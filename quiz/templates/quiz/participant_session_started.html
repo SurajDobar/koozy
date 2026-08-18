@@ -1,0 +1,17 @@
+{% extends "quiz/base.html" %}
+{% block title %}{{ live_session.quiz.title }} started · Koozy{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <span class="nav-link">Game PIN {{ live_session.game_pin }}</span>
+</header>
+<main class="page narrow-page">
+    <p class="eyebrow">Session active</p>
+    <h1>{{ live_session.quiz.title }} has started.</h1>
+    <p class="muted">You're connected as {{ participant.display_name }}. Live questions will appear here in the next MVP feature.</p>
+    <div class="card">
+        <strong>Stay on this page.</strong>
+        <p class="muted" style="margin-top:0.35rem;">The host has started the session.</p>
+    </div>
+</main>
+{% endblock %}

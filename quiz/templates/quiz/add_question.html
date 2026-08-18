@@ -1,0 +1,73 @@
+{% extends "quiz/base.html" %}
+{% block title %}Add questions · Koozy{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <div style="display:flex;gap:.75rem;align-items:center;">
+        <a class="nav-link" href="{% url 'host_quiz_list' %}">Done editing</a>
+        {% if can_start %}
+        <form method="post" action="{% url 'create_live_session' quiz.id %}" style="margin:0;">
+            {% csrf_token %}
+            <button class="button button-sm" type="submit">Host now</button>
+        </form>
+        {% endif %}
+    </div>
+</header>
+<main class="page">
+    <p class="eyebrow">{{ quiz.category }} · {{ quiz.difficulty|title }}</p>
+    <h1>{{ quiz.title }}</h1>
+    <p class="muted">Add one multiple-choice question at a time. Choose the correct option before saving.</p>
+    <form class="card" method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="field{% if field.name == 'correct_answer' %} radio-list{% endif %}">
+                {% if field.name == 'correct_answer' %}
+                    <fieldset><legend>{{ field.label }}</legend>{{ field }}{% if field.errors %}<ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</fieldset>
+                {% else %}
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.errors %}<ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                {% endif %}
+            </div>
+        {% endfor %}
+        <div class="actions" style="margin-top:1.25rem;">
+            <button class="button" type="submit">Save question &amp; add another</button>
+            <a class="button button-secondary" href="{% url 'host_quiz_list' %}">Done editing</a>
+        </div>
+    </form>
+
+    <section class="card" style="margin-top:1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <h2 style="margin:0;">Saved questions ({{ questions|length }})</h2>
+            {% if can_start %}
+            <form method="post" action="{% url 'create_live_session' quiz.id %}" style="margin:0;">
+                {% csrf_token %}
+                <button class="button button-sm" type="submit">Host quiz</button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% for question in questions %}
+            <article class="quiz-card" style="align-items:flex-start;">
+                <div style="flex:1;">
+                    <strong style="font-size:1.05rem;">{{ forloop.counter }}. {{ question.question_text }}</strong>
+                    <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem;font-size:.85rem;">
+                        <span style="padding:.15rem .45rem;border-radius:4px;background:{% if question.correct_answer == 'a' %}#bbf7d0;font-weight:700;color:#15803d;{% else %}var(--kz-bg);color:var(--kz-muted);{% endif %}">A: {{ question.option_a }}</span>
+                        <span style="padding:.15rem .45rem;border-radius:4px;background:{% if question.correct_answer == 'b' %}#bbf7d0;font-weight:700;color:#15803d;{% else %}var(--kz-bg);color:var(--kz-muted);{% endif %}">B: {{ question.option_b }}</span>
+                        <span style="padding:.15rem .45rem;border-radius:4px;background:{% if question.correct_answer == 'c' %}#bbf7d0;font-weight:700;color:#15803d;{% else %}var(--kz-bg);color:var(--kz-muted);{% endif %}">C: {{ question.option_c }}</span>
+                        <span style="padding:.15rem .45rem;border-radius:4px;background:{% if question.correct_answer == 'd' %}#bbf7d0;font-weight:700;color:#15803d;{% else %}var(--kz-bg);color:var(--kz-muted);{% endif %}">D: {{ question.option_d }}</span>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'delete_question' quiz.id question.id %}" style="margin:0;" onsubmit="return confirm('Delete question {{ forloop.counter }}?');">
+                    {% csrf_token %}
+                    <button class="button button-quiet button-sm" style="color:#dc2626;" type="submit" title="Delete question">Delete</button>
+                </form>
+            </article>
+        {% empty %}
+            <div class="empty">
+                <p class="muted">Your saved questions will appear here.</p>
+            </div>
+        {% endfor %}
+    </section>
+</main>
+{% endblock %}

@@ -1,0 +1,507 @@
+{% extends "quiz/base.html" %}
+{% block title %}{{ live_session.quiz.title }} · Koozy{% endblock %}
+{% block body %}<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <span class="nav-link" id="participant-name-nav">{{ participant.display_name|default:"Participant" }}</span>
+</header>
+
+<main class="page narrow-page" id="play-root"
+    data-pin="{{ live_session.game_pin }}"
+    data-participant-name="{{ participant.display_name }}">
+
+    {# ── SCREEN: QUESTION ──────────────────────────────────── #}
+    <div id="screen-question" class="play-screen" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+            <p class="eyebrow" style="margin:0;" id="q-progress">Question 1</p>
+            <div class="timer-ring">
+                <svg viewBox="0 0 44 44" width="48" height="48">
+                    <circle class="timer-track" cx="22" cy="22" r="18"/>
+                    <circle class="timer-fill" id="timer-circle" cx="22" cy="22" r="18"
+                        stroke-dasharray="113" stroke-dashoffset="0"/>
+                </svg>
+                <span id="timer-label" class="timer-label">—</span>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:0;padding:1.5rem;">
+            <p id="question-text" style="font-size:1.15rem;font-weight:700;line-height:1.45;min-height:3rem;"></p>
+        </div>
+
+        <div id="answer-grid" class="answer-grid" style="margin-top:1.25rem;"></div>
+        <p id="answered-notice" style="display:none;text-align:center;margin-top:1rem;" class="muted">
+            Answer submitted — waiting for results…
+        </p>
+    </div>
+
+    {# ── SCREEN: REVEAL ────────────────────────────────────── #}
+    <div id="screen-reveal" class="play-screen" style="display:none;">
+        <div id="reveal-result" style="text-align:center;padding:2rem 0 1rem;"></div>
+        <div id="reveal-answers" class="answer-grid" style="margin-top:1rem;pointer-events:none;"></div>
+        <div class="card" style="margin-top:1.25rem;text-align:center;">
+            <p class="eyebrow" style="margin-bottom:.25rem;">Your score</p>
+            <p id="reveal-score" style="font-size:2.5rem;font-weight:800;color:var(--kz-purple);line-height:1;"></p>
+        </div>
+        <div class="card" style="margin-top:1rem;padding:1rem 1.5rem;">
+            <p class="eyebrow" style="margin-bottom:.5rem;">Leaderboard</p>
+            <ol id="reveal-leaderboard" style="list-style:none;display:grid;gap:.4rem;"></ol>
+        </div>
+        <p class="muted" style="text-align:center;margin-top:1.25rem;font-size:.9rem;">Waiting for the host to continue…</p>
+    </div>
+
+    {# ── SCREEN: WAITING ───────────────────────────────────── #}
+    <div id="screen-waiting" class="play-screen" style="display:none;">
+        <p class="eyebrow">Game starting</p>
+        <h1>Get ready, <span id="waiting-name" style="color:var(--kz-purple);">{{ participant.display_name }}</span>!</h1>
+        <p class="muted">The host is about to launch the first question.</p>
+        <div class="card" style="text-align:center;padding:2rem;">
+            <span style="font-size:3rem;">⏳</span>
+            <p class="muted" style="margin-top:.75rem;">Waiting for question…</p>
+        </div>
+    </div>
+
+    {# ── SCREEN: COMPLETE ──────────────────────────────────── #}
+    <div id="screen-complete" class="play-screen" style="display:none;">
+        <p class="eyebrow">Quiz complete</p>
+        <h1>Well played!</h1>
+        <p class="muted">The quiz has ended.</p>
+        <a class="button full-width" id="see-results-btn" style="margin-top:1.25rem;"
+           href="{% url 'participant_result_page' live_session.game_pin %}">See your results</a>
+    </div>
+</main>
+
+<script>
+(function () {
+    const pin          = "{{ live_session.game_pin }}";
+    const csrfToken    = "{{ csrf_token }}";
+    const CIRCUMFERENCE = 113;
+
+    const ANSWER_COLORS = { a: '#05CDFF', b: '#FF4444', c: '#00CC05', d: '#8000FF' };
+    const ANSWER_LABELS = { a: 'A', b: 'B', c: 'C', d: 'D' };
+
+    // ── Tab-scoped token management ───────────────────────────
+    const urlPt = new URLSearchParams(window.location.search).get('pt');
+    const serverPt = "{{ participant.join_token|default:'' }}";
+    const activeToken = urlPt || sessionStorage.getItem('koozy_participant_token_' + pin) || sessionStorage.getItem('koozy_participant_token') || serverPt;
+
+    if (activeToken) {
+        sessionStorage.setItem('koozy_participant_token', activeToken);
+        sessionStorage.setItem('koozy_participant_token_' + pin, activeToken);
+        if (window.location.search.includes('pt=')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    function getHeaders(extra = {}) {
+        const headers = { 'Content-Type': 'application/json', ...extra };
+        if (activeToken) {
+            headers['X-Participant-Token'] = activeToken;
+        }
+        return headers;
+    }
+
+    let participantName = "{{ participant.display_name|default:'' }}";
+    let timerInterval   = null;
+    let currentQuestion = null;
+    let submitted       = false;
+    let myScore         = 0;
+    let revealShown     = false;
+    let pollInterval    = null;
+    let lastQuestionIndex = -1;
+
+    function updateParticipantUI(p) {
+        if (!p) return;
+        if (p.display_name) {
+            participantName = p.display_name;
+            const navName = document.getElementById('participant-name-nav');
+            if (navName) navName.textContent = p.display_name;
+            const waitingName = document.getElementById('waiting-name');
+            if (waitingName) waitingName.textContent = p.display_name;
+        }
+        if (p.score !== undefined) {
+            myScore = p.score;
+        }
+    }
+
+    // ── Screen management ─────────────────────────────────────
+    function showScreen(id) {
+        document.querySelectorAll('.play-screen').forEach(el => el.style.display = 'none');
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+    }
+
+    // ── WebSocket ─────────────────────────────────────────────
+    const ws = new WebSocket(
+        `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/live-sessions/${pin}/lobby/`
+    );
+
+    ws.onmessage = ({ data }) => {
+        const msg = JSON.parse(data);
+        if (msg.type === 'lobby_state')           handleLobbyState(msg);
+        else if (msg.event === 'question_start')  onQuestionStart(msg);
+        else if (msg.event === 'answer_closed')   onAnswerClosed(msg.correct_answer, msg.leaderboard);
+        else if (msg.event === 'quiz_complete')   handleComplete();
+    };
+
+    function handleLobbyState(state) {
+        if (state.status === 'COMPLETED') { handleComplete(); return; }
+        if (state.status === 'ACTIVE' && currentQuestion === null) showScreen('screen-waiting');
+    }
+
+    // ── Question start ────────────────────────────────────────
+    function onQuestionStart(msg) {
+        currentQuestion = msg;
+        submitted = false;
+        revealShown = false;
+        lastQuestionIndex = msg.question_index;
+
+        document.getElementById('q-progress').textContent =
+            `Question ${msg.question_index + 1} of ${msg.question_count}`;
+        document.getElementById('question-text').textContent = msg.question_text;
+        document.getElementById('answered-notice').style.display = 'none';
+
+        const grid = document.getElementById('answer-grid');
+        grid.replaceChildren();
+        ['a','b','c','d'].forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'answer-btn';
+            btn.dataset.option = opt;
+            btn.style.setProperty('--ab-color', ANSWER_COLORS[opt]);
+            btn.innerHTML = `<span class="ab-label">${ANSWER_LABELS[opt]}</span>
+                             <span class="ab-text">${msg['option_' + opt]}</span>`;
+            btn.addEventListener('click', () => submitAnswer(opt));
+            grid.appendChild(btn);
+        });
+
+        showScreen('screen-question');
+        startTimer(msg.time_limit, 0);
+    }
+
+    // ── Answer submission ─────────────────────────────────────
+    function submitAnswer(option) {
+        if (submitted) return;
+        submitted = true;
+        document.querySelectorAll('.answer-btn').forEach(b => {
+            b.disabled = true;
+            if (b.dataset.option === option) {
+                b.classList.add('ab-selected');
+            } else {
+                b.style.opacity = '0.35';
+            }
+        });
+        document.getElementById('answered-notice').style.display = 'block';
+
+        fetch(`/api/sessions/${pin}/answer/`, {
+            method: 'POST',
+            headers: getHeaders({ 'X-CSRFToken': csrfToken }),
+            body: JSON.stringify({ selected_option: option }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.querySelectorAll('.answer-btn').forEach(b => {
+                if (b.dataset.option === option) b.classList.add('ab-selected');
+            });
+        });
+    }
+
+    // ── Reveal screen ─────────────────────────────────────────
+    function onAnswerClosed(correctAnswer, leaderboard) {
+        if (revealShown) return;
+        revealShown = true;
+        stopTimer();
+        renderReveal(correctAnswer, leaderboard);
+    }
+
+    function renderReveal(correct, leaderboard) {
+        const correctLower = (correct || '').toLowerCase();
+        const wasCorrect = submitted &&
+            Boolean(document.querySelector(`.answer-btn.ab-selected[data-option="${correctLower}"]`));
+
+        // Sync score from leaderboard if available
+        const myEntry = (leaderboard || []).find(p => p.display_name === participantName);
+        if (myEntry) myScore = myEntry.score;
+
+        const resultDiv = document.getElementById('reveal-result');
+        resultDiv.innerHTML = wasCorrect
+            ? `<div class="reveal-badge correct">✓ Correct! <span>+1000 pts</span></div>`
+            : `<div class="reveal-badge incorrect">${submitted ? '✗ Wrong' : '— Time up'}</div>`;
+
+        const grid = document.getElementById('reveal-answers');
+        grid.replaceChildren();
+        if (currentQuestion) {
+            ['a','b','c','d'].forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'answer-btn ab-static';
+                btn.style.setProperty('--ab-color', ANSWER_COLORS[opt]);
+                if (opt === correctLower) btn.classList.add('ab-correct');
+                btn.innerHTML = `<span class="ab-label">${ANSWER_LABELS[opt]}</span>
+                                 <span class="ab-text">${currentQuestion['option_' + opt]}</span>`;
+                grid.appendChild(btn);
+            });
+        }
+
+        document.getElementById('reveal-score').textContent = myScore.toLocaleString();
+
+        const lb = document.getElementById('reveal-leaderboard');
+        lb.replaceChildren();
+        (leaderboard || []).slice(0, 5).forEach(entry => {
+            const li = document.createElement('li');
+            li.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:.35rem .5rem;border-radius:6px;background:var(--kz-bg);';
+            li.innerHTML = `<span style="font-weight:700;color:var(--kz-muted);min-width:1.5rem;">${entry.rank}</span>
+                            <span style="flex:1;font-weight:600;">${entry.display_name}</span>
+                            <span style="font-weight:800;color:var(--kz-purple);">${entry.score.toLocaleString()}</span>`;
+            lb.appendChild(li);
+        });
+
+        showScreen('screen-reveal');
+    }
+
+    function handleComplete() {
+        stopTimer();
+        stopPoll();
+        const resBtn = document.getElementById('see-results-btn');
+        if (resBtn && activeToken) {
+            resBtn.href = `{% url 'participant_result_page' live_session.game_pin %}?pt=${encodeURIComponent(activeToken)}`;
+        }
+        showScreen('screen-complete');
+    }
+
+    // ── Timer ─────────────────────────────────────────────────
+    function startTimer(limit, elapsed) {
+        stopTimer();
+        let remaining = Math.max(0, limit - elapsed);
+        updateTimerDisplay(remaining, limit);
+        timerInterval = setInterval(() => {
+            remaining = Math.max(0, remaining - 0.25);
+            updateTimerDisplay(remaining, limit);
+            if (remaining <= 0) {
+                stopTimer();
+                poll();
+            }
+        }, 250);
+    }
+
+    function stopTimer() {
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    }
+
+    function updateTimerDisplay(remaining, limit) {
+        const label  = document.getElementById('timer-label');
+        const circle = document.getElementById('timer-circle');
+        if (label)  label.textContent = Math.ceil(remaining);
+        if (circle) {
+            const fraction = limit > 0 ? remaining / limit : 0;
+            circle.style.strokeDashoffset = CIRCUMFERENCE * (1 - fraction);
+            circle.style.stroke = fraction > 0.5 ? '#16a34a' : fraction > 0.25 ? '#d97706' : '#dc2626';
+        }
+    }
+
+    // ── Poll (1 second) ───────────────────────────────────────
+    function startPoll() {
+        stopPoll();
+        pollInterval = setInterval(poll, 1000);
+    }
+
+    function stopPoll() {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    }
+
+    function poll() {
+        fetch(`/api/sessions/${pin}/state/`, { headers: getHeaders() })
+            .then(r => r.json())
+            .then(handleStateUpdate)
+            .catch(() => {});
+    }
+
+    function handleStateUpdate(data) {
+        updateParticipantUI(data.participant);
+
+        if (data.status === 'COMPLETED') { handleComplete(); return; }
+        if (data.status !== 'ACTIVE') return;
+
+        // Question advanced
+        if (data.current_question_index !== lastQuestionIndex && data.question) {
+            lastQuestionIndex = data.current_question_index;
+            submitted = data.participant?.submitted_option != null;
+            onQuestionStart({
+                event: 'question_start',
+                question_index: data.current_question_index,
+                question_count: data.question_count,
+                question_text:  data.question.question_text,
+                option_a: data.question.option_a,
+                option_b: data.question.option_b,
+                option_c: data.question.option_c,
+                option_d: data.question.option_d,
+                time_limit: data.question.time_limit,
+            });
+            if (data.participant?.submitted_option) {
+                submitted = true;
+                document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+                const sel = document.querySelector(`.answer-btn[data-option="${data.participant.submitted_option}"]`);
+                if (sel) sel.classList.add('ab-selected');
+                document.getElementById('answered-notice').style.display = 'block';
+            }
+            startTimer(data.question.time_limit, data.question.seconds_elapsed);
+        }
+
+        // Question is closed — show reveal
+        if (data.question_closed && !revealShown && data.question?.correct_answer) {
+            fetch(`/api/sessions/${pin}/leaderboard/`, { headers: getHeaders() })
+                .then(r => r.json())
+                .then(lb => {
+                    onAnswerClosed(data.question.correct_answer, lb.leaderboard);
+                });
+        }
+    }
+
+    // ── Initialise ────────────────────────────────────────────
+    fetch(`/api/sessions/${pin}/state/`, { headers: getHeaders() })
+        .then(r => r.json())
+        .then(data => {
+            updateParticipantUI(data.participant);
+
+            if (data.status === 'COMPLETED') { handleComplete(); return; }
+
+            if (data.status === 'ACTIVE' && data.question) {
+                lastQuestionIndex = data.current_question_index;
+
+                if (data.question_closed && data.question.correct_answer) {
+                    currentQuestion = {
+                        option_a: data.question.option_a,
+                        option_b: data.question.option_b,
+                        option_c: data.question.option_c,
+                        option_d: data.question.option_d,
+                    };
+                    submitted = data.participant?.submitted_option != null;
+                    if (data.participant?.submitted_option) {
+                        const fakeGrid = document.getElementById('answer-grid');
+                        fakeGrid.replaceChildren();
+                        ['a','b','c','d'].forEach(opt => {
+                            const btn = document.createElement('button');
+                            btn.className = 'answer-btn';
+                            btn.dataset.option = opt;
+                            btn.style.setProperty('--ab-color', ANSWER_COLORS[opt]);
+                            if (opt === data.participant.submitted_option.toLowerCase()) btn.classList.add('ab-selected');
+                            fakeGrid.appendChild(btn);
+                        });
+                    }
+                    fetch(`/api/sessions/${pin}/leaderboard/`, { headers: getHeaders() })
+                        .then(r => r.json())
+                        .then(lb => onAnswerClosed(data.question.correct_answer, lb.leaderboard));
+                    startPoll();
+                    return;
+                }
+
+                if (data.answer_phase_open) {
+                    onQuestionStart({
+                        event: 'question_start',
+                        question_index: data.current_question_index,
+                        question_count: data.question_count,
+                        question_text:  data.question.question_text,
+                        option_a: data.question.option_a,
+                        option_b: data.question.option_b,
+                        option_c: data.question.option_c,
+                        option_d: data.question.option_d,
+                        time_limit: data.question.time_limit,
+                    });
+                    startTimer(data.question.time_limit, data.question.seconds_elapsed);
+                    if (data.participant?.submitted_option) {
+                        submitted = true;
+                        document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+                        const sel = document.querySelector(`.answer-btn[data-option="${data.participant.submitted_option}"]`);
+                        if (sel) sel.classList.add('ab-selected');
+                        document.getElementById('answered-notice').style.display = 'block';
+                    }
+                } else {
+                    showScreen('screen-waiting');
+                }
+            } else {
+                showScreen('screen-waiting');
+            }
+            startPoll();
+        });
+})();
+</script>
+
+<style>
+/* ── Timer ────────────────────────────── */
+.timer-ring { position:relative;display:inline-flex;align-items:center;justify-content:center; }
+.timer-label { position:absolute;font-size:.72rem;font-weight:800;color:var(--kz-ink); }
+.timer-track { fill:none;stroke:var(--kz-border);stroke-width:3; }
+.timer-fill  { fill:none;stroke:#16a34a;stroke-width:3;stroke-linecap:round;
+    transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .25s linear, stroke .5s; }
+
+/* ── Answer grid ──────────────────────── */
+.answer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+}
+
+.answer-btn {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .85rem 1rem;
+    border: 3px solid var(--kz-ink);
+    border-radius: var(--kz-radius-md);
+    background: var(--ab-color, #ccc);
+    font-family: var(--kz-font-body);
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--kz-ink);
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s, opacity .2s;
+    box-shadow: 3px 3px 0 var(--kz-ink);
+    text-align: left;
+    line-height: 1.3;
+}
+.answer-btn:hover:not(:disabled) {
+    transform: translate(-2px,-2px);
+    box-shadow: 5px 5px 0 var(--kz-ink);
+}
+.answer-btn:active:not(:disabled) {
+    transform: translate(1px,1px);
+    box-shadow: 1px 1px 0 var(--kz-ink);
+}
+.answer-btn.ab-selected {
+    outline: 4px solid var(--kz-ink);
+    outline-offset: 3px;
+    box-shadow: 6px 6px 0 var(--kz-ink);
+    transform: translateY(-2px);
+    opacity: 1 !important;
+}
+.answer-btn.ab-correct  { outline: 4px solid #16a34a; outline-offset:2px; box-shadow:4px 4px 0 #16a34a; opacity: 1 !important; }
+.answer-btn.ab-static   { cursor:default; }
+
+.ab-label {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:1.6rem;
+    height:1.6rem;
+    border-radius:4px;
+    background:rgba(0,0,0,.18);
+    font-weight:900;
+    font-size:.85rem;
+    flex-shrink:0;
+}
+.ab-text { flex:1; }
+
+/* ── Reveal badge ─────────────────────── */
+.reveal-badge {
+    display:inline-block;
+    padding:.6rem 1.5rem;
+    border-radius:var(--kz-radius-lg);
+    font-size:1.25rem;
+    font-weight:800;
+    border:3px solid var(--kz-ink);
+    box-shadow:4px 4px 0 var(--kz-ink);
+}
+.reveal-badge.correct { background:#bbf7d0;color:#15803d; }
+.reveal-badge.incorrect { background:#fee2e2;color:#b91c1c; }
+
+@media (max-width:480px) {
+    .answer-grid { grid-template-columns:1fr; }
+}
+</style>
+{% endblock %}

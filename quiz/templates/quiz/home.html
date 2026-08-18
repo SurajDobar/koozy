@@ -1,0 +1,34 @@
+{% extends "quiz/base.html" %}
+{% block title %}Koozy{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <nav style="display:flex;gap:1rem;align-items:center;">
+        <a class="nav-link" href="{% url 'join_game' %}">Join quiz</a>
+        <a class="nav-link" href="{% url 'host_quiz_list' %}">Host workspace</a>
+    </nav>
+</header>
+
+<section class="home-hero">
+    <div class="paper-note hand">Handmade with order</div>
+    <h1>Make learning <span style="color:var(--kz-purple);">play.</span></h1>
+    <p class="subtitle">Create quizzes, host live sessions, and bring energy to every question. Koozy is a multiplayer quiz platform built for real classrooms and real teams.</p>
+    <div class="home-actions">
+        <a class="button" href="{% url 'host_quiz_list' %}">Host a quiz</a>
+        <a class="button button-secondary" href="{% url 'join_game' %}">Join with PIN</a>
+    </div>
+</section>
+
+<div class="page">
+    <div class="home-cards">
+        <a class="home-card" href="{% url 'host_quiz_list' %}">
+            <strong>Create &amp; host</strong>
+            <span>Build quizzes with multiple-choice questions and run live sessions.</span>
+        </a>
+        <a class="home-card" href="{% url 'join_game' %}">
+            <strong>Join &amp; play</strong>
+            <span>Enter a Game PIN and compete in real-time quizzes.</span>
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,638 @@
+/* =========================================================
+   Koozy Design System
+   Source of truth: design.md
+   ========================================================= */
+
+/* --- Reset & Base --- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    /* Base Colors */
+    --kz-bg: #F7F5EF;
+    --kz-paper: #FFFDF7;
+    --kz-white: #FFFFFF;
+    --kz-ink: #191817;
+    --kz-muted: #77736C;
+    --kz-border: #D8D3CA;
+
+    /* Brand */
+    --kz-purple: #6C4DE8;
+    --kz-purple-hover: #5a3dd0;
+    --kz-purple-light: rgba(108, 77, 232, 0.08);
+    --kz-purple-focus: rgba(108, 77, 232, 0.18);
+
+    /* Quiz Colors */
+    --kz-quiz-blue: #05CDFF;
+    --kz-quiz-red: #FF0000;
+    --kz-quiz-green: #00FF04;
+    --kz-quiz-purple: #8000FF;
+
+    /* Shadows */
+    --kz-shadow-sm: 0 1px 3px rgba(25, 24, 23, 0.04);
+    --kz-shadow-md: 0 4px 12px rgba(25, 24, 23, 0.06);
+    --kz-shadow-lg: 0 12px 30px rgba(25, 24, 23, 0.06);
+    --kz-shadow-offset: 4px 5px 0 var(--kz-ink);
+
+    /* Radii */
+    --kz-radius-sm: 8px;
+    --kz-radius-md: 12px;
+    --kz-radius-lg: 16px;
+
+    /* Spacing */
+    --kz-space-xs: 0.35rem;
+    --kz-space-sm: 0.65rem;
+    --kz-space-md: 1rem;
+    --kz-space-lg: 1.5rem;
+    --kz-space-xl: 2rem;
+    --kz-space-2xl: 3rem;
+
+    /* Transitions */
+    --kz-transition: 180ms ease;
+    --kz-transition-smooth: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Typography */
+    --kz-font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --kz-font-hand: 'Caveat', cursive;
+}
+
+html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+    font-family: var(--kz-font-body);
+    color: var(--kz-ink);
+    background: var(--kz-bg);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+img { max-width: 100%; display: block; }
+
+/* --- Focus States --- */
+:focus-visible {
+    outline: 3px solid var(--kz-purple-focus);
+    outline-offset: 2px;
+}
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* =========================================================
+   TYPOGRAPHY
+   ========================================================= */
+
+.eyebrow {
+    color: var(--kz-purple);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+h1 {
+    margin: 0.35rem 0 0.6rem;
+    font-size: clamp(1.75rem, 5vw, 2.75rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--kz-ink);
+}
+
+h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--kz-ink);
+}
+
+.muted { color: var(--kz-muted); line-height: 1.6; }
+.meta { color: var(--kz-muted); font-size: 0.9rem; }
+
+.hand {
+    font-family: var(--kz-font-hand);
+    font-weight: 600;
+}
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+
+.page {
+    width: min(100% - 2.5rem, 820px);
+    margin: 3rem auto;
+    animation: fadeUp 400ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.narrow-page { max-width: 560px; }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================
+   SITE HEADER
+   ========================================================= */
+
+.site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem max(1.25rem, calc((100% - 1040px) / 2));
+    border-bottom: 1px solid var(--kz-border);
+    background: var(--kz-white);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.brand {
+    color: var(--kz-purple);
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    transition: color var(--kz-transition);
+}
+.brand:hover { color: var(--kz-purple-hover); }
+
+.nav-link {
+    color: var(--kz-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: color var(--kz-transition);
+}
+.nav-link:hover { color: var(--kz-ink); }
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.card {
+    margin-top: var(--kz-space-lg);
+    padding: clamp(1.25rem, 4vw, 2rem);
+    border: 1px solid var(--kz-border);
+    border-radius: var(--kz-radius-lg);
+    background: var(--kz-white);
+    box-shadow: var(--kz-shadow-md);
+}
+
+.card-paper {
+    background: var(--kz-paper);
+    border: 2px solid var(--kz-ink);
+    box-shadow: var(--kz-shadow-offset);
+    border-radius: var(--kz-radius-md);
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.65rem 1.25rem;
+    border: 2px solid var(--kz-ink);
+    border-radius: var(--kz-radius-sm);
+    background: var(--kz-purple);
+    color: var(--kz-white);
+    font-family: var(--kz-font-body);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background var(--kz-transition), transform var(--kz-transition), box-shadow var(--kz-transition);
+    box-shadow: 3px 3px 0 var(--kz-ink);
+    user-select: none;
+}
+
+.button:hover {
+    background: var(--kz-purple-hover);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--kz-ink);
+}
+
+.button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--kz-ink);
+}
+
+.button-secondary {
+    background: var(--kz-white);
+    color: var(--kz-ink);
+}
+.button-secondary:hover {
+    background: var(--kz-bg);
+}
+
+.button-quiet {
+    background: transparent;
+    border-color: var(--kz-border);
+    box-shadow: none;
+    color: var(--kz-ink);
+}
+.button-quiet:hover {
+    border-color: var(--kz-purple);
+    color: var(--kz-purple);
+    box-shadow: none;
+    transform: none;
+}
+
+.button-sm {
+    min-height: 2.2rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.85rem;
+}
+
+.full-width { width: 100%; }
+
+/* =========================================================
+   FORMS
+   ========================================================= */
+
+.field { margin-bottom: 1.15rem; }
+
+label, legend {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--kz-ink);
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    border: 2px solid var(--kz-border);
+    border-radius: var(--kz-radius-sm);
+    background: var(--kz-white);
+    color: var(--kz-ink);
+    font-family: var(--kz-font-body);
+    font-size: 0.95rem;
+    transition: border-color var(--kz-transition), box-shadow var(--kz-transition);
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--kz-purple);
+    box-shadow: 0 0 0 3px var(--kz-purple-focus);
+}
+
+input::placeholder, textarea::placeholder {
+    color: var(--kz-muted);
+    opacity: 0.7;
+}
+
+.errorlist {
+    margin: 0.4rem 0 0;
+    padding: 0;
+    color: #b91c1c;
+    font-size: 0.88rem;
+    list-style: none;
+}
+
+.errorlist li::before {
+    content: "⚠ ";
+}
+
+.non-field-errors {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border: 2px solid #b91c1c;
+    border-radius: var(--kz-radius-sm);
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Radio / Checkbox */
+.radio-list { display: grid; gap: 0.55rem; }
+.radio-list label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    font-weight: 500;
+    cursor: pointer;
+}
+.radio-list input[type="radio"] {
+    width: auto;
+    accent-color: var(--kz-purple);
+}
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.compact-actions { margin-top: 0; }
+.compact-actions form { margin: 0; }
+
+/* =========================================================
+   QUIZ CARDS (list items)
+   ========================================================= */
+
+.quiz-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+.quiz-card + .quiz-card { border-top: 1px solid var(--kz-border); }
+.quiz-card h2 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty {
+    text-align: center;
+    padding: 2.5rem 1rem;
+}
+
+.empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.6;
+}
+
+/* =========================================================
+   PIN CARD
+   ========================================================= */
+
+.pin-card {
+    margin: var(--kz-space-lg) 0;
+    padding: 1.5rem;
+    border-radius: var(--kz-radius-lg);
+    background: var(--kz-ink);
+    color: var(--kz-white);
+    text-align: center;
+    border: 2px solid var(--kz-ink);
+    box-shadow: var(--kz-shadow-offset);
+}
+
+.pin-card span {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.65;
+}
+
+.pin-card strong {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: clamp(2.5rem, 9vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    font-family: var(--kz-font-body);
+}
+
+.small-pin strong {
+    font-size: 1.6rem;
+    letter-spacing: 0.08em;
+}
+
+/* =========================================================
+   LOBBY
+   ========================================================= */
+
+.lobby-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.participant-panel { margin-top: 0; }
+.participant-panel h2 { margin-top: 0; }
+
+.participant-list {
+    display: grid;
+    gap: 0.55rem;
+    margin: 1rem 0 0;
+    padding: 0;
+}
+
+.participant-list li {
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--kz-radius-sm);
+    background: var(--kz-bg);
+    border: 1px solid var(--kz-border);
+    font-weight: 600;
+    font-size: 0.95rem;
+    animation: fadeUp 300ms ease both;
+}
+
+.participant-list .empty-participants {
+    font-weight: 400;
+    color: var(--kz-muted);
+    font-style: italic;
+}
+
+/* =========================================================
+   DEV LINK GRID
+   ========================================================= */
+
+.dev-link-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+.dev-link {
+    display: grid;
+    gap: 0.25rem;
+    min-height: 6.5rem;
+    padding: 1rem;
+    border: 2px solid var(--kz-border);
+    border-radius: var(--kz-radius-md);
+    background: var(--kz-white);
+    text-decoration: none;
+    transition: border-color var(--kz-transition), transform var(--kz-transition), box-shadow var(--kz-transition);
+}
+
+.dev-link:hover {
+    border-color: var(--kz-purple);
+    transform: translateY(-2px);
+    box-shadow: var(--kz-shadow-md);
+}
+
+.dev-link strong {
+    font-size: 0.95rem;
+    color: var(--kz-ink);
+}
+
+.dev-link span {
+    color: var(--kz-muted);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* =========================================================
+   HOME / LANDING
+   ========================================================= */
+
+.home-hero {
+    text-align: center;
+    padding: 5rem 1rem 3rem;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.home-hero h1 {
+    font-size: clamp(2.5rem, 7vw, 4rem);
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+}
+
+.home-hero .subtitle {
+    font-size: 1.15rem;
+    color: var(--kz-muted);
+    max-width: 420px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+}
+
+.home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.home-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    max-width: 640px;
+    margin: 3rem auto 0;
+}
+
+.home-card {
+    padding: 1.5rem;
+    border: 2px solid var(--kz-border);
+    border-radius: var(--kz-radius-md);
+    background: var(--kz-white);
+    text-decoration: none;
+    transition: border-color var(--kz-transition), transform var(--kz-transition), box-shadow var(--kz-transition);
+}
+
+.home-card:hover {
+    border-color: var(--kz-purple);
+    transform: translateY(-2px);
+    box-shadow: var(--kz-shadow-md);
+}
+
+.home-card strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 1.05rem;
+    color: var(--kz-ink);
+}
+
+.home-card span {
+    color: var(--kz-muted);
+    font-size: 0.9rem;
+}
+
+/* Paper accent for landing */
+.paper-note {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--kz-paper);
+    border: 2px solid var(--kz-ink);
+    border-radius: var(--kz-radius-sm);
+    box-shadow: 2px 3px 0 var(--kz-ink);
+    font-family: var(--kz-font-hand);
+    font-size: 1.1rem;
+    transform: rotate(-1.5deg);
+    margin-bottom: 1.5rem;
+}
+
+/* =========================================================
+   QUIZ LIST (public)
+   ========================================================= */
+
+.quiz-list-item {
+    padding: 1.25rem 0;
+}
+.quiz-list-item + .quiz-list-item { border-top: 1px solid var(--kz-border); }
+
+.quiz-list-item h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.quiz-list-item .badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: var(--kz-purple-light);
+    color: var(--kz-purple);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    margin-right: 0.4rem;
+}
+
+/* =========================================================
+   STATUS / BADGES
+   ========================================================= */
+
+.status-waiting {
+    color: var(--kz-muted);
+    font-weight: 600;
+}
+
+.status-active {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+    .lobby-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+    .page { margin-top: 2rem; }
+    .quiz-card { align-items: flex-start; flex-direction: column; }
+    .quiz-card .button { width: 100%; }
+    .home-hero { padding: 3rem 1rem 2rem; }
+    .home-actions { flex-direction: column; align-items: stretch; }
+    .home-actions .button { width: 100%; }
+}

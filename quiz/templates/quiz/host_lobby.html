@@ -1,0 +1,381 @@
+{% extends "quiz/base.html" %}
+{% block title %}Host lobby · {{ live_session.quiz.title }}{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <a class="nav-link" href="{% url 'host_quiz_list' %}">Host workspace</a>
+</header>
+
+<main class="page lobby-layout" id="host-lobby"
+    data-pin="{{ live_session.game_pin }}"
+    data-session-id="{{ live_session.id }}"
+    data-status="{{ live_session.status }}"
+    data-q-index="{{ live_session.current_question_index }}"
+    data-q-count="{{ question_count }}">
+
+    {# ── Left column ─────────────────────────────────────────── #}
+    <section>
+        <p class="eyebrow">Host lobby</p>
+        <h1>{{ live_session.quiz.title }}</h1>
+        <p class="muted" id="session-status-text">
+            {% if live_session.status == 'WAITING' %}Waiting for participants to join
+            {% elif live_session.status == 'ACTIVE' %}Session active
+            {% else %}Session completed{% endif %}
+        </p>
+
+        <div class="pin-card">
+            <span>Game PIN</span>
+            <strong>{{ live_session.game_pin }}</strong>
+        </div>
+
+        {# ── WAITING: start button ── #}
+        {% if live_session.status == 'WAITING' %}
+        <form method="post" action="{% url 'start_live_session' live_session.id %}" id="start-form">
+            {% csrf_token %}
+            <button class="button full-width" type="submit"
+                {% if not can_start %}disabled title="{{ cannot_start_reason }}"{% endif %}>
+                Start quiz
+            </button>
+        </form>
+        {% if not can_start %}
+        <p class="muted" style="margin-top:.5rem;font-size:.88rem;color:#dc2626;">⚠ {{ cannot_start_reason }}</p>
+        {% endif %}
+        {% endif %}
+
+        {# ── ACTIVE: live question panel ── #}
+        {% if live_session.status == 'ACTIVE' %}
+        <div class="card" id="live-question-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+                <p class="eyebrow" style="margin:0;" id="q-progress">
+                    Question {{ live_session.current_question_index|add:1 }} / {{ question_count }}
+                </p>
+                <div class="timer-ring" id="timer-ring">
+                    <svg viewBox="0 0 44 44" width="44" height="44">
+                        <circle class="timer-track" cx="22" cy="22" r="18"/>
+                        <circle class="timer-fill" id="timer-circle" cx="22" cy="22" r="18"
+                            stroke-dasharray="113" stroke-dashoffset="0"/>
+                    </svg>
+                    <span id="timer-label" class="timer-label">—</span>
+                </div>
+            </div>
+
+            <p id="question-text" style="font-size:1.15rem;font-weight:700;line-height:1.45;margin-bottom:1rem;">
+                {% if current_question %}{{ current_question.question_text }}{% else %}Loading…{% endif %}
+            </p>
+
+            {# ── Host option cards grid ── #}
+            <div id="host-options-grid" class="answer-grid" style="margin-bottom:1.25rem;pointer-events:none;">
+                {% if current_question %}
+                <div class="answer-btn ab-static" style="--ab-color:var(--kz-quiz-blue);">
+                    <span class="ab-label">A</span>
+                    <span class="ab-text" id="host-opt-a">{{ current_question.option_a }}</span>
+                </div>
+                <div class="answer-btn ab-static" style="--ab-color:var(--kz-quiz-red);">
+                    <span class="ab-label">B</span>
+                    <span class="ab-text" id="host-opt-b">{{ current_question.option_b }}</span>
+                </div>
+                <div class="answer-btn ab-static" style="--ab-color:var(--kz-quiz-green);">
+                    <span class="ab-label">C</span>
+                    <span class="ab-text" id="host-opt-c">{{ current_question.option_c }}</span>
+                </div>
+                <div class="answer-btn ab-static" style="--ab-color:var(--kz-quiz-purple);">
+                    <span class="ab-label">D</span>
+                    <span class="ab-text" id="host-opt-d">{{ current_question.option_d }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {# ── Answer phase: shown while question is open ── #}
+            <div id="phase-open">
+                <p class="muted" style="font-size:.9rem;">Participants are answering…</p>
+                <form method="post" action="{% url 'host_close_question' live_session.id %}" style="margin-top:.75rem;">
+                    {% csrf_token %}
+                    <button class="button button-sm button-secondary" type="submit" id="close-btn">
+                        Close answers & reveal
+                    </button>
+                </form>
+            </div>
+
+            {# ── Reveal phase: shown after question closes ── #}
+            <div id="phase-reveal" style="display:none;">
+                <p class="eyebrow" style="margin-bottom:.5rem;color:#16a34a;">Answers closed</p>
+                <div id="dist-bars" style="display:grid;gap:.5rem;margin-bottom:.75rem;"></div>
+            </div>
+
+            {# Actions: Next question / Finish quiz ── #}
+            <div class="actions compact-actions" style="margin-top:.75rem;">
+                <form method="post" action="{% url 'host_next_question' live_session.id %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button class="button button-sm" type="submit" id="next-btn">
+                        {% if live_session.current_question_index|add:1 >= question_count %}Finish quiz{% else %}Next question{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ── COMPLETED ── #}
+        {% if live_session.status == 'COMPLETED' %}
+        <div class="card" style="margin-top:1.25rem;">
+            <p class="eyebrow">Quiz complete</p>
+            <p class="muted" style="margin-top:.35rem;">All questions have been answered.</p>
+            <a class="button full-width" style="margin-top:1rem;" href="{% url 'host_result_page' live_session.id %}">View results</a>
+        </div>
+        {% endif %}
+    </section>
+
+    {# ── Right column: participant panel ─────────────────────── #}
+    <section class="card participant-panel">
+        <p class="eyebrow"><span id="participant-count">{{ participants|length }}</span> participant{{ participants|length|pluralize }}</p>
+        <h2>In the lobby</h2>
+        <ul class="participant-list" id="participant-list">
+            {% for participant in participants %}
+                <li>{{ participant.display_name }}</li>
+            {% empty %}
+                <li class="muted empty-participants">Participants will appear here when they join.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</main>
+
+<script>
+(function () {
+    const pin       = "{{ live_session.game_pin }}";
+    const status    = "{{ live_session.status }}";
+    const qCount    = {{ question_count }};
+    const CIRCUMFERENCE = 113;
+    const OPTION_COLORS = { a: '#05CDFF', b: '#FF4444', c: '#00CC05', d: '#8000FF' };
+    const OPTION_LABELS = { a: 'A', b: 'B', c: 'C', d: 'D' };
+
+    let timerInterval  = null;
+    let revealShown    = false;
+    let currentQIndex  = {{ live_session.current_question_index }};
+    let currentQData   = null;
+    let pollInterval   = null;
+
+    // ── WebSocket ──────────────────────────────────────────────
+    const ws = new WebSocket(
+        `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/live-sessions/${pin}/lobby/`
+    );
+
+    ws.onmessage = ({ data }) => {
+        const msg = JSON.parse(data);
+        if (msg.type === 'lobby_state')          handleLobbyState(msg);
+        else if (msg.event === 'question_start') handleQuestionStart(msg);
+        else if (msg.event === 'answer_closed')  handleAnswerClosed(msg);
+        else if (msg.event === 'quiz_complete')  handleQuizComplete();
+    };
+
+    // ── Lobby state (participant list) ─────────────────────────
+    function handleLobbyState(state) {
+        const countEl = document.getElementById('participant-count');
+        const listEl  = document.getElementById('participant-list');
+        if (countEl) countEl.textContent = state.participant_count;
+        if (listEl) {
+            listEl.replaceChildren();
+            if (state.participants.length) {
+                state.participants.forEach(name => {
+                    const li = document.createElement('li'); li.textContent = name; listEl.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li'); li.className = 'muted empty-participants';
+                li.textContent = 'Participants will appear here when they join.'; listEl.appendChild(li);
+            }
+        }
+    }
+
+    // ── Question start ─────────────────────────────────────────
+    function handleQuestionStart(msg) {
+        currentQIndex = msg.question_index;
+        currentQData  = msg;
+        revealShown = false;
+
+        const qProgress = document.getElementById('q-progress');
+        const qText     = document.getElementById('question-text');
+        const nextBtn   = document.getElementById('next-btn');
+        const phaseOpen   = document.getElementById('phase-open');
+        const phaseReveal = document.getElementById('phase-reveal');
+
+        if (qProgress) qProgress.textContent = `Question ${msg.question_index + 1} / ${msg.question_count}`;
+        if (qText) qText.textContent = msg.question_text;
+        if (phaseOpen)   phaseOpen.style.display   = 'block';
+        if (phaseReveal) phaseReveal.style.display  = 'none';
+        if (nextBtn) {
+            nextBtn.textContent = (msg.question_index + 1 >= qCount) ? 'Finish quiz' : 'Next question';
+        }
+
+        // Render option cards
+        const optGrid = document.getElementById('host-options-grid');
+        if (optGrid) {
+            optGrid.replaceChildren();
+            ['a','b','c','d'].forEach(opt => {
+                const card = document.createElement('div');
+                card.className = 'answer-btn ab-static';
+                card.dataset.option = opt;
+                card.style.setProperty('--ab-color', OPTION_COLORS[opt]);
+                card.innerHTML = `<span class="ab-label">${OPTION_LABELS[opt]}</span>
+                                  <span class="ab-text">${msg['option_' + opt] || ''}</span>`;
+                optGrid.appendChild(card);
+            });
+        }
+
+        startTimer(msg.time_limit, 0);
+    }
+
+    // ── Answer closed (reveal) ─────────────────────────────────
+    function handleAnswerClosed(msg) {
+        if (revealShown) return;
+        revealShown = true;
+        stopTimer();
+
+        const phaseOpen   = document.getElementById('phase-open');
+        const phaseReveal = document.getElementById('phase-reveal');
+        if (phaseOpen)   phaseOpen.style.display   = 'none';
+        if (phaseReveal) phaseReveal.style.display  = 'block';
+
+        const correct = (msg.correct_answer || '').toLowerCase();
+
+        // Highlight correct option in host grid
+        document.querySelectorAll('#host-options-grid .answer-btn').forEach(btn => {
+            if (btn.dataset.option === correct) {
+                btn.classList.add('ab-correct');
+            } else {
+                btn.style.opacity = '0.4';
+            }
+        });
+
+        // Render distribution bars
+        const bars = document.getElementById('dist-bars');
+        if (bars && msg.distribution) {
+            const dist = msg.distribution;
+            const total = Object.values(dist).reduce((s, v) => s + v, 0) || 1;
+            bars.replaceChildren();
+            ['a','b','c','d'].forEach(opt => {
+                const count = dist[opt] || 0;
+                const pct   = Math.round(count / total * 100);
+                const isCorrect = opt === correct;
+                const row = document.createElement('div');
+                row.style.cssText = 'display:grid;grid-template-columns:1.5rem 1fr 2.5rem;align-items:center;gap:.5rem;';
+                row.innerHTML = `
+                    <span style="font-weight:800;font-size:.9rem;">${OPTION_LABELS[opt]}</span>
+                    <div style="background:var(--kz-border);border-radius:4px;height:1.6rem;overflow:hidden;
+                                border:2px solid ${isCorrect ? 'var(--kz-ink)' : 'transparent'};">
+                        <div style="width:${pct}%;height:100%;background:${OPTION_COLORS[opt]};
+                                    border-radius:2px;transition:width .4s ease;"></div>
+                    </div>
+                    <span style="font-size:.85rem;font-weight:700;text-align:right;">${count}</span>
+                `;
+                bars.appendChild(row);
+            });
+        }
+    }
+
+    function handleQuizComplete() {
+        stopTimer();
+        stopPoll();
+        window.location.href = "{% url 'host_result_page' live_session.id %}";
+    }
+
+    // ── Timer ──────────────────────────────────────────────────
+    function startTimer(limit, elapsed) {
+        stopTimer();
+        let remaining = Math.max(0, limit - elapsed);
+        updateTimerDisplay(remaining, limit);
+        timerInterval = setInterval(() => {
+            remaining = Math.max(0, remaining - 0.25);
+            updateTimerDisplay(remaining, limit);
+            if (remaining <= 0) {
+                stopTimer();
+                hostPoll();
+            }
+        }, 250);
+    }
+
+    function stopTimer() {
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    }
+
+    function updateTimerDisplay(remaining, limit) {
+        const label  = document.getElementById('timer-label');
+        const circle = document.getElementById('timer-circle');
+        if (label)  label.textContent = Math.ceil(remaining);
+        if (circle) {
+            const fraction = limit > 0 ? remaining / limit : 0;
+            circle.style.strokeDashoffset = CIRCUMFERENCE * (1 - fraction);
+            circle.style.stroke = fraction > 0.5 ? '#16a34a' : fraction > 0.25 ? '#d97706' : '#dc2626';
+        }
+    }
+
+    // ── Poll ───────────────────────────────────────────────────
+    function startPoll() {
+        stopPoll();
+        pollInterval = setInterval(hostPoll, 1500);
+    }
+    function stopPoll() {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    }
+
+    function hostPoll() {
+        fetch(`/api/sessions/${pin}/state/`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'COMPLETED') { handleQuizComplete(); return; }
+                if (data.status !== 'ACTIVE') return;
+
+                if (data.current_question_index !== currentQIndex && data.question) {
+                    currentQIndex = data.current_question_index;
+                    revealShown = false;
+                    handleQuestionStart({
+                        question_index: data.current_question_index,
+                        question_count: data.question_count,
+                        question_text:  data.question.question_text,
+                        option_a: data.question.option_a,
+                        option_b: data.question.option_b,
+                        option_c: data.question.option_c,
+                        option_d: data.question.option_d,
+                        time_limit: data.question.time_limit,
+                    });
+                    startTimer(data.question.time_limit, data.question.seconds_elapsed);
+                }
+
+                if (data.question_closed && !revealShown) {
+                    handleAnswerClosed({
+                        correct_answer: data.question?.correct_answer,
+                        distribution: data.distribution || { a:0, b:0, c:0, d:0 },
+                        leaderboard: [],
+                    });
+                }
+            })
+            .catch(() => {});
+    }
+
+    // ── Init ───────────────────────────────────────────────────
+    if (status === 'ACTIVE') {
+        fetch(`/api/sessions/${pin}/state/`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.question) {
+                    if (data.question_closed) {
+                        handleAnswerClosed({
+                            correct_answer: data.question.correct_answer,
+                            distribution: data.distribution || { a:0, b:0, c:0, d:0 },
+                            leaderboard: [],
+                        });
+                    } else {
+                        startTimer(data.question.time_limit, data.question.seconds_elapsed);
+                    }
+                }
+            });
+        startPoll();
+    }
+})();
+</script>
+
+<style>
+.timer-ring { position:relative;display:inline-flex;align-items:center;justify-content:center; }
+.timer-label { position:absolute;font-size:.72rem;font-weight:800;color:var(--kz-ink); }
+.timer-track { fill:none;stroke:var(--kz-border);stroke-width:3; }
+.timer-fill  { fill:none;stroke:#16a34a;stroke-width:3;stroke-linecap:round;
+    transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .25s linear, stroke .5s; }
+</style>
+{% endblock %}

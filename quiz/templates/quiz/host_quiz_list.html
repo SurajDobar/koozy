@@ -1,0 +1,49 @@
+{% extends "quiz/base.html" %}
+{% block title %}My quizzes · Koozy{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <a class="nav-link" href="{% url 'quiz_list' %}">All quizzes</a>
+</header>
+<main class="page">
+    <p class="eyebrow">Host workspace</p>
+    <h1>My quizzes</h1>
+    <p class="muted">Quizzes created in this browser are shown here.</p>
+    <div class="actions"><a class="button" href="{% url 'create_quiz' %}">Create a quiz</a></div>
+
+    <section class="card">
+        {% for quiz in quizzes %}
+            <article class="quiz-card">
+                <div>
+                    <h2>{{ quiz.title }}</h2>
+                    <p class="meta">{{ quiz.category }} · {{ quiz.difficulty|title }} · {{ quiz.question_count }} question{{ quiz.question_count|pluralize }}</p>
+                </div>
+                <div class="actions compact-actions">
+                    <a class="button button-quiet button-sm" href="{% url 'add_question' quiz.id %}">
+                        {% if quiz.question_count > 0 %}Edit questions{% else %}Add questions{% endif %}
+                    </a>
+                    {% if quiz.question_count > 0 %}
+                    <form method="post" action="{% url 'create_live_session' quiz.id %}" style="margin:0;">
+                        {% csrf_token %}
+                        <button class="button button-sm" type="submit">Host quiz</button>
+                    </form>
+                    {% else %}
+                    <button class="button button-sm" disabled title="Add at least one question before hosting">Host quiz</button>
+                    {% endif %}
+                    <form method="post" action="{% url 'delete_quiz' quiz.id %}" style="margin:0;" onsubmit="return confirm('Delete \'{{ quiz.title }}\' and all its questions?');">
+                        {% csrf_token %}
+                        <button class="button button-quiet button-sm" style="color:#dc2626;" type="submit">Delete</button>
+                    </form>
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty">
+                <div class="empty-icon">📝</div>
+                <h2>No quizzes yet</h2>
+                <p class="muted">Create your first quiz to start adding questions.</p>
+                <div class="actions" style="justify-content:center;"><a class="button" href="{% url 'create_quiz' %}">Create a quiz</a></div>
+            </div>
+        {% endfor %}
+    </section>
+</main>
+{% endblock %}

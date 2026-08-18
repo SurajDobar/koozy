@@ -1,0 +1,36 @@
+{% extends "quiz/base.html" %}
+{% block title %}Koozy — Quizzes{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <a class="nav-link" href="{% url 'host_quiz_list' %}">Host workspace</a>
+</header>
+<main class="page">
+    <p class="eyebrow">Browse</p>
+    <h1>Available quizzes</h1>
+    <p class="muted">All quizzes stored in the system.</p>
+
+    <section class="card">
+        {% for quiz in quizzes %}
+            <div class="quiz-list-item">
+                <h3>{{ quiz.title }}</h3>
+                <p class="meta">
+                    <span class="badge">{{ quiz.category }}</span>
+                    <span class="badge">{{ quiz.difficulty|title }}</span>
+                    <span class="muted" style="margin-left:0.5rem;">{{ quiz.question_count }} question{{ quiz.question_count|pluralize }}</span>
+                </p>
+                {% if quiz.description %}<p class="muted" style="margin-top:0.35rem;">{{ quiz.description }}</p>{% endif %}
+            </div>
+        {% empty %}
+            <div class="empty">
+                <div class="empty-icon">📚</div>
+                <h2>No quizzes available</h2>
+                <p class="muted">Quizzes will appear here once they are created.</p>
+                <div class="actions" style="justify-content:center;margin-top:1rem;">
+                    <a class="button" href="{% url 'create_quiz' %}">Create a quiz</a>
+                </div>
+            </div>
+        {% endfor %}
+    </section>
+</main>
+{% endblock %}

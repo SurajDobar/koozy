@@ -1,0 +1,38 @@
+{% extends "quiz/base.html" %}
+{% block title %}Join a live quiz · Koozy{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <a class="nav-link" href="{% url 'host_quiz_list' %}">Host workspace</a>
+</header>
+<main class="page narrow-page">
+    <p class="eyebrow">Join a live quiz</p>
+    <h1>Enter the Game PIN</h1>
+    <p class="muted">Ask your host for the five-character PIN.</p>
+    <form class="card" method="post" novalidate>
+        {% csrf_token %}
+        <div class="field">
+            {{ form.game_pin.label_tag }}
+            {{ form.game_pin }}
+            {% if form.game_pin.errors %}
+                <ul class="errorlist">{% for error in form.game_pin.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+        <button class="button full-width" type="submit">Continue</button>
+    </form>
+</main>
+<script>
+    const pinInput = document.querySelector('input[name="game_pin"]');
+    if (pinInput) {
+        pinInput.focus();
+        pinInput.style.textTransform = 'uppercase';
+        pinInput.style.letterSpacing = '0.25em';
+        pinInput.style.fontWeight = '800';
+        pinInput.style.textAlign = 'center';
+        pinInput.style.fontSize = '1.35rem';
+        pinInput.addEventListener('input', () => {
+            pinInput.value = pinInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        });
+    }
+</script>
+{% endblock %}

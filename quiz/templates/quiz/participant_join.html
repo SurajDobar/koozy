@@ -1,0 +1,33 @@
+{% extends "quiz/base.html" %}
+{% block title %}Join {{ live_session.quiz.title }} · Koozy{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <a class="nav-link" href="{% url 'join_game' %}">Use another PIN</a>
+</header>
+<main class="page narrow-page">
+    <p class="eyebrow">Game PIN {{ live_session.game_pin }}</p>
+    <h1>{{ live_session.quiz.title }}</h1>
+    <p class="muted">Choose the name other participants will see.</p>
+    <form class="card" method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="non-field-errors">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+        {% endif %}
+        <div class="field">
+            {{ form.display_name.label_tag }}
+            {{ form.display_name }}
+            {% if form.display_name.errors %}
+                <ul class="errorlist">{% for error in form.display_name.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+        <button class="button full-width" type="submit">Join lobby</button>
+    </form>
+</main>
+<script>
+    const nameInput = document.querySelector('input[name="display_name"]');
+    if (nameInput) {
+        nameInput.focus();
+    }
+</script>
+{% endblock %}

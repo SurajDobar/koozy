@@ -1,0 +1,47 @@
+{% extends "quiz/base.html" %}
+{% block title %}Koozy Development Hub{% endblock %}
+{% block body %}
+<header class="site-header">
+    <span class="brand">Koozy</span>
+    <span class="nav-link">Development only</span>
+</header>
+<main class="page">
+    <p class="eyebrow">Development</p>
+    <h1>Koozy Development Hub</h1>
+    <p class="muted">Quick access to development flows and testing routes. Not a public feature.</p>
+
+    <section class="card">
+        <h2>Authoring</h2>
+        <div class="dev-link-grid">
+            <a class="dev-link" href="{% url 'host_quiz_list' %}"><strong>Host Workspace</strong><span>Manage quizzes and host live sessions</span></a>
+            <a class="dev-link" href="{% url 'create_quiz' %}"><strong>Create Quiz</strong><span>Start a new quiz from scratch</span></a>
+            <a class="dev-link" href="{% url 'quiz_list' %}"><strong>Quiz List</strong><span>View all stored quizzes</span></a>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Live Session</h2>
+        <div class="dev-link-grid">
+            <a class="dev-link" href="{% url 'join_game' %}"><strong>Join Quiz</strong><span>Enter a Game PIN as a participant</span></a>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>REST API (JSON)</h2>
+        <div class="dev-link-grid">
+            <a class="dev-link" href="/api/sessions/XXXXX/state/" target="_blank"><strong>Session State</strong><span>/api/sessions/&lt;pin&gt;/state/</span></a>
+            <a class="dev-link" href="/api/sessions/XXXXX/leaderboard/" target="_blank"><strong>Leaderboard</strong><span>/api/sessions/&lt;pin&gt;/leaderboard/</span></a>
+            <a class="dev-link" href="/api/sessions/XXXXX/result/" target="_blank"><strong>Participant Result</strong><span>/api/sessions/&lt;pin&gt;/result/</span></a>
+            <a class="dev-link" href="/api/sessions/XXXXX/host-result/" target="_blank"><strong>Host Result</strong><span>/api/sessions/&lt;pin&gt;/host-result/</span></a>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Tools</h2>
+        <div class="dev-link-grid">
+            <a class="dev-link" href="{% url 'admin:index' %}"><strong>Django Admin</strong><span>Inspect models and data directly</span></a>
+            <a class="dev-link" href="{% url 'home' %}"><strong>Home</strong><span>Landing page</span></a>
+        </div>
+    </section>
+</main>
+{% endblock %}

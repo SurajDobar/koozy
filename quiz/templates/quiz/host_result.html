@@ -1,0 +1,52 @@
+{% extends "quiz/base.html" %}
+{% block title %}Results · {{ live_session.quiz.title }}{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <a class="nav-link" href="{% url 'host_quiz_list' %}">Host workspace</a>
+</header>
+
+<main class="page">
+    <p class="eyebrow">Quiz complete</p>
+    <h1>{{ live_session.quiz.title }}</h1>
+    <p class="muted">Game PIN {{ live_session.game_pin }} · {{ participants|length }} participant{{ participants|length|pluralize }} · {{ question_count }} question{{ question_count|pluralize }}</p>
+
+    <div class="card" style="margin-top:1.5rem;">
+        <h2 style="margin-bottom:1rem;">Final leaderboard</h2>
+
+        {% if participants %}
+        <div style="display:grid;gap:.6rem;">
+            {% for participant in participants %}
+            <div style="display:grid;grid-template-columns:2rem 1fr auto;align-items:center;gap:.75rem;
+                        padding:.85rem 1rem;border-radius:var(--kz-radius-sm);border:1px solid var(--kz-border);
+                        {% if forloop.counter == 1 %}background:#fef9c3;border-color:#d97706;{% elif forloop.counter == 2 %}background:#f1f5f9;{% elif forloop.counter == 3 %}background:#fff7ed;border-color:#c2410c;{% else %}background:var(--kz-bg);{% endif %}">
+                <span style="font-weight:900;font-size:{% if forloop.counter <= 3 %}1.1rem{% else %}.95rem{% endif %};
+                             color:{% if forloop.counter == 1 %}#92400e{% elif forloop.counter == 2 %}#475569{% elif forloop.counter == 3 %}#9a3412{% else %}var(--kz-muted){% endif %};">
+                    {% if forloop.counter == 1 %}🥇
+                    {% elif forloop.counter == 2 %}🥈
+                    {% elif forloop.counter == 3 %}🥉
+                    {% else %}{{ participant.rank }}{% endif %}
+                </span>
+                <span style="font-weight:{% if forloop.counter <= 3 %}700{% else %}600{% endif %};font-size:.95rem;">
+                    {{ participant.display_name }}
+                </span>
+                <span style="font-weight:800;font-size:1.05rem;color:var(--kz-purple);">
+                    {{ participant.score }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">
+            <p class="empty-icon">📋</p>
+            <p class="muted">No participants completed this session.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="actions" style="margin-top:1.5rem;">
+        <a class="button" href="{% url 'host_quiz_list' %}">Back to workspace</a>
+        <a class="button button-secondary" href="{% url 'create_live_session' live_session.quiz.id %}">Run again</a>
+    </div>
+</main>
+{% endblock %}

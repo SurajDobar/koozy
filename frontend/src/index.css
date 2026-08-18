@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;600;700&family=Patrick+Hand&family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400&display=swap');
+@import "tailwindcss";
+
+:root {
+  --kz-bg: #f7f5ef;
+  --kz-paper: #fffdf7;
+  --kz-card: #ffffff;
+  --kz-ink: #191817;
+  --kz-muted: #77736c;
+  --kz-line: #d8d3ca;
+  --purple: #6c4de8;
+  --blue: #05cdff;
+  --red: #ff0000;
+  --green: #00ff04;
+  --kz-purple: #6c4de8;
+  --kz-purple-hover: #5838d6;
+  --kz-blue: #05cdff;
+  --kz-red: #ff0000;
+  --kz-green: #00ff04;
+  --kz-font-hand: 'Patrick Hand', cursive;
+  --kz-font-sans: 'Roboto', 'DM Sans', sans-serif;
+  --kz-font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  margin: 0;
+  background-color: var(--kz-bg);
+  color: var(--kz-ink);
+  font-family: var(--kz-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-hand {
+  font-family: var(--kz-font-hand);
+}
+
+.font-mono {
+  font-family: var(--kz-font-mono);
+}
+
+/* Koozy Tactile Design Utilities */
+.kz-btn-primary {
+  background-color: var(--kz-purple);
+  color: white;
+  border: 2px solid var(--kz-ink);
+  box-shadow: 3px 3px 0 var(--kz-ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.kz-btn-primary:hover:not(:disabled) {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 4.5px 4.5px 0 var(--kz-ink);
+  background-color: var(--kz-purple-hover);
+}
+.kz-btn-primary:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1.5px 1.5px 0 var(--kz-ink);
+}
+
+.kz-btn-secondary {
+  background-color: #ffffff;
+  color: var(--kz-ink);
+  border: 2px solid var(--kz-ink);
+  box-shadow: 2.5px 2.5px 0 var(--kz-line);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.kz-btn-secondary:hover:not(:disabled) {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 4px 4px 0 var(--kz-ink);
+  border-color: var(--kz-ink);
+}
+.kz-btn-secondary:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--kz-ink);
+}
+
+.kz-card {
+  background-color: var(--kz-card);
+  border: 1.5px solid var(--kz-line);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(25, 24, 23, 0.05);
+}
+
+.kz-card-tactile {
+  background-color: #ffffff;
+  border: 2px solid var(--kz-ink);
+  box-shadow: 4px 4px 0 var(--kz-ink);
+  border-radius: 16px;
+}
+
+/* Question Option Color Systems */
+.opt-btn-a {
+  background-color: #e6f9ff;
+  border: 2px solid #05cdff;
+  color: #034a6e;
+}
+.opt-btn-a.selected {
+  background-color: #05cdff;
+  color: #ffffff;
+  border-color: #191817;
+  box-shadow: 3.5px 3.5px 0 #191817;
+}
+
+.opt-btn-b {
+  background-color: #ffebe8;
+  border: 2px solid #ff0000;
+  color: #990000;
+}
+.opt-btn-b.selected {
+  background-color: #ff0000;
+  color: #ffffff;
+  border-color: #191817;
+  box-shadow: 3.5px 3.5px 0 #191817;
+}
+
+.opt-btn-c {
+  background-color: #e6ffe6;
+  border: 2px solid #00ff04;
+  color: #08660a;
+}
+.opt-btn-c.selected {
+  background-color: #00cc05;
+  color: #ffffff;
+  border-color: #191817;
+  box-shadow: 3.5px 3.5px 0 #191817;
+}
+
+.opt-btn-d {
+  background-color: #f0ebff;
+  border: 2px solid #6c4de8;
+  color: #3b1eb8;
+}
+.opt-btn-d.selected {
+  background-color: #6c4de8;
+  color: #ffffff;
+  border-color: #191817;
+  box-shadow: 3.5px 3.5px 0 #191817;
+}

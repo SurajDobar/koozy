@@ -1,0 +1,68 @@
+{% extends "quiz/base.html" %}
+{% block title %}Lobby · Koozy{% endblock %}
+{% block body %}
+<header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Koozy</a>
+    <span class="nav-link">Game PIN {{ live_session.game_pin }}</span>
+</header>
+<main class="page lobby-layout">
+    <section>
+        <p class="eyebrow">Participant lobby</p>
+        <h1>You're in, <span style="color:var(--kz-purple);">{{ participant.display_name }}</span>.</h1>
+        <p class="muted" id="waiting-message">Waiting for the host to start <em>{{ live_session.quiz.title }}</em>.</p>
+        <div class="pin-card small-pin">
+            <span>Joined as</span>
+            <strong>{{ participant.display_name }}</strong>
+        </div>
+    </section>
+    <section class="card participant-panel">
+        <p class="eyebrow"><span id="participant-count">{{ participants|length }}</span> participant{{ participants|length|pluralize }}</p>
+        <h2>In the lobby</h2>
+        <ul class="participant-list" id="participant-list">
+            {% for lobby_participant in participants %}
+                <li>{{ lobby_participant.display_name }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+</main>
+<script>
+    const pin = "{{ live_session.game_pin }}";
+    const playUrl = "{% url 'participant_play' live_session.game_pin %}";
+
+    // 1. Manage tab-scoped token in sessionStorage
+    const urlPt = new URLSearchParams(window.location.search).get('pt');
+    const serverPt = "{{ participant.join_token|default:'' }}";
+    const activeToken = urlPt || serverPt || sessionStorage.getItem('koozy_participant_token_' + pin) || sessionStorage.getItem('koozy_participant_token');
+
+    if (activeToken) {
+        sessionStorage.setItem('koozy_participant_token', activeToken);
+        sessionStorage.setItem('koozy_participant_token_' + pin, activeToken);
+        if (window.location.search.includes('pt=')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    // 2. WebSocket for room updates
+    const socket = new WebSocket(
+        `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/live-sessions/${pin}/lobby/`
+    );
+    socket.onmessage = ({ data }) => {
+        const msg = JSON.parse(data);
+        // Session started via lobby_state OR question_start event
+        if ((msg.type === 'lobby_state' && msg.status !== 'WAITING') ||
+             msg.event === 'question_start') {
+            const targetUrl = activeToken ? `${playUrl}?pt=${encodeURIComponent(activeToken)}` : playUrl;
+            location.assign(targetUrl);
+            return;
+        }
+        if (msg.type === 'lobby_state') {
+            document.getElementById('participant-count').textContent = msg.participant_count;
+            const list = document.getElementById('participant-list');
+            list.replaceChildren();
+            msg.participants.forEach(name => {
+                const li = document.createElement('li'); li.textContent = name; list.appendChild(li);
+            });
+        }
+    };
+</script>
+{% endblock %}
