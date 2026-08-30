@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Clock, Send, ChevronLeft, ChevronRight, AlertCircle, CheckCircle2, HelpCircle } from 'lucide-react';
+import { Clock, Send, ChevronLeft, ChevronRight, AlertCircle, CheckCircle2, HelpCircle, Loader2 } from 'lucide-react';
 import { submitQuizAnswers } from '../utils/api';
 
 const OPTION_THEMES = {
@@ -410,6 +410,28 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
           </div>
         </div>
       )}
+
+      {/* Finishing / Auto-Submitting Overlay */}
+      {(submitting || session.status === 'COMPLETED') && (
+        <div className="fixed inset-0 bg-[#191817]/75 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="kz-card p-8 max-w-md w-full bg-white border-2 border-[#191817] shadow-[8px_8px_0_#191817] rounded-3xl text-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#eeeafd] text-[#6c4de8] border-2 border-[#191817] flex items-center justify-center shadow-[3px_3px_0_#191817] mx-auto mb-4 animate-spin">
+              <Loader2 size={28} />
+            </div>
+
+            <h3 className="text-2xl font-black text-[#191817] mb-2">
+              {session.status === 'COMPLETED' ? 'Quiz Concluded!' : 'Submitting Answers...'}
+            </h3>
+            <p className="text-sm font-bold text-[#77736c] mb-2">
+              Saving your answers and loading your score...
+            </p>
+            <p className="text-xs text-[#6c4de8] font-bold">
+              {answeredCount} of {totalQuestions} questions answered
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

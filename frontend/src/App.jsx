@@ -130,6 +130,7 @@ function LiveSessionController({ pin, isHost, config }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [localSubmitted, setLocalSubmitted] = useState(false);
+  const [hostSettling, setHostSettling] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
 
@@ -327,14 +328,22 @@ function LiveSessionController({ pin, isHost, config }) {
         {isHost ? (
           status === 'WAITING' ? (
             <HostLobby session={session} onStartSuccess={loadState} />
-          ) : status === 'ACTIVE' ? (
-            <HostLiveDashboard session={session} onEndSuccess={loadState} />
+          ) : status === 'ACTIVE' || hostSettling ? (
+            <HostLiveDashboard
+              session={session}
+              isSettling={hostSettling}
+              onEndSuccess={() => {
+                setHostSettling(false);
+                loadState();
+              }}
+              onStartSettling={() => setHostSettling(true)}
+            />
           ) : (
             <HostResults session={session} />
           )
         ) : (
           /* PARTICIPANT SCREENS */
-          status === 'COMPLETED' ? (
+          status === 'COMPLETED' && hasSubmitted ? (
             <ParticipantResults session={session} participant={participant} />
           ) : status === 'WAITING' || isPendingAdmission ? (
             <ParticipantLobby session={session} participant={participant} />

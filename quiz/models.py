@@ -262,3 +262,28 @@ class AnswerSubmission(models.Model):
 
     def __str__(self):
         return f"{self.participant} — Q{self.question_id} → {self.selected_option}"
+
+
+class AIGenerationUsage(models.Model):
+    """Tracks daily AI quiz generation attempts per authenticated host."""
+    MAX_DAILY_ATTEMPTS = 8
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ai_generation_usages",
+    )
+    date = models.DateField(default=timezone.localdate)
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "date"),
+                name="unique_user_daily_ai_generation_usage",
+            )
+        ]
+        ordering = ("-date",)
+
+    def __str__(self):
+        return f"{self.user} - {self.date}: {self.count}/{self.MAX_DAILY_ATTEMPTS}"

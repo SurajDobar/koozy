@@ -162,6 +162,19 @@ export async function addQuestion(quizId, questionData) {
   return res.json();
 }
 
+export async function updateQuestion(quizId, questionId, questionData) {
+  const res = await fetch(`/api/host/quizzes/${quizId}/questions/${questionId}/update/`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(questionData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update question');
+  }
+  return res.json();
+}
+
 export async function deleteQuestion(quizId, questionId) {
   const res = await fetch(`/api/host/quizzes/${quizId}/questions/${questionId}/delete/`, {
     method: 'POST',
@@ -244,4 +257,36 @@ export async function reorderQuestions(quizId, questionIds) {
   if (!res.ok) throw new Error('Failed to reorder questions');
   return res.json();
 }
+
+// ── AI Quiz Generator APIs ──────────────────────────────────────────────────
+
+export async function generateAIQuiz(data) {
+  const res = await fetch('/api/host/ai/generate/', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to generate AI quiz');
+  }
+  return res.json();
+}
+
+export async function fetchAIQuota() {
+  const res = await fetch('/api/host/ai/quota/', {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch AI quota');
+  return res.json();
+}
+
+export async function fetchAIPromptTemplate() {
+  const res = await fetch('/api/host/ai/prompt-template/', {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch prompt template');
+  return res.json();
+}
+
 

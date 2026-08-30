@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Sparkles, HelpCircle } from 'lucide-react';
-import { getCookie } from '../utils/api';
+import { createQuiz } from '../utils/api';
 import UserProfileBadge from '../components/UserProfileBadge';
+import AIGeneratorModal from '../components/AIGeneratorModal';
 
 export default function HostCreateQuizPage() {
   const [title, setTitle] = useState('');
@@ -11,6 +12,7 @@ export default function HostCreateQuizPage() {
   const [timeLimit, setTimeLimit] = useState(300); // 5 mins default in seconds
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAIModal, setShowAIModal] = useState(false);
 
   const config = window.__KOOZY_CONFIG__ || {};
   const user = config.user || null;
@@ -26,25 +28,13 @@ export default function HostCreateQuizPage() {
     setError('');
 
     try {
-      const res = await fetch('/api/quizzes/create/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken') || '',
-        },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
-          category,
-          difficulty,
-          time_limit: parseInt(timeLimit, 10),
-        }),
+      const data = await createQuiz({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        difficulty,
+        time_limit: parseInt(timeLimit, 10),
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to create quiz');
-      }
 
       // Redirect to Add Questions page
       window.location.href = `/host/quizzes/${data.id}/questions/`;
@@ -74,15 +64,28 @@ export default function HostCreateQuizPage() {
       </nav>
 
       <div className="max-w-2xl mx-auto">
-        <div className="font-hand text-2xl text-[#6c4de8] -rotate-1 mb-1 select-none">
-          step 1 of 2 ✦
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <div className="font-hand text-2xl text-[#6c4de8] -rotate-1 mb-1 select-none">
+              step 1 of 2 ✦
+            </div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-[#191817] tracking-tight mb-1">
+              Create New Quiz
+            </h1>
+            <p className="text-sm text-[#77736c]">
+              Set the quiz details manually, or generate a complete quiz instantly with Gemini AI.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAIModal(true)}
+            className="kz-btn-primary px-4 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 bg-[#6c4de8] text-white border-2 border-[#191817] shadow-[2px_2px_0px_#191817] hover:shadow-[3px_3px_0px_#191817] shrink-0 cursor-pointer"
+          >
+            <Sparkles size={16} />
+            <span>✨ Generate with AI</span>
+          </button>
         </div>
-        <h1 className="text-3xl md:text-4xl font-extrabold text-[#191817] tracking-tight mb-2">
-          Create New Quiz
-        </h1>
-        <p className="text-sm text-[#77736c] mb-8">
-          Set the quiz details, then add multiple-choice questions in the next step.
-        </p>
 
         <div className="kz-card p-8 md:p-10 bg-[#fffdf7]">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -113,14 +116,14 @@ export default function HostCreateQuizPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
                   Category
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Science"
+                  placeholder="e.g. Computer Science"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-4 py-2.5 bg-white border-2 border-[#d8d3ca] focus:border-[#6c4de8] rounded-xl text-sm font-semibold outline-none transition-colors"
@@ -144,13 +147,12 @@ export default function HostCreateQuizPage() {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
-                  Overall Timer (sec)
+                  Time Limit (Sec)
                 </label>
                 <input
                   type="number"
-                  min={30}
-                  max={3600}
-                  step={30}
+                  min="30"
+                  max="3600"
                   value={timeLimit}
                   onChange={(e) => setTimeLimit(e.target.value)}
                   className="w-full px-4 py-2.5 bg-white border-2 border-[#d8d3ca] focus:border-[#6c4de8] rounded-xl text-sm font-semibold font-mono outline-none transition-colors"
@@ -182,6 +184,15 @@ export default function HostCreateQuizPage() {
           </form>
         </div>
       </div>
+
+      {/* AI Quiz Generator Modal */}
+      <AIGeneratorModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        onGenerated={(quizId) => {
+          window.location.href = `/host/quizzes/${quizId}/questions/`;
+        }}
+      />
     </div>
   );
 }

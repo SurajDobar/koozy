@@ -1,128 +1,62 @@
-# Koozy 🎯
+# Koozy
 
-Koozy is a real-time multiplayer quiz platform built with Django and React.
+[![React](https://img.shields.io/badge/React-2026-blue?logo=react&logoColor=white)](https://react.dev/)
+[![Django](https://img.shields.io/badge/Django-6.x-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![Gemini](https://img.shields.io/badge/Gemini-AI-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+[![WebSockets](https://img.shields.io/badge/WebSockets-Realtime-black?logo=socketdotio&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 
-It lets a host create quizzes, start a live session, share a Game PIN, and have multiple players join and play together in real time.
 
-## Features
+<video src="public/Koozy.mp4" controls autoplay width="100%"></video>
 
-- Create and manage quizzes
-- Multiple-choice questions with customizable correct answers
-- Live multiplayer quiz sessions
-- Game PIN based joining
-- Real-time participant updates
-- Synchronized quiz timer
-- Question navigation
-- Automatic answer submission
-- Live host controls
-- Player results and leaderboard
-- Quiz import/export using JSON
-- Responsive React interface
+---
 
-## Tech Stack
+## What is Koozy?
 
-**Frontend**
-- React
-- Vite
-- Tailwind CSS
+Koozy is a real-time multiplayer quiz platform where hosts can create quizzes, generate them with AI, and run live game sessions while participants join instantly using a PIN — no account required.
 
-**Backend**
-- Django
-- Django REST Framework
-- Django Channels
-- WebSockets
+## ✨ Features
 
-**Database**
-- SQLite
+- 🎯 Create and manage quizzes
+- 🤖 AI-powered quiz generation with Gemini
+- ⚡ Real-time multiplayer gameplay
+- 🔢 PIN-based guest joining
+- 🏆 Live scoring & leaderboard
+- 🔐 Google authentication for Hosts
+- 📥 JSON import & export
+- 📡 WebSocket-powered live sessions
 
-## Getting Started
+## 🛠️ Built With
 
-### Requirements
+**React · Vite · Django · Django Channels · SQLite · Google OAuth · Gemini API**
 
-- Python 3.x
-- Node.js
-- npm
 
-### 1. Clone the repository
+
+<!-- Add your demo GIF/video here -->
+
+---
+
+## 🚀 Run Locally
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/koozy.git
+git clone <your-repository-url>
 cd koozy
-````
 
-### 2. Set up the backend
-
-```bash
 python -m venv venv
-```
-
-On Windows:
-
-```powershell
 .\venv\Scripts\Activate.ps1
-```
 
-Install dependencies:
-
-```bash
 pip install -r requirements.txt
-```
-
-Run migrations:
-
-```bash
 python manage.py migrate
-```
+python manage.py runserver
 
-### 3. Set up the frontend
+Then run the frontend:
 
-```bash
 cd frontend
 npm install
-npm run build
-cd ..
+npm run dev
+
+
 ```
+Create a .env file with your Google OAuth and Gemini API credentials.
+for more information read the .env.example
+<p align="center"> Built with Django, React & way too much caffeine. </p> 
 
-### 4. Start the server
-
-```bash
-python manage.py runserver
-```
-
-Open:
-
-```text
-http://127.0.0.1:8000/
-```
-
-## Testing
-
-Run the Django test suite:
-
-```bash
-python manage.py test
-```
-
-Build the React frontend:
-
-```bash
-cd frontend
-npm run build
-```
-
-## Project Structure
-
-```text
-koozy/
-├── config/          # Django configuration
-├── quiz/            # Django application
-├── frontend/        # React + Vite frontend
-├── documents/       # Project documentation
-├── manage.py
-├── requirements.txt
-└── .gitignore
-```
-
-## License
-
-This project is currently developed as a personal project.

@@ -813,6 +813,59 @@ def api_add_question(request, quiz_id):
     }, status=status.HTTP_201_CREATED)
 
 
+@api_view(["POST", "PUT", "PATCH"])
+def api_update_question(request, quiz_id, question_id):
+    """Update an existing question on a host-owned quiz."""
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    quiz = Quiz.objects.filter(id=quiz_id, author=request.user).first()
+    if quiz is None:
+        return Response({"detail": "Quiz not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
+
+    q = Question.objects.filter(id=question_id, quiz=quiz).first()
+    if q is None:
+        return Response({"detail": "Question not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    text = (request.data.get("question_text") or "").strip()
+    opt_a = (request.data.get("option_a") or "").strip()
+    opt_b = (request.data.get("option_b") or "").strip()
+    opt_c = (request.data.get("option_c") or "").strip()
+    opt_d = (request.data.get("option_d") or "").strip()
+    correct = (request.data.get("correct_answer") or "").strip().lower()
+    time_limit = int(request.data.get("time_limit") or q.time_limit or 20)
+
+    if not text or not opt_a or not opt_b or not opt_c or not opt_d:
+        return Response({"detail": "Question text and all 4 options (A, B, C, D) are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if correct not in ("a", "b", "c", "d"):
+        return Response({"detail": "Correct answer must be one of: 'a', 'b', 'c', or 'd'."}, status=status.HTTP_400_BAD_REQUEST)
+
+    q.question_text = text
+    q.option_a = opt_a
+    q.option_b = opt_b
+    q.option_c = opt_c
+    q.option_d = opt_d
+    q.correct_answer = correct
+    q.time_limit = time_limit
+    q.save()
+
+    return Response({
+        "question": {
+            "id": q.id,
+            "question_text": q.question_text,
+            "option_a": q.option_a,
+            "option_b": q.option_b,
+            "option_c": q.option_c,
+            "option_d": q.option_d,
+            "correct_answer": q.correct_answer,
+            "time_limit": q.time_limit,
+            "order": q.order,
+        },
+        "message": "Question updated successfully.",
+    }, status=status.HTTP_200_OK)
+
+
 @api_view(["POST", "DELETE"])
 def api_delete_question(request, quiz_id, question_id):
     if not request.user.is_authenticated:
@@ -1067,3 +1120,150 @@ def api_reorder_questions(request, quiz_id):
             Question.objects.filter(id=q_id, quiz=quiz).update(order=order)
 
     return Response({"reordered": True, "question_ids": question_ids})
+
+
+# ---------------------------------------------------------------------------
+# AI Quiz Generator REST APIs (Host Owned)
+# ---------------------------------------------------------------------------
+
+@api_view(["POST"])
+def api_ai_generate_quiz(request):
+    """
+    Generate a complete quiz using Gemini AI, validate strictly,
+    and save atomically under the authenticated host's ownership.
+    """
+    if not request.user.is_authenticated:
+        return Response(
+            {"detail": "Authentication credentials were not provided."},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    prompt = str(request.data.get("prompt") or "").strip()
+    if not prompt:
+        return Response(
+            {"detail": "Please provide a quiz topic or instructions."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if len(prompt) > 1000:
+        return Response(
+            {"detail": "Prompt is too long (maximum 1000 characters)."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    raw_count = request.data.get("question_count")
+    if raw_count is None or raw_count == "":
+        question_count = 5
+    else:
+        try:
+            question_count = int(raw_count)
+        except (ValueError, TypeError):
+            return Response(
+                {"detail": "Question count must be an integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    if question_count < 1 or question_count > 25:
+        return Response(
+            {"detail": "Question count must be between 1 and 25."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    from .ai_service import (
+        consume_daily_quota_atomic,
+        generate_quiz_with_gemini,
+        get_remaining_daily_quota,
+    )
+
+    remaining_quota = get_remaining_daily_quota(request.user)
+    if remaining_quota <= 0:
+        return Response(
+            {"detail": "Daily AI generation limit reached (8/8 attempts used today). Please try again tomorrow."},
+            status=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
+    try:
+        validated_quiz = generate_quiz_with_gemini(prompt, question_count)
+    except ValueError as err:
+        return Response(
+            {"detail": f"The generated quiz couldn't be validated: {err}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    except RuntimeError as err:
+        return Response(
+            {"detail": str(err)},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    except Exception as err:
+        return Response(
+            {"detail": "We couldn't generate the quiz right now. Please try again."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    # Successfully generated and validated — consume 1 quota attempt atomically
+    consumed, remaining = consume_daily_quota_atomic(request.user)
+    if not consumed:
+        return Response(
+            {"detail": "Daily AI generation limit reached (8/8 attempts used today). Please try again tomorrow."},
+            status=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
+    # Atomically create Quiz and Question records
+    with transaction.atomic():
+        quiz = Quiz.objects.create(
+            title=validated_quiz["title"],
+            description=validated_quiz["description"],
+            category=validated_quiz["category"],
+            difficulty=validated_quiz["difficulty"],
+            time_limit=validated_quiz["time_limit"],
+            author=request.user,
+        )
+        for q_data in validated_quiz["questions"]:
+            Question.objects.create(quiz=quiz, **q_data)
+
+    return Response(
+        {
+            "quiz_id": quiz.id,
+            "id": quiz.id,
+            "title": quiz.title,
+            "question_count": len(validated_quiz["questions"]),
+            "remaining_quota": remaining,
+            "message": "AI Quiz generated successfully!",
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(["GET"])
+def api_ai_quota(request):
+    """Returns the authenticated host's remaining AI generation attempts for today."""
+    if not request.user.is_authenticated:
+        return Response(
+            {"detail": "Authentication credentials were not provided."},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    from .ai_service import MAX_DAILY_ATTEMPTS, get_remaining_daily_quota
+
+    remaining = get_remaining_daily_quota(request.user)
+    return Response({
+        "remaining": remaining,
+        "limit": MAX_DAILY_ATTEMPTS,
+        "used": MAX_DAILY_ATTEMPTS - remaining,
+    })
+
+
+@api_view(["GET"])
+def api_ai_prompt_template(request):
+    """Returns the host-facing copyable prompt template."""
+    if not request.user.is_authenticated:
+        return Response(
+            {"detail": "Authentication credentials were not provided."},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    from .ai_service import get_host_ai_prompt_template
+
+    return Response({
+        "prompt_template": get_host_ai_prompt_template(),
+    })

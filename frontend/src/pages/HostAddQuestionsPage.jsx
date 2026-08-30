@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Play, ArrowLeft, ArrowUp, ArrowDown } from 'lucide-react';
-import { fetchQuizDetail, addQuestion, deleteQuestion, createLiveSession, reorderQuestions } from '../utils/api';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, Play, ArrowLeft, ArrowUp, ArrowDown, Edit3, Check, X, RotateCcw } from 'lucide-react';
+import { fetchQuizDetail, addQuestion, updateQuestion, deleteQuestion, createLiveSession, reorderQuestions } from '../utils/api';
 import UserProfileBadge from '../components/UserProfileBadge';
 
 export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
@@ -10,8 +10,11 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
   const [submitting, setSubmitting] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
 
-  // New question form state — NO default 'a', must be chosen explicitly by host
+  const formRef = useRef(null);
+
+  // Question form state — NO default 'a', must be chosen explicitly by host
   const [questionText, setQuestionText] = useState('');
   const [optionA, setOptionA] = useState('');
   const [optionB, setOptionB] = useState('');
@@ -37,7 +40,36 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
       });
   }, [qid]);
 
-  const handleAddQuestion = async (e) => {
+  const handleStartEdit = (question) => {
+    setEditingQuestionId(question.id);
+    setQuestionText(question.question_text || '');
+    setOptionA(question.option_a || '');
+    setOptionB(question.option_b || '');
+    setOptionC(question.option_c || '');
+    setOptionD(question.option_d || '');
+    setCorrectAnswer(question.correct_answer || '');
+    setTimeLimit(question.time_limit || 20);
+    setError('');
+
+    // Scroll form into view
+    if (formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingQuestionId(null);
+    setQuestionText('');
+    setOptionA('');
+    setOptionB('');
+    setOptionC('');
+    setOptionD('');
+    setCorrectAnswer('');
+    setTimeLimit(20);
+    setError('');
+  };
+
+  const handleSubmitQuestion = async (e) => {
     e.preventDefault();
     if (!questionText.trim() || !optionA.trim() || !optionB.trim() || !optionC.trim() || !optionD.trim()) {
       setError('Question text and all 4 options (A, B, C, D) are required');
@@ -45,36 +77,46 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
     }
 
     if (!correctAnswer) {
-      setError('Please select which option (A, B, C, or D) is the correct answer before adding the question.');
+      setError('Please select which option (A, B, C, or D) is the correct answer.');
       return;
     }
 
     setSubmitting(true);
     setError('');
 
-    try {
-      const targetQuizId = qid || quiz?.id;
-      const res = await addQuestion(targetQuizId, {
-        question_text: questionText.trim(),
-        option_a: optionA.trim(),
-        option_b: optionB.trim(),
-        option_c: optionC.trim(),
-        option_d: optionD.trim(),
-        correct_answer: correctAnswer,
-        time_limit: parseInt(timeLimit, 10) || 20,
-      });
+    const targetQuizId = qid || quiz?.id;
+    const payload = {
+      question_text: questionText.trim(),
+      option_a: optionA.trim(),
+      option_b: optionB.trim(),
+      option_c: optionC.trim(),
+      option_d: optionD.trim(),
+      correct_answer: correctAnswer,
+      time_limit: parseInt(timeLimit, 10) || 20,
+    };
 
-      setQuestions((prev) => [...prev, res.question]);
-      // Reset question inputs — require picking correct answer for next question
-      setQuestionText('');
-      setOptionA('');
-      setOptionB('');
-      setOptionC('');
-      setOptionD('');
-      setCorrectAnswer('');
+    try {
+      if (editingQuestionId) {
+        // Edit existing question
+        const res = await updateQuestion(targetQuizId, editingQuestionId, payload);
+        setQuestions((prev) =>
+          prev.map((q) => (q.id === editingQuestionId ? res.question : q))
+        );
+        handleCancelEdit();
+      } else {
+        // Add new question
+        const res = await addQuestion(targetQuizId, payload);
+        setQuestions((prev) => [...prev, res.question]);
+        setQuestionText('');
+        setOptionA('');
+        setOptionB('');
+        setOptionC('');
+        setOptionD('');
+        setCorrectAnswer('');
+      }
       setSubmitting(false);
     } catch (err) {
-      setError(err.message || 'Failed to add question');
+      setError(err.message || 'Failed to save question');
       setSubmitting(false);
     }
   };
@@ -176,15 +218,48 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Form: Add Question */}
+        {/* Left Form: Add / Edit Question */}
         <div className="lg:col-span-7">
-          <div className="kz-card p-6 md:p-8 bg-[#fffdf7] border-2 border-[#191817] shadow-[4px_4px_0_#191817] rounded-3xl sticky top-6">
-            <h2 className="text-xl font-extrabold text-[#191817] mb-4 flex items-center gap-2">
-              <Plus size={20} className="text-[#6c4de8]" />
-              <span>Add a Question</span>
-            </h2>
+          <div
+            ref={formRef}
+            className={`kz-card p-6 md:p-8 bg-[#fffdf7] border-2 shadow-[4px_4px_0_#191817] rounded-3xl sticky top-6 transition-all ${
+              editingQuestionId ? 'border-[#6c4de8] ring-2 ring-[#6c4de8]/20' : 'border-[#191817]'
+            }`}
+          >
+            {editingQuestionId ? (
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-[#eeeafd] text-[#6c4de8] flex items-center justify-center border border-[#c9bfff]">
+                    <Edit3 size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-extrabold text-[#191817] tracking-tight">
+                      Edit Question
+                    </h2>
+                    <p className="text-xs text-[#6c4de8] font-bold">
+                      Modifying existing question in quiz
+                    </p>
+                  </div>
+                </div>
 
-            <form onSubmit={handleAddQuestion} className="space-y-4">
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="text-xs font-bold text-[#77736c] hover:text-[#191817] bg-[#f7f5ef] hover:bg-[#eae6df] border border-[#d8d3ca] px-3 py-1.5 rounded-xl flex items-center gap-1 cursor-pointer transition-all"
+                  title="Cancel editing and create new question"
+                >
+                  <RotateCcw size={13} />
+                  <span>Cancel Edit</span>
+                </button>
+              </div>
+            ) : (
+              <h2 className="text-xl font-extrabold text-[#191817] mb-4 flex items-center gap-2">
+                <Plus size={20} className="text-[#6c4de8]" />
+                <span>Add a Question</span>
+              </h2>
+            )}
+
+            <form onSubmit={handleSubmitQuestion} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1">
                   Question Text *
@@ -328,14 +403,36 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="kz-btn-primary w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer mt-2"
-              >
-                <Plus size={16} />
-                <span>{submitting ? 'Adding...' : 'Add Question'}</span>
-              </button>
+              <div className="flex gap-2 pt-1">
+                {editingQuestionId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    disabled={submitting}
+                    className="px-4 py-3.5 rounded-xl border-2 border-[#191817] font-bold text-sm text-[#191817] hover:bg-[#f7f5ef] transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="kz-btn-primary flex-1 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {editingQuestionId ? (
+                    <>
+                      <Check size={16} />
+                      <span>{submitting ? 'Saving Changes...' : 'Save Changes →'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={16} />
+                      <span>{submitting ? 'Adding...' : 'Add Question'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -357,74 +454,101 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
               </p>
             </div>
           ) : (
-            questions.map((q, idx) => (
-              <div
-                key={q.id || idx}
-                className="kz-card p-5 bg-white border-2 border-[#191817] shadow-[2.5px_2.5px_0_#191817] rounded-2xl relative"
-              >
-                <div className="flex justify-between items-start gap-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-[#6c4de8] bg-[#eeeafd] px-2 py-0.5 rounded-md border border-[#c9bfff]">
-                      Q{idx + 1}
-                    </span>
-                    {/* Reorder Buttons */}
-                    <div className="flex items-center gap-0.5">
+            questions.map((q, idx) => {
+              const isEditingThis = editingQuestionId === q.id;
+
+              return (
+                <div
+                  key={q.id || idx}
+                  className={`kz-card p-5 bg-white border-2 rounded-2xl relative transition-all ${
+                    isEditingThis
+                      ? 'border-[#6c4de8] shadow-[3.5px_3.5px_0_#6c4de8] ring-2 ring-[#6c4de8]/20 bg-[#fffdfa]'
+                      : 'border-[#191817] shadow-[2.5px_2.5px_0_#191817]'
+                  }`}
+                >
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-[#6c4de8] bg-[#eeeafd] px-2 py-0.5 rounded-md border border-[#c9bfff]">
+                        Q{idx + 1}
+                      </span>
+                      {isEditingThis && (
+                        <span className="text-[11px] font-black text-[#6c4de8] bg-[#eeeafd] px-2 py-0.5 rounded-md border border-[#6c4de8] animate-pulse">
+                          ✏️ Editing
+                        </span>
+                      )}
+                      {/* Reorder Buttons */}
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          onClick={() => handleMove(idx, -1)}
+                          disabled={idx === 0}
+                          className="p-1 text-[#77736c] hover:text-[#191817] disabled:opacity-20 disabled:cursor-not-allowed rounded hover:bg-[#f7f5ef] cursor-pointer"
+                          title="Move Up"
+                        >
+                          <ArrowUp size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleMove(idx, 1)}
+                          disabled={idx === questions.length - 1}
+                          className="p-1 text-[#77736c] hover:text-[#191817] disabled:opacity-20 disabled:cursor-not-allowed rounded hover:bg-[#f7f5ef] cursor-pointer"
+                          title="Move Down"
+                        >
+                          <ArrowDown size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1">
                       <button
-                        onClick={() => handleMove(idx, -1)}
-                        disabled={idx === 0}
-                        className="p-1 text-[#77736c] hover:text-[#191817] disabled:opacity-20 disabled:cursor-not-allowed rounded hover:bg-[#f7f5ef] cursor-pointer"
-                        title="Move Up"
+                        id={`edit-question-btn-${q.id}`}
+                        onClick={() => handleStartEdit(q)}
+                        className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                          isEditingThis
+                            ? 'text-[#6c4de8] bg-[#eeeafd] ring-1 ring-[#6c4de8]'
+                            : 'text-[#77736c] hover:text-[#6c4de8] hover:bg-[#eeeafd]'
+                        }`}
+                        title="Edit Question"
                       >
-                        <ArrowUp size={14} />
+                        <Edit3 size={16} />
                       </button>
                       <button
-                        onClick={() => handleMove(idx, 1)}
-                        disabled={idx === questions.length - 1}
-                        className="p-1 text-[#77736c] hover:text-[#191817] disabled:opacity-20 disabled:cursor-not-allowed rounded hover:bg-[#f7f5ef] cursor-pointer"
-                        title="Move Down"
+                        id={`delete-question-btn-${q.id}`}
+                        onClick={() => handleDeleteQuestion(q.id)}
+                        disabled={deletingId === q.id}
+                        className="p-1.5 text-[#77736c] hover:text-[#ff0000] hover:bg-[#fee2e2] rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                        title="Delete Question"
                       >
-                        <ArrowDown size={14} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
 
-                  <button
-                    id={`delete-question-btn-${q.id}`}
-                    onClick={() => handleDeleteQuestion(q.id)}
-                    disabled={deletingId === q.id}
-                    className="p-1.5 text-[#77736c] hover:text-[#ff0000] hover:bg-[#fee2e2] rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-                    title="Delete Question"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+                  <h4 className="text-base font-bold text-[#191817] mb-3 leading-snug">
+                    {q.question_text}
+                  </h4>
 
-                <h4 className="text-base font-bold text-[#191817] mb-3 leading-snug">
-                  {q.question_text}
-                </h4>
-
-                <div className="grid grid-cols-2 gap-1.5 text-xs">
-                  {['a', 'b', 'c', 'd'].map((k) => {
-                    const text = q[`option_${k}`];
-                    if (!text) return null;
-                    const isCorrect = q.correct_answer === k;
-                    return (
-                      <div
-                        key={k}
-                        className={`p-1.5 rounded-lg truncate ${
-                          isCorrect
-                            ? 'bg-[#e6ffe6] text-[#08660a] font-bold border border-[#a3ffa5]'
-                            : 'bg-[#f7f5ef] text-[#77736c]'
-                        }`}
-                      >
-                        <span className="font-bold uppercase mr-1">{k}:</span>
-                        <span>{text}</span>
-                      </div>
-                    );
-                  })}
+                  <div className="grid grid-cols-2 gap-1.5 text-xs">
+                    {['a', 'b', 'c', 'd'].map((k) => {
+                      const text = q[`option_${k}`];
+                      if (!text) return null;
+                      const isCorrect = q.correct_answer === k;
+                      return (
+                        <div
+                          key={k}
+                          className={`p-1.5 rounded-lg truncate ${
+                            isCorrect
+                              ? 'bg-[#e6ffe6] text-[#08660a] font-bold border border-[#a3ffa5]'
+                              : 'bg-[#f7f5ef] text-[#77736c]'
+                          }`}
+                        >
+                          <span className="font-bold uppercase mr-1">{k}:</span>
+                          <span>{text}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

@@ -8,16 +8,23 @@ function formatTime(seconds) {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function HostLiveDashboard({ session, onEndSuccess }) {
+export default function HostLiveDashboard({ session, onEndSuccess, isSettling = false, onStartSettling }) {
   const [secondsRemaining, setSecondsRemaining] = useState(session.seconds_remaining || 0);
   const [ending, setEnding] = useState(false);
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
   const [admittingId, setAdmittingId] = useState(null);
+  const [settling, setSettling] = useState(isSettling);
+  const [settleCountdown, setSettleCountdown] = useState(4);
+
+  useEffect(() => {
+    if (isSettling) setSettling(true);
+  }, [isSettling]);
 
   useEffect(() => {
     setSecondsRemaining(session.seconds_remaining || 0);
   }, [session.seconds_remaining]);
 
+  // Regular quiz countdown timer
   useEffect(() => {
     if (session.status !== 'ACTIVE' || secondsRemaining <= 0) return;
     const timer = setInterval(() => {
@@ -32,16 +39,54 @@ export default function HostLiveDashboard({ session, onEndSuccess }) {
     return () => clearInterval(timer);
   }, [session.status]);
 
+  // Settlement countdown & auto-finalize when all submitted or timer expires
+  const participants = session.participants || [];
+  const submissionsCount = session.submissions_count || 0;
+  const participantCount = session.participant_count || participants.length;
+
+  useEffect(() => {
+    if (!settling) return;
+
+    // If all participants have submitted, finalize immediately
+    if (participantCount > 0 && submissionsCount >= participantCount) {
+      const timeout = setTimeout(() => {
+        if (onEndSuccess) onEndSuccess();
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+
+    // Safety fallback timer so host is never stuck waiting for disconnected users
+    const timer = setInterval(() => {
+      setSettleCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          if (onEndSuccess) onEndSuccess();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [settling, submissionsCount, participantCount, onEndSuccess]);
+
   const confirmEndQuiz = async () => {
     setEnding(true);
+    setShowConfirmEnd(false);
+    setSettling(true);
+    if (onStartSettling) onStartSettling();
+
     try {
-      const res = await endQuiz(session.game_pin);
-      setShowConfirmEnd(false);
-      if (onEndSuccess) onEndSuccess(res);
+      await endQuiz(session.game_pin);
     } catch (err) {
-      console.error(err);
+      console.error('End quiz error', err);
+    } finally {
       setEnding(false);
     }
+  };
+
+  const handleManualFinalize = () => {
+    if (onEndSuccess) onEndSuccess();
   };
 
   const handleAdmit = async (id) => {
@@ -55,10 +100,7 @@ export default function HostLiveDashboard({ session, onEndSuccess }) {
     }
   };
 
-  const participants = session.participants || [];
   const pendingParticipants = session.pending_participants || [];
-  const submissionsCount = session.submissions_count || 0;
-  const participantCount = session.participant_count || participants.length;
   const isTimeLow = secondsRemaining <= 30;
 
   return (
@@ -206,6 +248,48 @@ export default function HostLiveDashboard({ session, onEndSuccess }) {
                 <span>{ending ? 'Ending...' : 'Yes, End Quiz'}</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settling / Finalizing Modal */}
+      {settling && (
+        <div className="fixed inset-0 bg-[#191817]/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="kz-card p-8 max-w-md w-full bg-white border-2 border-[#191817] shadow-[8px_8px_0_#191817] rounded-3xl text-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#eeeafd] text-[#6c4de8] border-2 border-[#191817] flex items-center justify-center shadow-[3px_3px_0_#191817] mx-auto mb-5 animate-pulse">
+              <Clock size={28} />
+            </div>
+
+            <h3 className="text-2xl font-black text-[#191817] mb-2 tracking-tight">
+              Finalizing Quiz & Scores...
+            </h3>
+            <p className="text-xs font-bold text-[#77736c] mb-5">
+              Collecting answers from all active students before displaying the final leaderboard.
+            </p>
+
+            <div className="bg-[#f7f5ef] p-4 rounded-2xl border-2 border-[#191817] mb-6">
+              <div className="flex justify-between items-center text-xs font-black text-[#191817] mb-2">
+                <span>Submissions In:</span>
+                <span className="text-[#6c4de8] font-black">{submissionsCount} / {participantCount} submitted</span>
+              </div>
+              <div className="w-full h-3 bg-white rounded-full overflow-hidden border border-[#191817]">
+                <div
+                  className="h-full bg-[#00cc05] transition-all duration-300 rounded-full"
+                  style={{ width: `${participantCount > 0 ? (submissionsCount / participantCount) * 100 : 0}%` }}
+                ></div>
+              </div>
+              <p className="text-[11px] text-[#77736c] font-semibold mt-2">
+                Auto-advancing in <span className="font-bold text-[#191817]">{settleCountdown}s</span>
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleManualFinalize}
+              className="kz-btn-primary w-full py-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Show Leaderboard Now →</span>
+            </button>
           </div>
         </div>
       )}

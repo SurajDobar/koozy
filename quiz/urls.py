@@ -1,8 +1,14 @@
+from django.templatetags.static import static
 from django.urls import path
+from django.views.generic.base import RedirectView
 
 from . import api, views
 
 urlpatterns = [
+    # ── Favicon & Web Manifest Direct Routes ───────────────────────────
+    path("favicon.ico", RedirectView.as_view(url=static("quiz/favicon/favicon.ico"), permanent=True)),
+    path("site.webmanifest", RedirectView.as_view(url=static("quiz/favicon/site.webmanifest"), permanent=True)),
+
     # ── Public / Home ──────────────────────────────────────────────────
     path("", views.home, name="home"),
     path("dev/", views.development_hub, name="development_hub"),
@@ -21,6 +27,7 @@ urlpatterns = [
     path("host/quizzes/", views.host_quiz_list, name="host_quiz_list"),
     path("host/quizzes/create/", views.create_quiz, name="create_quiz"),
     path("host/quizzes/<int:quiz_id>/delete/", views.delete_quiz, name="delete_quiz"),
+    path("host/quizzes/<int:quiz_id>/questions/", views.add_question, name="quiz_questions"),
     path("host/quizzes/<int:quiz_id>/questions/add/", views.add_question, name="add_question"),
     path("host/quizzes/<int:quiz_id>/questions/<int:question_id>/delete/", views.delete_question, name="delete_question"),
     path("host/quizzes/<int:quiz_id>/sessions/create/", views.create_live_session, name="create_live_session"),
@@ -60,7 +67,11 @@ urlpatterns = [
     path("api/host/quizzes/<int:quiz_id>/", api.api_quiz_detail, name="api_quiz_detail"),
     path("api/host/quizzes/<int:quiz_id>/questions/add/", api.api_add_question, name="api_add_question"),
     path("api/host/quizzes/<int:quiz_id>/questions/reorder/", api.api_reorder_questions, name="api_reorder_questions"),
+    path("api/host/quizzes/<int:quiz_id>/questions/<int:question_id>/update/", api.api_update_question, name="api_update_question"),
     path("api/host/quizzes/<int:quiz_id>/questions/<int:question_id>/delete/", api.api_delete_question, name="api_delete_question"),
     path("api/host/quizzes/<int:quiz_id>/sessions/create/", api.api_create_live_session, name="api_create_live_session"),
+    path("api/host/ai/generate/", api.api_ai_generate_quiz, name="api_ai_generate_quiz"),
+    path("api/host/ai/quota/", api.api_ai_quota, name="api_ai_quota"),
+    path("api/host/ai/prompt-template/", api.api_ai_prompt_template, name="api_ai_prompt_template"),
     path("api/join/", api.api_join_game, name="api_join_game"),
 ]

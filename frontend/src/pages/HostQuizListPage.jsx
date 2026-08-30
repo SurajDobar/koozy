@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Play, Edit3, Trash2, BookOpen, Clock, Download, Upload, LogOut, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plus, Play, Edit3, Trash2, BookOpen, Clock, Download, Upload, Sparkles } from 'lucide-react';
 import { fetchHostQuizzes, createLiveSession, deleteQuiz, importQuiz } from '../utils/api';
+import UserProfileBadge from '../components/UserProfileBadge';
+import AIGeneratorModal from '../components/AIGeneratorModal';
 
 export default function HostQuizListPage({ initialQuizzes = [] }) {
   const [quizzes, setQuizzes] = useState(initialQuizzes);
   const [loading, setLoading] = useState(initialQuizzes.length === 0);
   const [actionLoading, setActionLoading] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
   const [importJsonText, setImportJsonText] = useState('');
   const [importError, setImportError] = useState('');
   const [importing, setImporting] = useState(false);
@@ -128,18 +131,59 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
       {/* Dashboard Topline */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 my-8">
         <div>
-          <div className="font-hand text-2xl text-[#6c4de8] -rotate-1 select-none">
-            host workspace ✦
-          </div>
+          {user?.is_authenticated ? (
+            <div className="inline-flex items-center gap-3 bg-white border-2 border-[#191817] shadow-[3px_3px_0px_#191817] rounded-2xl px-3.5 py-2 mb-3">
+              <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#191817] bg-[#eeeafd] shrink-0">
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.name || 'Host'}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#6c4de8] text-white text-xs font-black flex items-center justify-center">
+                    {(user.name || user.email || 'H').charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col text-left">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-[#191817] leading-none">
+                    {user.name || 'Host'}
+                  </span>
+                  <span className="bg-[#00cc05]/15 text-[#008a03] font-black text-[9px] px-1.5 py-0.5 rounded-full border border-[#00cc05]/30">
+                    ● Google Logged In
+                  </span>
+                </div>
+                {user.email && (
+                  <span className="text-[11px] text-[#77736c] font-semibold leading-tight mt-0.5">
+                    {user.email}
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="font-hand text-2xl text-[#6c4de8] -rotate-1 select-none">
+              host workspace ✦
+            </div>
+          )}
           <h1 className="text-3xl md:text-4xl font-extrabold text-[#191817] tracking-tight">
             Your Quizzes
           </h1>
           <p className="text-sm text-[#77736c] mt-0.5">
-            {user?.name ? `Signed in as ${user.name}` : 'Manage your questions or launch an instant multiplayer session.'}
+            Manage your questions or launch an instant live multiplayer session.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => setShowAIModal(true)}
+            className="kz-btn-primary px-4 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 bg-[#6c4de8] text-white border-2 border-[#191817] shadow-[2px_2px_0px_#191817] hover:shadow-[3px_3px_0px_#191817] hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+          >
+            <Sparkles size={16} />
+            <span>✨ Generate with AI</span>
+          </button>
           <button
             onClick={() => setShowImportModal(true)}
             className="kz-btn-secondary px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer"
@@ -149,7 +193,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
           </button>
           <a
             href="/host/quizzes/create/"
-            className="kz-btn-primary px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
+            className="kz-btn-secondary px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"
           >
             <Plus size={16} />
             <span>+ Create Quiz</span>
@@ -169,9 +213,16 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
           </div>
           <h3 className="text-2xl font-extrabold text-[#191817] mb-2">No quizzes created yet</h3>
           <p className="text-sm text-[#77736c] max-w-md mx-auto mb-6">
-            Create your first quiz or import one from JSON to start hosting live games for your students.
+            Generate a full quiz with AI in seconds, import one from JSON, or create questions manually.
           </p>
-          <div className="flex justify-center gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
+            <button
+              onClick={() => setShowAIModal(true)}
+              className="kz-btn-primary px-6 py-2.5 rounded-xl font-black text-sm inline-flex items-center gap-2 bg-[#6c4de8] text-white border-2 border-[#191817] shadow-[2px_2px_0px_#191817] hover:shadow-[3px_3px_0px_#191817] cursor-pointer"
+            >
+              <Sparkles size={16} />
+              <span>✨ Generate with AI</span>
+            </button>
             <button
               onClick={() => setShowImportModal(true)}
               className="kz-btn-secondary px-5 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-1.5"
@@ -181,10 +232,10 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
             </button>
             <a
               href="/host/quizzes/create/"
-              className="kz-btn-primary px-6 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-1.5"
+              className="kz-btn-secondary px-6 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-1.5"
             >
               <Plus size={16} />
-              <span>Create Quiz →</span>
+              <span>Create Manually →</span>
             </a>
           </div>
         </div>
@@ -335,6 +386,16 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
           </div>
         </div>
       )}
+
+      {/* AI Quiz Generator Modal */}
+      <AIGeneratorModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        onGenerated={(quizId) => {
+          window.location.href = `/host/quizzes/${quizId}/questions/`;
+        }}
+      />
     </div>
   );
 }
+

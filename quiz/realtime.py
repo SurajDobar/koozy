@@ -28,7 +28,9 @@ def lobby_state(live_session):
         )
     )
     for p in admitted:
-        p["has_submitted"] = bool(p.get("submitted_at"))
+        sub = p.pop("submitted_at", None)
+        p["has_submitted"] = bool(sub)
+        p["submitted_at"] = sub.isoformat() if sub else None
 
     pending = list(
         live_session.participants.filter(is_kicked=False, is_admitted=False).values(
@@ -57,7 +59,9 @@ def _leaderboard_payload(live_session):
     )
     for rank, p in enumerate(participants, start=1):
         p["rank"] = rank
-        p["has_submitted"] = bool(p.get("submitted_at"))
+        sub = p.pop("submitted_at", None)
+        p["has_submitted"] = bool(sub)
+        p["submitted_at"] = sub.isoformat() if sub else None
     return participants
 
 
