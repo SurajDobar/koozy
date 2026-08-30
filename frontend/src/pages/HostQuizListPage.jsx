@@ -121,14 +121,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
           <a href="/join/" className="text-sm font-semibold text-[#191817] hover:text-[#6c4de8]">
             Join Room
           </a>
-          <a
-            href="/auth/logout/"
-            className="flex items-center gap-1.5 text-xs font-semibold text-[#77736c] hover:text-[#ff0000] bg-white border border-[#d8d3ca] px-3 py-1.5 rounded-xl hover:border-[#ff0000] transition-all"
-            title="Sign Out"
-          >
-            <LogOut size={13} />
-            <span>Sign Out</span>
-          </a>
+          <UserProfileBadge user={user} />
         </div>
       </nav>
 
@@ -136,7 +129,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 my-8">
         <div>
           <div className="font-hand text-2xl text-[#6c4de8] -rotate-1 select-none">
-            teacher workspace ✦
+            host workspace ✦
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-[#191817] tracking-tight">
             Your Quizzes

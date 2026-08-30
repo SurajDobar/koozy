@@ -1,7 +1,10 @@
 import React from 'react';
-import { LogOut, WifiOff, Wifi } from 'lucide-react';
+import { LogOut, WifiOff } from 'lucide-react';
+import UserProfileBadge from './UserProfileBadge';
 
-export default function Navbar({ title, pin, isHost, participantName, isReconnecting, onExit }) {
+export default function Navbar({ title, pin, isHost, participantName, isReconnecting, onExit, user }) {
+  const hostUser = user || window.__KOOZY_CONFIG__?.user;
+
   return (
     <header className="flex justify-between items-center py-4 px-6 border-b border-[#d8d3ca] bg-[#f7f5ef] max-w-6xl mx-auto w-full">
       <div className="flex items-center gap-3">
@@ -31,9 +34,9 @@ export default function Navbar({ title, pin, isHost, participantName, isReconnec
         )}
 
         {isHost && (
-          <span className="bg-[#191817] text-white text-xs font-bold px-3 py-1.5 rounded-xl">
-            HOST
-          </span>
+          <div className="flex items-center gap-2.5">
+            <UserProfileBadge user={hostUser} />
+          </div>
         )}
 
         {onExit && (

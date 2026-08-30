@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Play, ArrowLeft, ArrowUp, ArrowDown } from 'lucide-react';
 import { fetchQuizDetail, addQuestion, deleteQuestion, createLiveSession, reorderQuestions } from '../utils/api';
+import UserProfileBadge from '../components/UserProfileBadge';
 
 export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
   const [quiz, setQuiz] = useState(initialQuiz);
@@ -144,6 +145,7 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
             <ArrowLeft size={14} />
             <span>My Quizzes</span>
           </a>
+          <UserProfileBadge />
         </div>
       </nav>
 

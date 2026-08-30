@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import AnswerSubmission, LiveSession, Participant, Question, Quiz
+from .models import AnswerSubmission, HostProfile, LiveSession, Participant, Question, Quiz
+
+
+@admin.register(HostProfile)
+class HostProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "google_id", "avatar_url", "created_at")
+    readonly_fields = ("created_at",)
 
 
 class QuestionInline(admin.TabularInline):

@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { PlusCircle, ArrowLeft, ArrowRight } from 'lucide-react';
-import { createQuiz } from '../utils/api';
+import { ArrowLeft, Sparkles, HelpCircle } from 'lucide-react';
+import { getCookie } from '../utils/api';
+import UserProfileBadge from '../components/UserProfileBadge';
 
 export default function HostCreateQuizPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('Programming');
-  const [difficulty, setDifficulty] = useState('easy');
-  const [timeLimit, setTimeLimit] = useState(300);
+  const [category, setCategory] = useState('General');
+  const [difficulty, setDifficulty] = useState('medium');
+  const [timeLimit, setTimeLimit] = useState(300); // 5 mins default in seconds
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const config = window.__KOOZY_CONFIG__ || {};
+  const user = config.user || null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) {
-      setError('Please enter a quiz title');
+      setError('Quiz title is required');
       return;
     }
 
@@ -22,16 +26,30 @@ export default function HostCreateQuizPage() {
     setError('');
 
     try {
-      const res = await createQuiz({
-        title: title.trim(),
-        description: description.trim(),
-        category: category.trim() || 'General',
-        difficulty,
-        time_limit: parseInt(timeLimit, 10) || 300,
+      const res = await fetch('/api/quizzes/create/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken') || '',
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim(),
+          category,
+          difficulty,
+          time_limit: parseInt(timeLimit, 10),
+        }),
       });
-      window.location.href = `/host/quizzes/${res.id}/questions/add/`;
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create quiz');
+      }
+
+      // Redirect to Add Questions page
+      window.location.href = `/host/quizzes/${data.id}/questions/`;
     } catch (err) {
-      setError(err.message || 'Failed to create quiz');
+      setError(err.message);
       setLoading(false);
     }
   };
@@ -51,6 +69,7 @@ export default function HostCreateQuizPage() {
             <ArrowLeft size={14} />
             <span>Back to Library</span>
           </a>
+          <UserProfileBadge user={user} />
         </div>
       </nav>
 

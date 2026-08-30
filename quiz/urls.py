@@ -7,10 +7,12 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("dev/", views.development_hub, name="development_hub"),
 
-    # ── Teacher Authentication ─────────────────────────────────────────
+    # ── Host Authentication ────────────────────────────────────────────
     path("auth/login/", views.auth_login_view, name="auth_login_view"),
     path("auth/google/", views.auth_google_login, name="auth_google_login"),
+    path("auth/google/callback/", views.auth_google_callback, name="auth_google_callback"),
     path("auth/logout/", views.auth_logout_view, name="auth_logout_view"),
+    path("api/auth/me/", api.api_auth_me, name="api_auth_me"),
 
     # ── Quiz browsing ──────────────────────────────────────────────────
     path("quizzes/", views.quiz_list, name="quiz_list"),

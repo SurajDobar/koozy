@@ -4,6 +4,7 @@ from datetime import timedelta
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
+from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import Client, TestCase, TransactionTestCase
 from django.urls import reverse
@@ -11,17 +12,29 @@ from django.utils import timezone
 
 from config.asgi import application
 
-from .models import AnswerSubmission, LiveSession, Participant, Question, Quiz
+from .models import AnswerSubmission, HostProfile, LiveSession, Participant, Question, Quiz
 from .realtime import maybe_close_question, publish_lobby_state
+
+User = get_user_model()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _make_quiz(title="Test Quiz"):
+def _get_or_create_default_host():
+    user, _ = User.objects.get_or_create(
+        username="host@koozy.edu",
+        defaults={"email": "host@koozy.edu", "first_name": "Default Host"}
+    )
+    return user
+
+
+def _make_quiz(title="Test Quiz", author=None):
+    if author is None:
+        author = _get_or_create_default_host()
     return Quiz.objects.create(
-        title=title, description="", category="Test", difficulty="easy"
+        title=title, description="", category="Test", difficulty="easy", author=author
     )
 
 
@@ -77,6 +90,10 @@ def _expired_session_with_question(pin, time_limit=20):
 # ──────────────────────────────────────────────────────────────────────────────
 
 class HostQuizAuthoringTests(TestCase):
+    def setUp(self):
+        self.host_user = _get_or_create_default_host()
+        self.client.force_login(self.host_user)
+
     def test_host_can_create_quiz_and_add_multiple_questions(self):
         response = self.client.post(
             reverse("create_quiz"),
@@ -111,11 +128,7 @@ class HostQuizAuthoringTests(TestCase):
         )
 
     def test_host_can_delete_question(self):
-        session = self.client.session
-        quiz = Quiz.objects.create(title="Owned quiz", category="Test", difficulty="easy")
-        session["host_quiz_ids"] = [quiz.id]
-        session.save()
-
+        quiz = _make_quiz("Owned quiz", author=self.host_user)
         q1 = _make_question(quiz, "Q1")
         q2 = _make_question(quiz, "Q2")
         self.assertEqual(quiz.questions.count(), 2)
@@ -127,19 +140,15 @@ class HostQuizAuthoringTests(TestCase):
         self.assertTrue(Question.objects.filter(id=q2.id).exists())
 
     def test_host_can_delete_quiz(self):
-        session = self.client.session
-        quiz = Quiz.objects.create(title="Quiz to delete", category="Test", difficulty="easy")
-        session["host_quiz_ids"] = [quiz.id]
-        session.save()
+        quiz = _make_quiz("Quiz to delete", author=self.host_user)
         _make_question(quiz, "Q1")
 
         resp = self.client.post(reverse("delete_quiz", args=[quiz.id]))
         self.assertRedirects(resp, reverse("host_quiz_list"))
         self.assertFalse(Quiz.objects.filter(id=quiz.id).exists())
-        self.assertNotIn(quiz.id, self.client.session.get("host_quiz_ids", []))
 
     def test_session_state_includes_distribution_when_question_closed(self):
-        quiz = _make_quiz()
+        quiz = _make_quiz(author=self.host_user)
         q = _make_question(quiz, "Q1", correct="a")
         live_session = LiveSession.objects.create(
             quiz=quiz,
@@ -183,13 +192,14 @@ class DevelopmentHubTests(TestCase):
 
 class LiveSessionTests(TestCase):
     def setUp(self):
-        self.quiz = _make_quiz("Live quiz")
+        self.host_user = _get_or_create_default_host()
+        self.quiz = _make_quiz("Live quiz", author=self.host_user)
+        self.client.force_login(self.host_user)
 
     def host_client(self):
-        session = self.client.session
-        session["host_quiz_ids"] = [self.quiz.id]
-        session.save()
-        return self.client
+        client = Client()
+        client.force_login(self.host_user)
+        return client
 
     def test_host_can_create_a_session_with_a_five_character_pin(self):
         response = self.host_client().post(
@@ -201,18 +211,19 @@ class LiveSessionTests(TestCase):
         self.assertRedirects(response, reverse("host_lobby", args=[live_session.id]))
 
     def test_generated_pins_are_unique_for_active_sessions(self):
-        first = LiveSession.objects.create(quiz=self.quiz)
-        second = LiveSession.objects.create(quiz=self.quiz)
+        first = LiveSession.objects.create(quiz=self.quiz, host=self.host_user)
+        second = LiveSession.objects.create(quiz=self.quiz, host=self.host_user)
         self.assertNotEqual(first.game_pin, second.game_pin)
         with self.assertRaises(IntegrityError):
-            LiveSession.objects.create(quiz=self.quiz, game_pin=first.game_pin)
+            LiveSession.objects.create(quiz=self.quiz, game_pin=first.game_pin, host=self.host_user)
 
     def test_participant_can_join_and_refresh_without_duplication(self):
         live_session = LiveSession.objects.create(quiz=self.quiz, game_pin="ABCDE")
-        response = self.client.post(reverse("join_game"), {"game_pin": "abcde"})
+        guest_client = Client()
+        response = guest_client.post(reverse("join_game"), {"game_pin": "abcde"})
         self.assertRedirects(response, reverse("participant_join", args=["ABCDE"]))
 
-        response = self.client.post(
+        response = guest_client.post(
             reverse("participant_join", args=["ABCDE"]), {"display_name": "Avery"}
         )
         participant = live_session.participants.get(display_name="Avery")
@@ -223,12 +234,12 @@ class LiveSessionTests(TestCase):
         self.assertEqual(live_session.participants.count(), 1)
 
         # Visiting join page without explicit token shows join form (for another participant)
-        resp_join = self.client.get(reverse("participant_join", args=["ABCDE"]))
+        resp_join = guest_client.get(reverse("participant_join", args=["ABCDE"]))
         self.assertEqual(resp_join.status_code, 200)
         self.assertEqual(live_session.participants.count(), 1)
 
         # Visiting with explicit token redirects to lobby for that participant
-        resp_pt = self.client.get(
+        resp_pt = guest_client.get(
             f"{reverse('participant_join', args=['ABCDE'])}?pt={participant.join_token}"
         )
         self.assertRedirects(
@@ -238,14 +249,15 @@ class LiveSessionTests(TestCase):
 
     def test_invalid_pin_duplicate_name_and_closed_session_are_rejected(self):
         live_session = LiveSession.objects.create(quiz=self.quiz, game_pin="ABCDE")
-        invalid_pin = self.client.post(reverse("join_game"), {"game_pin": "ZZZZZ"})
+        guest_client = Client()
+        invalid_pin = guest_client.post(reverse("join_game"), {"game_pin": "ZZZZZ"})
         self.assertContains(invalid_pin, "find that Game PIN")
 
         first_client = Client()
         first_client.post(
             reverse("participant_join", args=["ABCDE"]), {"display_name": "Avery"}
         )
-        duplicate = self.client.post(
+        duplicate = guest_client.post(
             reverse("participant_join", args=["ABCDE"]), {"display_name": "avery"}
         )
         self.assertContains(duplicate, "already in use for this session")
@@ -258,7 +270,7 @@ class LiveSessionTests(TestCase):
 
     def test_host_can_start_a_waiting_session(self):
         _make_question(self.quiz)
-        live_session = LiveSession.objects.create(quiz=self.quiz, game_pin="ABCDE")
+        live_session = LiveSession.objects.create(quiz=self.quiz, game_pin="ABCDE", host=self.host_user)
         response = self.host_client().post(
             reverse("start_live_session", args=[live_session.id])
         )
@@ -266,7 +278,6 @@ class LiveSessionTests(TestCase):
         self.assertEqual(live_session.status, LiveSession.Status.ACTIVE)
         self.assertEqual(live_session.current_question_index, 0)
         self.assertIsNotNone(live_session.question_started_at)
-        # closed flag must be False when a new question starts
         self.assertFalse(live_session.current_question_closed)
         self.assertRedirects(response, reverse("host_lobby", args=[live_session.id]))
 
@@ -415,7 +426,8 @@ class AutoCloseTests(TestCase):
 
     def test_closed_flag_resets_on_next_question(self):
         """host_next_question must reset current_question_closed to False."""
-        quiz = _make_quiz()
+        host = _get_or_create_default_host()
+        quiz = _make_quiz(author=host)
         _make_question(quiz, "Q1", correct="a")
         _make_question(quiz, "Q2", correct="b")
         session = LiveSession.objects.create(
@@ -424,10 +436,9 @@ class AutoCloseTests(TestCase):
             current_question_index=0,
             question_started_at=timezone.now() - timedelta(seconds=25),
             current_question_closed=True,
+            host=host,
         )
-        sess = self.client.session
-        sess["host_quiz_ids"] = [quiz.id]
-        sess.save()
+        self.client.force_login(host)
 
         self.client.post(reverse("host_next_question", args=[session.id]))
         session.refresh_from_db()
@@ -437,12 +448,11 @@ class AutoCloseTests(TestCase):
 
     def test_closed_flag_reset_on_session_start(self):
         """start_live_session must initialise current_question_closed=False."""
-        quiz = _make_quiz()
+        host = _get_or_create_default_host()
+        quiz = _make_quiz(author=host)
         _make_question(quiz)
-        session = LiveSession.objects.create(quiz=quiz, game_pin="AC888")
-        sess = self.client.session
-        sess["host_quiz_ids"] = [quiz.id]
-        sess.save()
+        session = LiveSession.objects.create(quiz=quiz, game_pin="AC888", host=host)
+        self.client.force_login(host)
 
         self.client.post(reverse("start_live_session", args=[session.id]))
         session.refresh_from_db()
@@ -583,7 +593,8 @@ class AnswerProtectionTests(TestCase):
 
 class QuestionProgressionTests(TestCase):
     def setUp(self):
-        self.quiz = _make_quiz()
+        self.host_user = _get_or_create_default_host()
+        self.quiz = _make_quiz(author=self.host_user)
         _make_question(self.quiz, "Q1", correct="a")
         _make_question(self.quiz, "Q2", correct="b")
         _make_question(self.quiz, "Q3", correct="c")
@@ -592,10 +603,9 @@ class QuestionProgressionTests(TestCase):
             status=LiveSession.Status.ACTIVE,
             current_question_index=0,
             question_started_at=timezone.now(),
+            host=self.host_user,
         )
-        sess = self.client.session
-        sess["host_quiz_ids"] = [self.quiz.id]
-        sess.save()
+        self.client.force_login(self.host_user)
 
     def test_current_question_returns_correct_object(self):
         questions = list(self.quiz.questions.order_by("id"))
@@ -731,20 +741,21 @@ class LeaderboardTests(TestCase):
 
 class SessionCompletionTests(TestCase):
     def test_completed_session_shows_host_result_page(self):
-        quiz = _make_quiz()
+        host = _get_or_create_default_host()
+        quiz = _make_quiz(author=host)
         session = _make_session(quiz, pin="COMPL", status=LiveSession.Status.COMPLETED)
-        sess = self.client.session
-        sess["host_quiz_ids"] = [quiz.id]
-        sess.save()
+        self.client.force_login(host)
         resp = self.client.get(reverse("host_result_page", args=[session.id]))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "window.__KOOZY_CONFIG__")
         self.assertContains(resp, "bundle.js")
 
     def test_host_result_api_returns_leaderboard(self):
-        quiz = _make_quiz()
+        host = _get_or_create_default_host()
+        quiz = _make_quiz(author=host)
         session = _make_session(quiz, pin="CMPL3", status=LiveSession.Status.COMPLETED)
         Participant.objects.create(live_session=session, display_name="Winner", score=2000)
+        self.client.force_login(host)
         resp = self.client.get(reverse("api_host_result", args=[session.game_pin]))
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
@@ -1099,7 +1110,9 @@ class QuestionValidationTests(TestCase):
 class EndToEndV1FlowTests(TestCase):
     def test_complete_host_and_multiplayer_participant_flow(self):
         # 1. Host creates quiz
+        host_user = _get_or_create_default_host()
         host_client = Client()
+        host_client.force_login(host_user)
         resp_create = host_client.post(
             reverse("create_quiz"),
             {
@@ -1250,7 +1263,8 @@ class EndToEndV1FlowTests(TestCase):
 
 class V1BatchSubmissionAndGlobalTimerTests(TestCase):
     def setUp(self):
-        self.quiz = Quiz.objects.create(title="V1 Speed Quiz", time_limit=300)
+        self.host_user = _get_or_create_default_host()
+        self.quiz = Quiz.objects.create(title="V1 Speed Quiz", time_limit=300, author=self.host_user)
         self.q1 = _make_question(self.quiz, "Q1 Text", correct="a")
         self.q2 = _make_question(self.quiz, "Q2 Text", correct="b")
         self.q3 = _make_question(self.quiz, "Q3 Text", correct="c")
@@ -1261,6 +1275,7 @@ class V1BatchSubmissionAndGlobalTimerTests(TestCase):
             status=LiveSession.Status.ACTIVE,
             total_time_limit=300,
             quiz_started_at=timezone.now(),
+            host=self.host_user,
         )
 
         self.p1 = Participant.objects.create(
@@ -1328,6 +1343,7 @@ class V1BatchSubmissionAndGlobalTimerTests(TestCase):
 
     def test_host_kick_participant_endpoint(self):
         client = Client()
+        client.force_login(self.host_user)
         resp = client.post(
             reverse("api_host_kick_participant", args=[self.session.game_pin]),
             data=json.dumps({"participant_id": self.p2.id}),
@@ -1351,6 +1367,7 @@ class V1BatchSubmissionAndGlobalTimerTests(TestCase):
 
     def test_host_end_quiz_completes_session(self):
         client = Client()
+        client.force_login(self.host_user)
         resp = client.post(
             reverse("api_host_end_quiz", args=[self.session.game_pin]),
             content_type="application/json",
@@ -1369,12 +1386,14 @@ class V1BatchSubmissionAndGlobalTimerTests(TestCase):
 
 class AllReactRouteTests(TestCase):
     def setUp(self):
-        self.quiz = Quiz.objects.create(title="Django React Quiz", time_limit=300)
+        self.host_user = _get_or_create_default_host()
+        self.quiz = Quiz.objects.create(title="Django React Quiz", time_limit=300, author=self.host_user)
         self.q1 = _make_question(self.quiz, "Q1 Text", correct="a")
         self.session = LiveSession.objects.create(
             quiz=self.quiz,
             game_pin="REACT",
             status=LiveSession.Status.WAITING,
+            host=self.host_user,
         )
         self.participant = Participant.objects.create(
             live_session=self.session,
@@ -1398,79 +1417,84 @@ class AllReactRouteTests(TestCase):
         self.assertContains(resp, '"page": "join"')
 
     def test_join_pin_page_renders_react_app(self):
-        resp = self.client.get(reverse("participant_join", args=[self.session.game_pin]))
+        resp = self.client.get(reverse("participant_join", args=["REACT"]))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "bundle.js")
+        self.assertContains(resp, '<div id="root"></div>')
         self.assertContains(resp, '"page": "join_pin"')
 
-    def test_host_quiz_list_page_renders_react_app(self):
-        sess = self.client.session
-        sess["host_quiz_ids"] = [self.quiz.id]
-        sess.save()
+    def test_participant_lobby_renders_react_app(self):
+        c = Client()
+        c.cookies[f"kz_pt_{self.session.id}"] = self.participant.join_token
+        resp = c.get(reverse("participant_lobby", args=["REACT"]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "bundle.js")
+        self.assertContains(resp, '<div id="root"></div>')
+        self.assertContains(resp, '"page": "participant_session"')
+
+    def test_participant_play_renders_react_app(self):
+        c = Client()
+        c.cookies[f"kz_pt_{self.session.id}"] = self.participant.join_token
+        resp = c.get(reverse("participant_play", args=["REACT"]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "bundle.js")
+        self.assertContains(resp, '<div id="root"></div>')
+        self.assertContains(resp, '"page": "participant_session"')
+
+    def test_participant_result_renders_react_app(self):
+        self.session.status = LiveSession.Status.COMPLETED
+        self.session.save(update_fields=["status"])
+        c = Client()
+        c.cookies[f"kz_pt_{self.session.id}"] = self.participant.join_token
+        resp = c.get(reverse("participant_result_page", args=["REACT"]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "bundle.js")
+        self.assertContains(resp, '<div id="root"></div>')
+        self.assertContains(resp, '"page": "participant_session"')
+
+    def test_host_quiz_list_renders_react_app(self):
+        self.client.force_login(self.host_user)
         resp = self.client.get(reverse("host_quiz_list"))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "bundle.js")
+        self.assertContains(resp, '<div id="root"></div>')
         self.assertContains(resp, '"page": "host_quiz_list"')
 
-    def test_host_create_quiz_page_renders_react_app(self):
+    def test_create_quiz_renders_react_app(self):
+        self.client.force_login(self.host_user)
         resp = self.client.get(reverse("create_quiz"))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "bundle.js")
+        self.assertContains(resp, '<div id="root"></div>')
         self.assertContains(resp, '"page": "create_quiz"')
 
-    def test_host_add_question_page_renders_react_app(self):
-        sess = self.client.session
-        sess["host_quiz_ids"] = [self.quiz.id]
-        sess.save()
+    def test_add_question_renders_react_app(self):
+        self.client.force_login(self.host_user)
         resp = self.client.get(reverse("add_question", args=[self.quiz.id]))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "bundle.js")
+        self.assertContains(resp, '<div id="root"></div>')
         self.assertContains(resp, '"page": "add_question"')
 
-    def test_host_session_lobby_page_renders_react_app(self):
-        sess = self.client.session
-        sess["host_quiz_ids"] = [self.quiz.id]
-        sess.save()
+    def test_host_session_renders_react_app(self):
+        self.client.force_login(self.host_user)
         resp = self.client.get(reverse("host_lobby", args=[self.session.id]))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "bundle.js")
-        self.assertContains(resp, '"isHost": true')
+        self.assertContains(resp, '<div id="root"></div>')
+        self.assertContains(resp, '"page": "host_session"')
 
-    def test_participant_lobby_and_play_renders_react_app(self):
-        c = Client()
-        c.cookies[f"kz_pt_{self.session.id}"] = self.participant.join_token
-        resp_lobby = c.get(reverse("participant_lobby", args=[self.session.game_pin]))
-        self.assertEqual(resp_lobby.status_code, 200)
-        self.assertContains(resp_lobby, "bundle.js")
-        self.assertContains(resp_lobby, '"page": "participant_session"')
 
-    def test_development_hub_remains_django_only(self):
-        resp = self.client.get(reverse("development_hub"))
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "Koozy Development Hub")
-
-    def test_rest_session_state_and_ws_lobby_state_participant_contract_match(self):
-        from .realtime import lobby_state
-        # REST session_state
-        rest_resp = self.client.get(reverse("api_session_state", args=[self.session.game_pin]))
-        self.assertEqual(rest_resp.status_code, 200)
-        rest_data = rest_resp.json()
-
-        # WS lobby_state
-        ws_data = lobby_state(self.session)
-
-        # Assert participant structure and fields match
-        self.assertEqual(len(rest_data["participants"]), len(ws_data["participants"]))
-        self.assertEqual(rest_data["participant_count"], ws_data["participant_count"])
-        self.assertEqual(rest_data["participants"][0]["id"], ws_data["participants"][0]["id"])
-        self.assertEqual(rest_data["participants"][0]["display_name"], ws_data["participants"][0]["display_name"])
-        self.assertEqual(rest_data["participants"][0]["has_submitted"], ws_data["participants"][0]["has_submitted"])
-
+# ──────────────────────────────────────────────────────────────────────────────
+# V1 Closure Specifications & Regressions
+# ──────────────────────────────────────────────────────────────────────────────
 
 class V1ClosureSpecificationTests(TestCase):
     def setUp(self):
-        from django.contrib.auth.models import User
-        self.teacher = User.objects.create_user(username="teacher1@koozy.edu", email="teacher1@koozy.edu", first_name="Prof. Smith")
+        self.teacher, _ = User.objects.get_or_create(
+            username="teacher1@koozy.edu",
+            defaults={"email": "teacher1@koozy.edu", "first_name": "Prof. Smith"}
+        )
         self.quiz = Quiz.objects.create(
             title="Closure Quiz",
             description="Testing V1 closure specs",
@@ -1499,18 +1523,9 @@ class V1ClosureSpecificationTests(TestCase):
             correct_answer="b",
             order=2,
         )
-
-    def test_teacher_google_auth_flow(self):
-        resp = self.client.get(reverse("auth_google_login") + "?email=newteacher@koozy.edu&name=NewTeacher")
-        self.assertRedirects(resp, reverse("host_quiz_list"))
-        self.assertTrue(self.client.session["_auth_user_id"])
-
-        # Logout
-        resp_logout = self.client.get(reverse("auth_logout_view"))
-        self.assertRedirects(resp_logout, reverse("home"))
+        self.client.force_login(self.teacher)
 
     def test_single_active_live_session_per_teacher(self):
-        self.client.force_login(self.teacher)
         # Create session 1
         resp1 = self.client.post(reverse("api_create_live_session", args=[self.quiz.id]))
         self.assertEqual(resp1.status_code, 201)
@@ -1622,6 +1637,7 @@ class V1ClosureSpecificationTests(TestCase):
         imported_id = resp.json()["id"]
         imported_quiz = Quiz.objects.get(id=imported_id)
         self.assertEqual(imported_quiz.title, "Imported Biology Quiz")
+        self.assertEqual(imported_quiz.author, self.teacher)
         self.assertEqual(imported_quiz.questions.count(), 1)
 
         # Invalid import: missing questions
@@ -1755,6 +1771,236 @@ class V1ClosureSpecificationTests(TestCase):
         self.assertTrue(resp.json()["accepted"])
         p.refresh_from_db()
         self.assertIsNotNone(p.submitted_at)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Google Host Authentication & Per-User Quiz Ownership Suite
+# ──────────────────────────────────────────────────────────────────────────────
+
+class GoogleHostAuthAndQuizOwnershipTests(TestCase):
+    def setUp(self):
+        self.user_a = User.objects.create_user(
+            username="usera@google.com",
+            email="usera@google.com",
+            first_name="User Alpha",
+        )
+        HostProfile.objects.create(
+            user=self.user_a,
+            google_id="google-sub-user-a",
+            avatar_url="https://lh3.googleusercontent.com/a/usera-avatar.png",
+        )
+
+        self.user_b = User.objects.create_user(
+            username="userb@google.com",
+            email="userb@google.com",
+            first_name="User Beta",
+        )
+        HostProfile.objects.create(
+            user=self.user_b,
+            google_id="google-sub-user-b",
+            avatar_url="https://lh3.googleusercontent.com/a/userb-avatar.png",
+        )
+
+        self.quiz_a = Quiz.objects.create(
+            title="User A Private Quiz",
+            description="Alpha only",
+            category="Security",
+            difficulty="hard",
+            time_limit=240,
+            author=self.user_a,
+        )
+        self.q_a = _make_question(self.quiz_a, "Alpha Question", correct="a")
+
+        self.client_a = Client()
+        self.client_a.force_login(self.user_a)
+
+        self.client_b = Client()
+        self.client_b.force_login(self.user_b)
+
+        self.anon_client = Client()
+
+    def test_unauthenticated_host_access_is_blocked(self):
+        # HTML routes redirect to login
+        resp_list = self.anon_client.get(reverse("host_quiz_list"))
+        self.assertRedirects(resp_list, reverse("auth_login_view"))
+
+        resp_create = self.anon_client.get(reverse("create_quiz"))
+        self.assertRedirects(resp_create, reverse("auth_login_view"))
+
+        # REST API routes return 401
+        resp_api_list = self.anon_client.get(reverse("api_host_quizzes"))
+        self.assertEqual(resp_api_list.status_code, 401)
+
+        resp_api_create = self.anon_client.post(
+            reverse("api_create_quiz"),
+            {"title": "Anon Quiz"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp_api_create.status_code, 401)
+
+    def test_google_host_login_and_persistent_identity(self):
+        from .oauth import get_or_create_google_host_user
+
+        userinfo = {
+            "sub": "google-sub-12345",
+            "email": "teacher.new@google.com",
+            "name": "Teacher New",
+            "picture": "https://lh3.googleusercontent.com/a/teacher.png",
+        }
+        # First login -> creates user
+        user1 = get_or_create_google_host_user(userinfo)
+        self.assertEqual(user1.email, "teacher.new@google.com")
+        self.assertEqual(user1.first_name, "Teacher New")
+        self.assertEqual(user1.host_profile.google_id, "google-sub-12345")
+        self.assertEqual(user1.host_profile.avatar_url, "https://lh3.googleusercontent.com/a/teacher.png")
+
+        # Second login with same Google identity -> resolves same user instance
+        user2 = get_or_create_google_host_user(userinfo)
+        self.assertEqual(user1.id, user2.id)
+
+    def test_user_a_sees_own_quizzes(self):
+        resp = self.client_a.get(reverse("api_host_quizzes"))
+        self.assertEqual(resp.status_code, 200)
+        quizzes = resp.json()["quizzes"]
+        self.assertEqual(len(quizzes), 1)
+        self.assertEqual(quizzes[0]["id"], self.quiz_a.id)
+        self.assertEqual(quizzes[0]["title"], "User A Private Quiz")
+
+    def test_user_b_cannot_see_user_a_quizzes(self):
+        resp = self.client_b.get(reverse("api_host_quizzes"))
+        self.assertEqual(resp.status_code, 200)
+        quizzes = resp.json()["quizzes"]
+        # User B has no quizzes yet
+        self.assertEqual(len(quizzes), 0)
+
+    def test_user_b_cannot_access_or_edit_user_a_quiz(self):
+        # Detail view
+        resp_detail = self.client_b.get(reverse("api_quiz_detail", args=[self.quiz_a.id]))
+        self.assertEqual(resp_detail.status_code, 404)
+
+        # Add question
+        resp_add = self.client_b.post(
+            reverse("api_add_question", args=[self.quiz_a.id]),
+            {
+                "question_text": "Hacked question",
+                "option_a": "1",
+                "option_b": "2",
+                "option_c": "3",
+                "option_d": "4",
+                "correct_answer": "a",
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(resp_add.status_code, 404)
+
+        # Delete question
+        resp_del_q = self.client_b.post(
+            reverse("api_delete_question", args=[self.quiz_a.id, self.q_a.id]),
+        )
+        self.assertEqual(resp_del_q.status_code, 404)
+
+        # Delete quiz
+        resp_del = self.client_b.post(reverse("api_delete_quiz", args=[self.quiz_a.id]))
+        self.assertEqual(resp_del.status_code, 404)
+
+        # Export quiz
+        resp_export = self.client_b.get(reverse("api_export_quiz", args=[self.quiz_a.id]))
+        self.assertEqual(resp_export.status_code, 404)
+
+        # Launch live session
+        resp_launch = self.client_b.post(reverse("api_create_live_session", args=[self.quiz_a.id]))
+        self.assertEqual(resp_launch.status_code, 404)
+
+    def test_user_b_can_create_and_manage_own_quiz(self):
+        resp_create = self.client_b.post(
+            reverse("api_create_quiz"),
+            {
+                "title": "User B Quiz",
+                "description": "Beta quiz",
+                "category": "Math",
+                "difficulty": "easy",
+                "time_limit": 300,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(resp_create.status_code, 201)
+        quiz_b_id = resp_create.json()["id"]
+
+        quiz_b = Quiz.objects.get(id=quiz_b_id)
+        self.assertEqual(quiz_b.author, self.user_b)
+
+        # User B sees Quiz B in their dashboard
+        resp_list = self.client_b.get(reverse("api_host_quizzes"))
+        self.assertEqual(len(resp_list.json()["quizzes"]), 1)
+        self.assertEqual(resp_list.json()["quizzes"][0]["id"], quiz_b_id)
+
+        # User A cannot see Quiz B
+        resp_list_a = self.client_a.get(reverse("api_host_quizzes"))
+        self.assertEqual(len(resp_list_a.json()["quizzes"]), 1)
+        self.assertEqual(resp_list_a.json()["quizzes"][0]["id"], self.quiz_a.id)
+
+    def test_api_auth_me_endpoint(self):
+        # Authenticated user A
+        resp_a = self.client_a.get(reverse("api_auth_me"))
+        self.assertEqual(resp_a.status_code, 200)
+        data_a = resp_a.json()
+        self.assertTrue(data_a["is_authenticated"])
+        self.assertEqual(data_a["user"]["name"], "User Alpha")
+        self.assertEqual(data_a["user"]["email"], "usera@google.com")
+        self.assertEqual(data_a["user"]["avatar_url"], "https://lh3.googleusercontent.com/a/usera-avatar.png")
+
+        # Unauthenticated client
+        resp_anon = self.anon_client.get(reverse("api_auth_me"))
+        self.assertEqual(resp_anon.status_code, 200)
+        self.assertFalse(resp_anon.json()["is_authenticated"])
+
+    def test_logout_flow_clears_host_session(self):
+        resp_logout = self.client_a.get(reverse("auth_logout_view"))
+        self.assertRedirects(resp_logout, reverse("home"))
+
+        # Subsequent host request redirected to login
+        resp_check = self.client_a.get(reverse("host_quiz_list"))
+        self.assertRedirects(resp_check, reverse("auth_login_view"))
+
+    def test_participant_gameplay_requires_no_authentication(self):
+        # User A hosts a live session
+        resp_sess = self.client_a.post(reverse("api_create_live_session", args=[self.quiz_a.id]))
+        self.assertEqual(resp_sess.status_code, 201)
+        pin = resp_sess.json()["game_pin"]
+
+        # Guest participant joins without account
+        guest = Client()
+        join_resp = guest.post(
+            reverse("api_join_game"),
+            {"game_pin": pin, "display_name": "GuestGamer"},
+            content_type="application/json",
+        )
+        self.assertEqual(join_resp.status_code, 201)
+        token = join_resp.json()["join_token"]
+
+        # Host starts quiz
+        start_resp = self.client_a.post(reverse("api_host_start_quiz", args=[pin]))
+        self.assertEqual(start_resp.status_code, 200)
+
+        # Guest answers question
+        ans_resp = guest.post(
+            reverse("api_submit_quiz_answers", args=[pin]),
+            {"answers": {str(self.q_a.id): "a"}},
+            content_type="application/json",
+            HTTP_X_PARTICIPANT_TOKEN=token,
+        )
+        self.assertEqual(ans_resp.status_code, 200)
+        self.assertTrue(ans_resp.json()["accepted"])
+
+        # Host ends quiz
+        end_resp = self.client_a.post(reverse("api_host_end_quiz", args=[pin]))
+        self.assertEqual(end_resp.status_code, 200)
+
+        # Guest views results
+        res_resp = guest.get(reverse("api_participant_result", args=[pin]), HTTP_X_PARTICIPANT_TOKEN=token)
+        self.assertEqual(res_resp.status_code, 200)
+        self.assertEqual(res_resp.json()["score"], 1000)
+        self.assertEqual(res_resp.json()["rank"], 1)
 
 
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Gamepad2, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 import { joinGame, setParticipantToken } from '../utils/api';
+import UserProfileBadge from '../components/UserProfileBadge';
 
 export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
   const [name, setName] = useState('');
@@ -52,6 +53,7 @@ export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
             <ArrowLeft size={14} />
             <span>Home</span>
           </a>
+          <UserProfileBadge />
         </div>
       </nav>
 

@@ -1,7 +1,11 @@
 import React from 'react';
 import { ArrowRight, Gamepad2 } from 'lucide-react';
+import UserProfileBadge from '../components/UserProfileBadge';
 
 export default function HomePage({ user = null }) {
+  const config = window.__KOOZY_CONFIG__ || {};
+  const activeUser = user || config.user || null;
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-8 min-h-[90vh] flex flex-col justify-between">
       {/* Top Navbar */}
@@ -9,16 +13,12 @@ export default function HomePage({ user = null }) {
         <a href="/" className="font-hand text-4xl text-[#191817] hover:text-[#6c4de8] transition-colors -rotate-2 select-none">
           Koozy
         </a>
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-3 sm:gap-4 items-center">
           <a href="/join/" className="text-sm font-semibold text-[#191817] hover:text-[#6c4de8] transition-colors">
             Join Room
           </a>
-          <a
-            href="/host/quizzes/"
-            className="kz-btn-primary px-4 py-2 rounded-xl text-xs font-bold"
-          >
-            Host a Quiz
-          </a>
+
+          <UserProfileBadge user={activeUser} />
         </div>
       </nav>
 
@@ -40,16 +40,16 @@ export default function HomePage({ user = null }) {
         </h1>
 
         <p className="text-[#77736c] text-base md:text-lg max-w-xl mx-auto mt-2 mb-10 leading-relaxed">
-          Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for teachers. Fast for students.
+          Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players.
         </p>
 
-        {/* The Two Primary V1 CTAs (Section 4) */}
+        {/* The Two Primary V1 CTAs */}
         <div className="flex flex-wrap gap-4 justify-center items-center">
           <a
             href="/host/quizzes/"
             className="kz-btn-primary px-8 py-3.5 rounded-xl font-bold text-base flex items-center gap-2"
           >
-            <span>Host a Quiz</span>
+            <span>{activeUser?.is_authenticated ? 'Host Dashboard →' : 'Host a Quiz'}</span>
             <ArrowRight size={18} />
           </a>
           <a
@@ -64,7 +64,7 @@ export default function HomePage({ user = null }) {
 
       {/* Minimal Footer */}
       <footer className="pt-6 border-t border-[#d8d3ca] text-center text-xs text-[#77736c] flex flex-wrap justify-between items-center gap-4">
-        <span className="font-hand text-xl text-[#191817]">Koozy — Classroom Learning Play</span>
+        <span className="font-hand text-xl text-[#191817]">Koozy — Live Learning Play</span>
         <span>Built for fast, interactive multiplayer quizzes.</span>
       </footer>
     </div>

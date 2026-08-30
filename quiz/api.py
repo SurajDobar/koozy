@@ -3,18 +3,21 @@ Koozy REST API — used by the React multiplayer game UI.
 
 Endpoints
 ---------
+GET  /api/auth/me/                     → current authenticated host profile info
 GET  /api/sessions/<pin>/state/       → session status, global timer, questions (all unlocked), and participant state
 POST /api/sessions/<pin>/submit/      → batch submit complete quiz answers at once
 POST /api/sessions/<pin>/answer/      → single question answer (backward-compatible)
 POST /api/sessions/<pin>/start/       → host starts the entire quiz
 POST /api/sessions/<pin>/end/         → host ends the quiz early
 POST /api/sessions/<pin>/kick/        → host removes a participant
+POST /api/sessions/<pin>/admit/       → host admits a participant
 GET  /api/sessions/<pin>/leaderboard/ → ranked participant list
 GET  /api/sessions/<pin>/result/      → full results for requesting participant
 GET  /api/sessions/<pin>/host-result/ → full host leaderboard
 """
 
 import json
+import secrets
 
 from django.db import IntegrityError, transaction
 from django.db.models import F
@@ -24,7 +27,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import AnswerSubmission, LiveSession, Participant, Question, Quiz
+from .models import AnswerSubmission, HostProfile, LiveSession, Participant, Question, Quiz
 from .realtime import (
     maybe_close_question,
     maybe_complete_quiz,
@@ -38,6 +41,31 @@ from .realtime import (
 
 POINTS_CORRECT = 1000
 POINTS_INCORRECT = 0
+
+
+# ---------------------------------------------------------------------------
+# Auth state helper
+# ---------------------------------------------------------------------------
+
+@api_view(["GET"])
+def api_auth_me(request):
+    """Returns current host user and profile data."""
+    if not request.user.is_authenticated:
+        return Response({"is_authenticated": False, "user": None})
+
+    avatar_url = ""
+    profile = getattr(request.user, "host_profile", None)
+    if profile:
+        avatar_url = profile.avatar_url or ""
+
+    return Response({
+        "is_authenticated": True,
+        "user": {
+            "name": request.user.first_name or request.user.username,
+            "email": request.user.email,
+            "avatar_url": avatar_url,
+        }
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +130,7 @@ def session_state(request, game_pin):
         maybe_complete_quiz(ls)
         ls.refresh_from_db()
 
-    questions = list(ls.quiz.questions.order_by("id"))
+    questions = list(ls.quiz.questions.order_by("order", "id"))
     total = len(questions)
     participant = _get_participant(request, ls)
     current_q = ls.current_question()
@@ -148,6 +176,7 @@ def session_state(request, game_pin):
             ls.status == LiveSession.Status.COMPLETED
             or ls.current_question_closed
             or (participant is not None and participant.submitted_at is not None)
+            or (request.user.is_authenticated and ls.quiz.author_id == request.user.id)
         )
         questions_data = []
         for idx, q in enumerate(questions):
@@ -250,7 +279,6 @@ def submit_quiz_answers(request, game_pin):
             status=status.HTTP_403_FORBIDDEN,
         )
 
-    # Check if session exists and is either active or completed (allows grace for final auto-submits)
     if ls.status not in (LiveSession.Status.ACTIVE, LiveSession.Status.COMPLETED):
         return Response({"detail": "Quiz is not active or completed."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -342,7 +370,6 @@ def submit_answer(request, game_pin):
             status=status.HTTP_403_FORBIDDEN,
         )
 
-    # Check for batch answers dict
     if "answers" in request.data:
         return submit_quiz_answers(request, game_pin)
 
@@ -396,15 +423,18 @@ def submit_answer(request, game_pin):
 
 
 # ---------------------------------------------------------------------------
-# Host Session Controls (Start, End, Kick)
+# Host Session Controls (Start, End, Kick, Admit) — Authenticated Host Only
 # ---------------------------------------------------------------------------
 
 @api_view(["POST"])
 def host_start_quiz(request, game_pin):
     """Host starts the quiz for everyone."""
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper()).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
     if ls is None:
-        return Response({"detail": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
     if ls.status == LiveSession.Status.WAITING:
         if not ls.can_start():
@@ -432,9 +462,12 @@ def host_start_quiz(request, game_pin):
 @api_view(["POST"])
 def host_end_quiz(request, game_pin):
     """Host manually ends the quiz."""
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper()).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
     if ls is None:
-        return Response({"detail": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
     if ls.status == LiveSession.Status.ACTIVE:
         ls.status = LiveSession.Status.COMPLETED
@@ -449,9 +482,12 @@ def host_end_quiz(request, game_pin):
 @api_view(["POST"])
 def host_kick_participant(request, game_pin):
     """Host removes a participant from the session."""
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper()).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
     if ls is None:
-        return Response({"detail": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
     participant_id = request.data.get("participant_id")
     if not participant_id:
@@ -471,9 +507,12 @@ def host_kick_participant(request, game_pin):
 @api_view(["POST"])
 def host_admit_participant(request, game_pin):
     """Host admits a waiting/late participant into the live quiz."""
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper()).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
     if ls is None:
-        return Response({"detail": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
     participant_id = request.data.get("participant_id")
     if not participant_id:
@@ -536,7 +575,7 @@ def participant_result(request, game_pin):
             "message": "Quiz is in progress. Results and standings will be revealed when the session completes.",
         })
 
-    questions = list(ls.quiz.questions.order_by("id"))
+    questions = list(ls.quiz.questions.order_by("order", "id"))
     total = len(questions)
     submissions = {
         s.question_id: s
@@ -565,7 +604,6 @@ def participant_result(request, game_pin):
             }
         )
 
-    # Rank calculated against all admitted participants
     ranked = list(
         ls.participants.filter(is_kicked=False, is_admitted=True)
         .order_by("-score", "submitted_at", "joined_at")
@@ -591,12 +629,15 @@ def participant_result(request, game_pin):
 @api_view(["GET"])
 def host_result(request, game_pin):
     """Returns full participant leaderboard and answers for the host results screen."""
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper()).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
     if ls is None:
-        return Response({"detail": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
     leaderboard_data = _leaderboard_data(ls)
-    questions = list(ls.quiz.questions.order_by("id"))
+    questions = list(ls.quiz.questions.order_by("order", "id"))
     total_q = len(questions)
 
     for entry in leaderboard_data:
@@ -614,21 +655,15 @@ def host_result(request, game_pin):
 
 
 # ---------------------------------------------------------------------------
-# Quiz Authoring & Library REST APIs
+# Quiz Authoring & Library REST APIs (Strict Host Ownership)
 # ---------------------------------------------------------------------------
 
 @api_view(["GET"])
 def api_host_quizzes(request):
-    host_quiz_ids = request.session.get("host_quiz_ids")
-    if host_quiz_ids is None:
-        host_quiz_ids = list(Quiz.objects.values_list("id", flat=True))
-        request.session["host_quiz_ids"] = host_quiz_ids
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    quizzes = Quiz.objects.filter(id__in=host_quiz_ids).order_by("-id")
-    if not quizzes.exists() and Quiz.objects.exists():
-        quizzes = Quiz.objects.all().order_by("-id")
-        request.session["host_quiz_ids"] = list(quizzes.values_list("id", flat=True))
-
+    quizzes = Quiz.objects.filter(author=request.user).order_by("-id")
     data = []
     for q in quizzes:
         data.append({
@@ -645,6 +680,9 @@ def api_host_quizzes(request):
 
 @api_view(["POST"])
 def api_create_quiz(request):
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
     title = (request.data.get("title") or "").strip()
     if not title:
         return Response({"detail": "Title is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -659,9 +697,8 @@ def api_create_quiz(request):
         category=category,
         difficulty=difficulty,
         time_limit=time_limit,
+        author=request.user,
     )
-    host_quiz_ids = request.session.get("host_quiz_ids", [])
-    request.session["host_quiz_ids"] = [*host_quiz_ids, quiz.id]
 
     return Response({
         "id": quiz.id,
@@ -674,22 +711,26 @@ def api_create_quiz(request):
     }, status=status.HTTP_201_CREATED)
 
 
-@api_view(["POST"])
+@api_view(["POST", "DELETE"])
 def api_delete_quiz(request, quiz_id):
-    host_quiz_ids = request.session.get("host_quiz_ids", [])
-    quiz = Quiz.objects.filter(id=quiz_id).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    quiz = Quiz.objects.filter(id=quiz_id, author=request.user).first()
     if quiz is None:
-        return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Quiz not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
     quiz.delete()
-    request.session["host_quiz_ids"] = [qid for qid in host_quiz_ids if qid != quiz_id]
     return Response({"deleted": True})
 
 
 @api_view(["GET"])
 def api_quiz_detail(request, quiz_id):
-    quiz = Quiz.objects.filter(id=quiz_id).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    quiz = Quiz.objects.filter(id=quiz_id, author=request.user).first()
     if quiz is None:
-        return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Quiz not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
     questions = [
         {
@@ -701,8 +742,9 @@ def api_quiz_detail(request, quiz_id):
             "option_d": q.option_d,
             "correct_answer": q.correct_answer,
             "time_limit": q.time_limit,
+            "order": q.order,
         }
-        for q in quiz.questions.order_by("id")
+        for q in quiz.questions.order_by("order", "id")
     ]
 
     return Response({
@@ -721,13 +763,12 @@ def api_quiz_detail(request, quiz_id):
 
 @api_view(["POST"])
 def api_add_question(request, quiz_id):
-    quiz = Quiz.objects.filter(id=quiz_id).first()
-    if quiz is None:
-        return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    host_quiz_ids = request.session.get("host_quiz_ids", [])
-    if quiz.id not in host_quiz_ids:
-        request.session["host_quiz_ids"] = [*host_quiz_ids, quiz.id]
+    quiz = Quiz.objects.filter(id=quiz_id, author=request.user).first()
+    if quiz is None:
+        return Response({"detail": "Quiz not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
     text = (request.data.get("question_text") or "").strip()
     opt_a = (request.data.get("option_a") or "").strip()
@@ -743,6 +784,8 @@ def api_add_question(request, quiz_id):
     if correct not in ("a", "b", "c", "d"):
         return Response({"detail": "Correct answer must be one of: 'a', 'b', 'c', or 'd'."}, status=status.HTTP_400_BAD_REQUEST)
 
+    next_order = (quiz.questions.order_by("-order").values_list("order", flat=True).first() or 0) + 1
+
     q = Question.objects.create(
         quiz=quiz,
         question_text=text,
@@ -752,6 +795,7 @@ def api_add_question(request, quiz_id):
         option_d=opt_d,
         correct_answer=correct,
         time_limit=time_limit,
+        order=next_order,
     )
 
     return Response({
@@ -764,15 +808,19 @@ def api_add_question(request, quiz_id):
             "option_d": q.option_d,
             "correct_answer": q.correct_answer,
             "time_limit": q.time_limit,
+            "order": q.order,
         }
     }, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST", "DELETE"])
 def api_delete_question(request, quiz_id, question_id):
-    quiz = Quiz.objects.filter(id=quiz_id).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    quiz = Quiz.objects.filter(id=quiz_id, author=request.user).first()
     if quiz is None:
-        return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Quiz not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
     q = Question.objects.filter(id=question_id, quiz=quiz).first()
     if q is None:
         return Response({"detail": "Question not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -782,29 +830,22 @@ def api_delete_question(request, quiz_id, question_id):
 
 @api_view(["POST"])
 def api_create_live_session(request, quiz_id):
-    quiz = Quiz.objects.filter(id=quiz_id).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    quiz = Quiz.objects.filter(id=quiz_id, author=request.user).first()
     if quiz is None:
-        return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Quiz not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
-    host = request.user if request.user.is_authenticated else None
-
-    # Single active session per teacher: complete any prior active/waiting sessions
-    if host:
-        LiveSession.objects.filter(
-            host=host,
-            status__in=[LiveSession.Status.WAITING, LiveSession.Status.ACTIVE]
-        ).update(status=LiveSession.Status.COMPLETED, ended_at=timezone.now())
-
-    host_quiz_ids = request.session.get("host_quiz_ids")
-    if host_quiz_ids is None:
-        host_quiz_ids = list(Quiz.objects.values_list("id", flat=True))
-    if quiz.id not in host_quiz_ids:
-        host_quiz_ids = [*host_quiz_ids, quiz.id]
-    request.session["host_quiz_ids"] = host_quiz_ids
+    # Complete prior active/waiting sessions for this host
+    LiveSession.objects.filter(
+        host=request.user,
+        status__in=[LiveSession.Status.WAITING, LiveSession.Status.ACTIVE]
+    ).update(status=LiveSession.Status.COMPLETED, ended_at=timezone.now())
 
     ls = LiveSession.objects.create(
         quiz=quiz,
-        host=host,
+        host=request.user,
         total_time_limit=getattr(quiz, "time_limit", 300) or 300,
     )
     return Response({
@@ -815,7 +856,7 @@ def api_create_live_session(request, quiz_id):
 
 @api_view(["POST"])
 def api_join_game(request):
-    import secrets
+    """Participant join endpoint — public guest-based."""
     pin = (request.data.get("game_pin") or "").upper().strip()
     name = (request.data.get("display_name") or "").strip()
 
@@ -851,7 +892,6 @@ def api_join_game(request):
         )
         return res
 
-    # Late join admission flow: WAITING = admitted immediately; ACTIVE = pending admission
     is_admitted = (ls.status == LiveSession.Status.WAITING)
 
     p = Participant.objects.create(
@@ -879,17 +919,20 @@ def api_join_game(request):
 
 
 # ---------------------------------------------------------------------------
-# JSON Export, JSON Import & Question Reordering
+# JSON Export, JSON Import & Question Reordering (Host Owned)
 # ---------------------------------------------------------------------------
 
 @api_view(["GET"])
 def api_export_quiz(request, quiz_id):
-    """Export a quiz and its questions to standard Koozy JSON format (always pure JSON response)."""
-    quiz = Quiz.objects.filter(id=quiz_id).first()
-    if quiz is None:
-        return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+    """Export a quiz and its questions to standard Koozy JSON format."""
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    questions = quiz.questions.all()
+    quiz = Quiz.objects.filter(id=quiz_id, author=request.user).first()
+    if quiz is None:
+        return Response({"detail": "Quiz not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
+
+    questions = quiz.questions.all().order_by("order", "id")
     data = {
         "title": quiz.title,
         "description": quiz.description,
@@ -920,7 +963,9 @@ def api_export_quiz(request, quiz_id):
 @api_view(["POST"])
 def api_import_quiz(request):
     """Import a quiz from JSON payload or uploaded .json file."""
-    import json
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
     data = request.data
     if not isinstance(data, dict):
         try:
@@ -984,21 +1029,16 @@ def api_import_quiz(request):
         })
 
     with transaction.atomic():
-        author = request.user if request.user.is_authenticated else None
         quiz = Quiz.objects.create(
             title=title,
             description=(data.get("description") or "").strip(),
             category=(data.get("category") or "General").strip(),
             difficulty=(data.get("difficulty") or "easy").strip(),
             time_limit=int(data.get("time_limit") or 300),
-            author=author,
+            author=request.user,
         )
         for vq in validated_questions:
             Question.objects.create(quiz=quiz, **vq)
-
-        if not request.user.is_authenticated:
-            quiz_ids = request.session.get("host_quiz_ids") or []
-            request.session["host_quiz_ids"] = [*quiz_ids, quiz.id]
 
     return Response({
         "id": quiz.id,
@@ -1011,9 +1051,12 @@ def api_import_quiz(request):
 @api_view(["POST"])
 def api_reorder_questions(request, quiz_id):
     """Update question display ordering for a quiz."""
-    quiz = Quiz.objects.filter(id=quiz_id).first()
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    quiz = Quiz.objects.filter(id=quiz_id, author=request.user).first()
     if quiz is None:
-        return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Quiz not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
     question_ids = request.data.get("question_ids")
     if not isinstance(question_ids, list):
@@ -1024,5 +1067,3 @@ def api_reorder_questions(request, quiz_id):
             Question.objects.filter(id=q_id, quiz=quiz).update(order=order)
 
     return Response({"reordered": True, "question_ids": question_ids})
-
-

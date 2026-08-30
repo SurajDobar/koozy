@@ -1,49 +1,48 @@
 import json
+import logging
 import secrets
-from django.db.models import Count
-from django.http import HttpResponseNotAllowed
+from django.conf import settings
+from django.contrib.auth import login, logout
+from django.db.models import Count, Q
+from django.http import HttpResponseNotAllowed, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
 from .forms import GamePinForm, ParticipantJoinForm, QuestionForm, QuizForm
-from .models import AnswerSubmission, LiveSession, Participant, Question, Quiz
+from .models import AnswerSubmission, HostProfile, LiveSession, Participant, Question, Quiz
+from .oauth import (
+    build_google_authorization_url,
+    exchange_code_and_get_userinfo,
+    get_or_create_google_host_user,
+)
 from .realtime import (
     maybe_close_question,
     publish_answer_closed,
     publish_lobby_state,
-    publish_question_start,
     publish_quiz_complete,
     publish_quiz_start,
 )
 
+logger = logging.getLogger(__name__)
 
-from django.contrib.auth import login, logout
-from django.contrib.auth.models import User
-from django.db.models import Count, Q
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-def _host_quiz_ids(request):
-    if request.user.is_authenticated:
-        return list(
-            Quiz.objects.filter(Q(author=request.user) | Q(author__isnull=True)).values_list("id", flat=True)
-        )
-    host_quiz_ids = request.session.get("host_quiz_ids")
-    if host_quiz_ids is None:
-        host_quiz_ids = request.session.pop("teacher_quiz_ids", None)
-        if host_quiz_ids is None:
-            host_quiz_ids = list(Quiz.objects.values_list("id", flat=True))
-        request.session["host_quiz_ids"] = host_quiz_ids
-    return host_quiz_ids
-
-
-def _host_live_session(request, session_id):
-    session = get_object_or_404(LiveSession, id=session_id)
-    host_quiz_ids = _host_quiz_ids(request)
-    if session.quiz_id not in host_quiz_ids:
-        request.session["host_quiz_ids"] = [*host_quiz_ids, session.quiz_id]
-    return session
+def _host_user_data(user):
+    """Serialize authenticated host user for React hydration."""
+    if not user or not user.is_authenticated:
+        return None
+    avatar_url = ""
+    profile = getattr(user, "host_profile", None)
+    if profile:
+        avatar_url = profile.avatar_url or ""
+    return {
+        "is_authenticated": True,
+        "name": user.first_name or user.username,
+        "email": user.email,
+        "avatar_url": avatar_url,
+    }
 
 
 def _participant_cookie_name(live_session):
@@ -72,35 +71,93 @@ def _set_participant_cookie(response, live_session, participant):
     )
 
 
-# ── Teacher Authentication ───────────────────────────────────────────────────
+# ── Host Authentication ───────────────────────────────────────────────────────
 
 def auth_login_view(request):
     if request.user.is_authenticated:
         return redirect("host_quiz_list")
+    client_id = getattr(settings, "GOOGLE_CLIENT_ID", "").strip()
+    error = request.GET.get("error", "")
     config = {
         "page": "login",
+        "google_configured": bool(client_id),
+        "error": error,
     }
     return render(
         request,
         "quiz/app.html",
         {
             "config_json": json.dumps(config),
-            "page_title": "Teacher Sign In — Koozy",
+            "page_title": "Host Sign In — Koozy",
         },
     )
 
 
 def auth_google_login(request):
     """
-    Teacher Google Sign-In handler / callback.
-    Authenticates or creates a User instance and establishes session.
+    Initiate Google OAuth 2.0 flow.
     """
-    email = (request.GET.get("email") or request.POST.get("email") or "teacher@koozy.edu").strip().lower()
-    name = (request.GET.get("name") or request.POST.get("name") or "Teacher").strip()
-    
-    user, _ = User.objects.get_or_create(username=email, defaults={"email": email, "first_name": name})
-    login(request, user)
-    return redirect("host_quiz_list")
+    if request.user.is_authenticated:
+        return redirect("host_quiz_list")
+
+    # In dev or test environments when mock params are explicitly provided in test
+    if settings.DEBUG:
+        mock_email = request.GET.get("mock_email")
+        if mock_email:
+            user = get_or_create_google_host_user({
+                "email": mock_email,
+                "name": request.GET.get("mock_name", "Host"),
+                "sub": f"mock-{mock_email}",
+                "picture": request.GET.get("mock_picture", ""),
+            })
+            login(request, user)
+            return redirect("host_quiz_list")
+
+    try:
+        auth_url = build_google_authorization_url(request)
+        return redirect(auth_url)
+    except ValueError as e:
+        config = {
+            "page": "login",
+            "error": str(e),
+            "google_configured": False,
+        }
+        return render(
+            request,
+            "quiz/app.html",
+            {
+                "config_json": json.dumps(config),
+                "page_title": "Configuration Required — Koozy",
+            },
+            status=200 if settings.DEBUG else 500,
+        )
+
+
+def auth_google_callback(request):
+    """
+    Google OAuth 2.0 callback endpoint.
+    Exchanges code for tokens, retrieves profile, and authenticates Django User.
+    """
+    error = request.GET.get("error")
+    if error:
+        return redirect(f"{reverse('auth_login_view')}?error={error}")
+
+    code = request.GET.get("code")
+    state = request.GET.get("state")
+    if not code or not state:
+        return redirect(f"{reverse('auth_login_view')}?error=missing_code_or_state")
+
+    try:
+        userinfo = exchange_code_and_get_userinfo(request, code, state)
+        user = get_or_create_google_host_user(userinfo)
+        login(request, user)
+        # Clear OAuth state from session
+        request.session.pop("oauth_state", None)
+        request.session.pop("oauth_code_verifier", None)
+        return redirect("host_quiz_list")
+    except Exception as e:
+        logger.error("OAuth callback error: %s", str(e), exc_info=True)
+        return redirect(f"{reverse('auth_login_view')}?error=oauth_failed")
 
 
 def auth_logout_view(request):
@@ -113,10 +170,7 @@ def auth_logout_view(request):
 def home(request):
     config = {
         "page": "home",
-        "user": {
-            "is_authenticated": request.user.is_authenticated,
-            "name": request.user.first_name or request.user.username,
-        } if request.user.is_authenticated else None,
+        "user": _host_user_data(request.user),
     }
     return render(
         request,
@@ -136,30 +190,22 @@ def quiz_list(request):
     return redirect("host_quiz_list")
 
 
-# ── Host workspace (authoring) ────────────────────────────────────────────────
+# ── Host workspace (authoring & ownership) ───────────────────────────────────
 
 def host_quiz_list(request):
-    if request.user.is_authenticated:
-        quizzes = list(
-            Quiz.objects.filter(Q(author=request.user) | Q(author__isnull=True))
-            .annotate(question_count=Count("questions"))
-            .values("id", "title", "description", "category", "difficulty", "time_limit", "question_count")
-        )
-    else:
-        quizzes = list(
-            Quiz.objects.filter(id__in=_host_quiz_ids(request))
-            .annotate(question_count=Count("questions"))
-            .values("id", "title", "description", "category", "difficulty", "time_limit", "question_count")
-        )
+    if not request.user.is_authenticated:
+        return redirect("auth_login_view")
+
+    quizzes = list(
+        Quiz.objects.filter(author=request.user)
+        .annotate(question_count=Count("questions"))
+        .values("id", "title", "description", "category", "difficulty", "time_limit", "question_count")
+    )
 
     config = {
         "page": "host_quiz_list",
         "quizzes": quizzes,
-        "user": {
-            "is_authenticated": request.user.is_authenticated,
-            "name": request.user.first_name or request.user.username if request.user.is_authenticated else None,
-            "email": request.user.email if request.user.is_authenticated else None,
-        } if request.user.is_authenticated else None,
+        "user": _host_user_data(request.user),
     }
     return render(
         request,
@@ -167,28 +213,25 @@ def host_quiz_list(request):
         {
             "config_json": json.dumps(config),
             "quizzes": quizzes,
-            "page_title": "Teacher Dashboard — Koozy",
+            "page_title": "Host Dashboard — Koozy",
         },
     )
 
 
 def create_quiz(request):
+    if not request.user.is_authenticated:
+        return redirect("auth_login_view")
+
     form = QuizForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         quiz = form.save(commit=False)
-        if request.user.is_authenticated:
-            quiz.author = request.user
+        quiz.author = request.user
         quiz.save()
-        quiz_ids = _host_quiz_ids(request)
-        request.session["host_quiz_ids"] = [*quiz_ids, quiz.id]
         return redirect("add_question", quiz_id=quiz.id)
 
     config = {
         "page": "create_quiz",
-        "user": {
-            "is_authenticated": request.user.is_authenticated,
-            "name": request.user.first_name or request.user.username if request.user.is_authenticated else None,
-        } if request.user.is_authenticated else None,
+        "user": _host_user_data(request.user),
     }
     return render(
         request,
@@ -202,7 +245,10 @@ def create_quiz(request):
 
 
 def add_question(request, quiz_id):
-    quiz = get_object_or_404(Quiz, id=quiz_id, id__in=_host_quiz_ids(request))
+    if not request.user.is_authenticated:
+        return redirect("auth_login_view")
+
+    quiz = get_object_or_404(Quiz, id=quiz_id, author=request.user)
     form = QuestionForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         question = form.save(commit=False)
@@ -211,13 +257,14 @@ def add_question(request, quiz_id):
         return redirect("add_question", quiz_id=quiz.id)
 
     questions = list(
-        quiz.questions.order_by("id").values(
-            "id", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_answer", "time_limit"
+        quiz.questions.order_by("order", "id").values(
+            "id", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_answer", "time_limit", "order"
         )
     )
     config = {
         "page": "add_question",
         "quizId": quiz.id,
+        "user": _host_user_data(request.user),
         "quiz": {
             "id": quiz.id,
             "title": quiz.title,
@@ -245,7 +292,9 @@ def add_question(request, quiz_id):
 def delete_question(request, quiz_id, question_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-    quiz = get_object_or_404(Quiz, id=quiz_id, id__in=_host_quiz_ids(request))
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Authentication required")
+    quiz = get_object_or_404(Quiz, id=quiz_id, author=request.user)
     question = get_object_or_404(Question, id=question_id, quiz=quiz)
     question.delete()
     return redirect("add_question", quiz_id=quiz.id)
@@ -254,10 +303,10 @@ def delete_question(request, quiz_id, question_id):
 def delete_quiz(request, quiz_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-    quiz = get_object_or_404(Quiz, id=quiz_id, id__in=_host_quiz_ids(request))
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Authentication required")
+    quiz = get_object_or_404(Quiz, id=quiz_id, author=request.user)
     quiz.delete()
-    quiz_ids = [qid for qid in _host_quiz_ids(request) if qid != quiz_id]
-    request.session["host_quiz_ids"] = quiz_ids
     return redirect("host_quiz_list")
 
 
@@ -266,21 +315,35 @@ def delete_quiz(request, quiz_id):
 def create_live_session(request, quiz_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-    quiz = get_object_or_404(Quiz, id=quiz_id, id__in=_host_quiz_ids(request))
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Authentication required")
+
+    quiz = get_object_or_404(Quiz, id=quiz_id, author=request.user)
+    # End previous active/waiting sessions for this host
+    LiveSession.objects.filter(
+        host=request.user,
+        status__in=[LiveSession.Status.WAITING, LiveSession.Status.ACTIVE]
+    ).update(status=LiveSession.Status.COMPLETED, ended_at=timezone.now())
+
     live_session = LiveSession.objects.create(
         quiz=quiz,
+        host=request.user,
         total_time_limit=getattr(quiz, "time_limit", 300) or 300,
     )
     return redirect("host_lobby", session_id=live_session.id)
 
 
 def host_lobby(request, session_id):
-    live_session = _host_live_session(request, session_id)
+    if not request.user.is_authenticated:
+        return redirect("auth_login_view")
+
+    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
     config = {
         "page": "host_session",
         "gamePin": live_session.game_pin,
         "isHost": True,
         "sessionId": live_session.id,
+        "user": _host_user_data(request.user),
     }
     return render(
         request,
@@ -297,7 +360,10 @@ def host_lobby(request, session_id):
 def start_live_session(request, session_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-    live_session = _host_live_session(request, session_id)
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Authentication required")
+
+    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
     if (
         live_session.status == LiveSession.Status.WAITING
         and live_session.can_start()
@@ -318,11 +384,14 @@ def start_live_session(request, session_id):
 def host_next_question(request, session_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-    live_session = _host_live_session(request, session_id)
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Authentication required")
+
+    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
     if live_session.status != LiveSession.Status.ACTIVE:
         return redirect("host_lobby", session_id=live_session.id)
 
-    questions = list(live_session.quiz.questions.order_by("id"))
+    questions = list(live_session.quiz.questions.order_by("order", "id"))
     next_index = live_session.current_question_index + 1
 
     if next_index >= len(questions):
@@ -343,7 +412,10 @@ def host_next_question(request, session_id):
 def host_close_question(request, session_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-    live_session = _host_live_session(request, session_id)
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Authentication required")
+
+    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
     if live_session.status == LiveSession.Status.ACTIVE and not live_session.current_question_closed:
         live_session.current_question_closed = True
         live_session.save(update_fields=["current_question_closed"])
@@ -352,12 +424,16 @@ def host_close_question(request, session_id):
 
 
 def host_result_page(request, session_id):
-    live_session = _host_live_session(request, session_id)
+    if not request.user.is_authenticated:
+        return redirect("auth_login_view")
+
+    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
     config = {
         "page": "host_session",
         "gamePin": live_session.game_pin,
         "isHost": True,
         "sessionId": live_session.id,
+        "user": _host_user_data(request.user),
     }
     return render(
         request,
@@ -509,7 +585,6 @@ def participant_result_page(request, game_pin):
 
     # Only allow results after the session is completed
     if live_session.status != LiveSession.Status.COMPLETED:
-        # Redirect participants back to the lobby if the quiz is still in progress
         return redirect('participant_lobby', game_pin=live_session.game_pin)
 
     config = {

@@ -25,6 +25,7 @@ build/
 # Local database
 db.sqlite3
 db.sqlite3-journal
+*.backup
 
 # Django generated files
 *.log
