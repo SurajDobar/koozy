@@ -5,8 +5,8 @@
 [![Gemini](https://img.shields.io/badge/Gemini-AI-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
 [![WebSockets](https://img.shields.io/badge/WebSockets-Realtime-black?logo=socketdotio&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 
+[![Koozy Demo](https://img.youtube.com/vi/vlDssxNcjaU/maxresdefault.jpg)](https://youtu.be/vlDssxNcjaU)
 
-<video src="public/Koozy.mp4" controls autoplay width="100%"></video>
 
 ---
 
