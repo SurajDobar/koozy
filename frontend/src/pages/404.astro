@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Page Not Found — Koozy"
+  description="The requested page could not be found."
+  noindex={true}
+>
+  <div class="max-w-4xl mx-auto px-6 py-8 min-h-[90vh] flex flex-col justify-between">
+    <nav class="flex justify-between items-center pb-6 border-b border-[#d8d3ca]">
+      <a
+        href="/"
+        class="font-hand text-4xl text-[#191817] hover:text-[#6c4de8] transition-colors -rotate-2 select-none"
+      >
+        Koozy
+      </a>
+      <a
+        href="/"
+        class="kz-btn-secondary px-4 py-2 rounded-xl text-xs font-bold"
+      >
+        Home
+      </a>
+    </nav>
+
+    <div class="my-auto flex flex-col items-center justify-center text-center p-4">
+      <div class="inline-block font-hand text-3xl text-[#6c4de8] -rotate-2 mb-2 select-none">
+        lost in the chaos? ✦
+      </div>
+
+      <div class="kz-card p-8 md:p-10 max-w-md w-full bg-[#fffdf7] border-2 border-[#191817] shadow-[4px_4px_0_#191817] rounded-3xl">
+        <h1 class="text-6xl font-black text-[#191817] mb-2 tracking-tight">
+          404
+        </h1>
+        <h2 class="text-xl font-bold text-[#191817] mb-2">
+          Page Not Found
+        </h2>
+        <p class="text-sm text-[#77736c] mb-6">
+          The page you are looking for does not exist or has moved.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a
+            href="/"
+            class="kz-btn-primary px-6 py-2.5 rounded-xl font-bold text-sm block"
+          >
+            Back to Home
+          </a>
+          <a
+            href="/join/"
+            class="kz-btn-secondary px-6 py-2.5 rounded-xl font-bold text-sm block"
+          >
+            Join a Quiz
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <footer class="pt-6 border-t border-[#d8d3ca] text-center text-xs text-[#77736c]">
+      Koozy — Live Learning Play
+    </footer>
+  </div>
+</BaseLayout>

@@ -3,10 +3,31 @@ import { LogOut, BookOpen, PlusCircle, CheckCircle2, ShieldCheck } from 'lucide-
 
 export default function UserProfileBadge({ user = null }) {
   const config = typeof window !== 'undefined' ? (window.__KOOZY_CONFIG__ || {}) : {};
-  const activeUser = user || config.user || null;
+  const [activeUser, setActiveUser] = useState(user || config.user || null);
   const [isOpen, setIsOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Sync prop changes
+  useEffect(() => {
+    if (user) {
+      setActiveUser(user);
+    }
+  }, [user]);
+
+  // Gracefully hydrate auth state in Astro / static islands where config.user is not preloaded
+  useEffect(() => {
+    if (!user && !config.user && typeof window !== 'undefined') {
+      fetch('/api/auth/me/')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.is_authenticated && data.user) {
+            setActiveUser(data.user);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user, config.user]);
 
   // Close dropdown on click outside or escape key
   useEffect(() => {

@@ -1,0 +1,79 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+  ogType?: 'website' | 'article';
+  ogImage?: string;
+  schema?: Record<string, any>;
+}
+
+const {
+  title,
+  description = 'Koozy is an interactive, real-time multiplayer quiz and trivia platform with Google Gemini AI. Simple for hosts, fast for players.',
+  noindex = false,
+  ogType = 'website',
+  ogImage = '/apple-touch-icon.png',
+  schema,
+} = Astro.props;
+
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'http://localhost:4321').toString().replace(/\/$/, '');
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
+const fullTitle = title
+  ? title.includes('Koozy')
+    ? title
+    : `${title} — Koozy`
+  : 'Koozy — Make learning play';
+const resolvedOgImage = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
+---
+
+<!-- Core Metadata -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{fullTitle}</title>
+<meta name="title" content={fullTitle} />
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalUrl} />
+<meta name="theme-color" content="#6c4de8" />
+
+<!-- Robots Indexing Control -->
+{noindex ? (
+  <meta name="robots" content="noindex, nofollow" />
+) : (
+  <meta name="robots" content="index, follow" />
+)}
+
+<!-- OpenGraph / Social Cards -->
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={resolvedOgImage} />
+<meta property="og:site_name" content="Koozy" />
+
+<!-- Twitter Cards -->
+<meta property="twitter:card" content="summary" />
+<meta property="twitter:url" content={canonicalUrl} />
+<meta property="twitter:title" content={fullTitle} />
+<meta property="twitter:description" content={description} />
+<meta property="twitter:image" content={resolvedOgImage} />
+
+<!-- Favicon & Touch Icons -->
+<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Patrick+Hand&family=Roboto:wght@400;500;700&display=swap"
+  rel="stylesheet"
+/>
+
+<!-- Optional Schema.org JSON-LD -->
+{schema && (
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+)}

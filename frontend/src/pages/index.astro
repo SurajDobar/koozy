@@ -1,0 +1,124 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import UserProfileBadge from '../components/UserProfileBadge.jsx';
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Koozy',
+  description: 'Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players.',
+  applicationCategory: 'EducationalApplication',
+  operatingSystem: 'All',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+};
+---
+
+<BaseLayout
+  title="Koozy — Make learning play"
+  description="Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players."
+  noindex={false}
+  schema={schema}
+>
+  <div class="max-w-5xl mx-auto px-6 py-8 min-h-[90vh] flex flex-col justify-between">
+    <!-- Top Navbar -->
+    <header class="flex justify-between items-center pb-6 border-b border-[#d8d3ca]">
+      <a
+        href="/"
+        class="font-hand text-4xl text-[#191817] hover:text-[#6c4de8] transition-colors -rotate-2 select-none"
+      >
+        Koozy
+      </a>
+      <nav class="flex gap-3 sm:gap-4 items-center">
+        <a
+          href="/join/"
+          class="text-sm font-semibold text-[#191817] hover:text-[#6c4de8] transition-colors"
+        >
+          Join Room
+        </a>
+
+        <!-- Interactive Auth Profile Island -->
+        <UserProfileBadge client:load />
+      </nav>
+    </header>
+
+    <!-- Semantic Hero Section (Zero Client JS) -->
+    <main class="flex flex-col items-center justify-center text-center relative my-auto py-12 md:py-20">
+      <div class="hidden md:block absolute left-4 top-8 font-hand text-2xl text-[#77736c] -rotate-6 select-none">
+        learning doesn't have to be boring ✦
+      </div>
+      <div class="hidden md:block absolute right-6 bottom-8 font-hand text-2xl text-[#77736c] rotate-6 select-none">
+        ready? <span class="text-[#6c4de8]">→</span>
+      </div>
+
+      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
+        A little quiz, a lot of chaos.
+      </div>
+
+      <h1 class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-[#191817] max-w-4xl leading-[0.95] my-4">
+        Make learning <span class="font-hand text-[#6c4de8] font-normal">play.</span>
+      </h1>
+
+      <p class="text-[#77736c] text-base md:text-lg max-w-xl mx-auto mt-2 mb-10 leading-relaxed">
+        Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players.
+      </p>
+
+      <!-- Primary Action CTAs -->
+      <div class="flex flex-wrap gap-4 justify-center items-center">
+        <a
+          href="/host/quizzes/"
+          class="kz-btn-primary px-8 py-3.5 rounded-xl font-bold text-base flex items-center gap-2"
+        >
+          <span>Host a Quiz</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
+        </a>
+        <a
+          href="/join/"
+          class="kz-btn-secondary px-8 py-3.5 rounded-xl font-bold text-base flex items-center gap-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="text-[#6c4de8]"
+          >
+            <line x1="6" x2="10" y1="12" y2="12" />
+            <line x1="8" x2="8" y1="10" y2="14" />
+            <line x1="15" x2="15.01" y1="13" y2="13" />
+            <line x1="18" x2="18.01" y1="11" y2="11" />
+            <rect width="20" height="12" x="2" y="6" rx="6" />
+          </svg>
+          <span>Join a Quiz</span>
+        </a>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="pt-6 border-t border-[#d8d3ca] text-center text-xs text-[#77736c] flex flex-wrap justify-between items-center gap-4">
+      <span class="font-hand text-xl text-[#191817]">Koozy — Live Learning Play</span>
+      <span>Built for fast, interactive multiplayer quizzes.</span>
+    </footer>
+  </div>
+</BaseLayout>

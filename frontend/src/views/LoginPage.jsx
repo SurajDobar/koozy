@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { ArrowLeft, LogIn, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
-  const config = window.__KOOZY_CONFIG__ || {};
+  const config = typeof window !== 'undefined' ? (window.__KOOZY_CONFIG__ || {}) : {};
   const [loading, setLoading] = useState(false);
-  const queryParams = new URLSearchParams(window.location.search);
+  const search = typeof window !== 'undefined' ? window.location.search : '';
+  const queryParams = new URLSearchParams(search);
   const errorParam = queryParams.get('error') || config.error || '';
 
   const handleGoogleSignIn = () => {

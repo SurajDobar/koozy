@@ -5,7 +5,16 @@ import UserProfileBadge from '../components/UserProfileBadge';
 
 export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
   const [name, setName] = useState('');
-  const [pin, setPin] = useState(initialPin);
+  const [pin, setPin] = useState(() => {
+    if (initialPin) return initialPin;
+    if (typeof window !== 'undefined') {
+      const qp = new URLSearchParams(window.location.search).get('pin');
+      if (qp) return qp.toUpperCase();
+      const match = window.location.pathname.match(/\/join\/([A-Za-z0-9]{5})/i);
+      if (match) return match[1].toUpperCase();
+    }
+    return '';
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

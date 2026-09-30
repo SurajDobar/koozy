@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import HostCreateQuizPage from '../../../views/HostCreateQuizPage.jsx';
+---
+
+<BaseLayout
+  title="Create Quiz — Koozy"
+  description="Create a new multiplayer quiz or generate questions with Gemini AI."
+  noindex={true}
+>
+  <HostCreateQuizPage client:only="react" />
+</BaseLayout>

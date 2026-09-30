@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import HostQuizListPage from '../../../views/HostQuizListPage.jsx';
+---
+
+<BaseLayout
+  title="Host Quiz Library — Koozy"
+  description="Manage and host your interactive quizzes on Koozy."
+  noindex={true}
+>
+  <HostQuizListPage client:only="react" />
+</BaseLayout>
