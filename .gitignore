@@ -26,9 +26,13 @@ ENV/
 db.sqlite3
 db.sqlite3-journal
 *.backup
+backend/db.sqlite3
+backend/db.sqlite3-journal
+backend/*.backup
 
 # Django generated files
 *.log
+backend/*.log
 
 # =========================
 # Environment / Secrets
@@ -37,6 +41,9 @@ db.sqlite3-journal
 .env
 .env.*
 !.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
 
 # =========================
 # React / Vite / Node
@@ -58,7 +65,7 @@ frontend/dist/
 # Uncomment this if you don't want to commit
 # the generated React bundle.
 #
-# quiz/static/quiz/dist/
+# backend/quiz/static/quiz/dist/
 
 # =========================
 # IDE / Editors

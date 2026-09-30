@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   build: {
-    outDir: path.resolve(import.meta.dirname, '../quiz/static/quiz/dist'),
+    outDir: path.resolve(import.meta.dirname, '../backend/quiz/static/quiz/dist'),
     emptyOutDir: true,
     rollupOptions: {
       output: {

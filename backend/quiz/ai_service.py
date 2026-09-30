@@ -75,6 +75,8 @@ def get_host_ai_prompt_template() -> str:
     """Reads and returns the host-facing HOST_AI_PROMPT.md content."""
     base_dir = getattr(settings, "BASE_DIR", Path("."))
     prompt_file = base_dir / "AI_Agent_Rules" / "HOST_AI_PROMPT.md"
+    if not prompt_file.exists():
+        prompt_file = base_dir.parent / "AI_Agent_Rules" / "HOST_AI_PROMPT.md"
     if prompt_file.exists():
         try:
             return prompt_file.read_text(encoding="utf-8")
