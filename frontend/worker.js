@@ -2,7 +2,7 @@
  * Cloudflare Worker for Koozy (Frontend & Reverse Proxy).
  *
  * Serves Astro static assets from dist-astro via env.ASSETS.
- * Reverse-proxies dynamic requests (/api/*, /auth/google/*, /auth/logout*, /ws/*, /admin/*)
+ * Reverse-proxies dynamic requests (/api/*, /auth/google/*, /auth/logout*, /ws/*, /admin/*, /host/sessions/*)
  * to the Django + Daphne ASGI backend on Render.
  */
 
@@ -13,11 +13,12 @@ export default {
 
     // Backend route definitions matching Django & Daphne ASGI routes
     const isBackendRoute =
+      pathname === '/api' ||
       pathname.startsWith('/api/') ||
       pathname.startsWith('/auth/google') ||
-      pathname === '/auth/logout' ||
-      pathname === '/auth/logout/' ||
+      pathname.startsWith('/auth/logout') ||
       pathname.startsWith('/ws/') ||
+      pathname === '/admin' ||
       pathname.startsWith('/admin/') ||
       pathname.startsWith('/static/admin/') ||
       pathname.startsWith('/static/rest_framework/') ||
@@ -38,13 +39,78 @@ export default {
         return fetch(wsTarget.toString(), request);
       }
 
-      // Handle standard HTTP requests (API, OAuth, Admin)
-      const proxyReq = new Request(targetUrl.toString(), request);
-      proxyReq.headers.set('X-Forwarded-Host', url.host);
-      proxyReq.headers.set('X-Forwarded-Proto', url.protocol.replace(':', ''));
+      // 1. Forward request headers, stripping hop-by-hop headers
+      const forwardHeaders = new Headers();
+      for (const [key, value] of request.headers.entries()) {
+        const lowerKey = key.toLowerCase();
+        if (
+          lowerKey === 'host' ||
+          lowerKey === 'connection' ||
+          lowerKey === 'keep-alive' ||
+          lowerKey === 'transfer-encoding'
+        ) {
+          continue;
+        }
+        forwardHeaders.set(key, value);
+      }
 
-      // Use redirect: 'manual' so that 302 redirects (e.g. Google OAuth redirect) are returned to the browser
-      return fetch(proxyReq, { redirect: 'manual' });
+      // Add proxy identity headers for Django
+      forwardHeaders.set('X-Forwarded-Host', url.host);
+      forwardHeaders.set('X-Forwarded-Proto', url.protocol.replace(':', ''));
+
+      // 2. Safely buffer request body for methods that support bodies
+      let requestBody = null;
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        requestBody = await request.arrayBuffer();
+      }
+
+      const fetchInit = {
+        method: request.method,
+        headers: forwardHeaders,
+        redirect: 'manual',
+      };
+      if (requestBody && requestBody.byteLength > 0) {
+        fetchInit.body = requestBody;
+      }
+
+      // 3. Perform subrequest to Render backend
+      const backendResponse = await fetch(targetUrl.toString(), fetchInit);
+
+      // 4. Construct clean response headers
+      const responseHeaders = new Headers(backendResponse.headers);
+
+      // Remove hop-by-hop headers that trigger ERR_QUIC_PROTOCOL_ERROR / ERR_HTTP2_PROTOCOL_ERROR in browsers
+      responseHeaders.delete('connection');
+      responseHeaders.delete('keep-alive');
+      responseHeaders.delete('transfer-encoding');
+      responseHeaders.delete('proxy-connection');
+
+      // Preserve all Set-Cookie headers cleanly
+      if (typeof backendResponse.headers.getSetCookie === 'function') {
+        const cookies = backendResponse.headers.getSetCookie();
+        if (cookies && cookies.length > 0) {
+          responseHeaders.delete('Set-Cookie');
+          for (const cookie of cookies) {
+            responseHeaders.append('Set-Cookie', cookie);
+          }
+        }
+      }
+
+      // Rewrite Location header if backend redirected using its internal Render URL
+      const location = responseHeaders.get('Location');
+      if (location) {
+        if (location.startsWith(backendOrigin)) {
+          responseHeaders.set('Location', location.replace(backendOrigin, url.origin));
+        } else if (location.startsWith('http://koozy.live')) {
+          responseHeaders.set('Location', location.replace('http://koozy.live', 'https://koozy.live'));
+        }
+      }
+
+      return new Response(backendResponse.body, {
+        status: backendResponse.status,
+        statusText: backendResponse.statusText,
+        headers: responseHeaders,
+      });
     }
 
     // Serve Astro static pages and assets from ./dist-astro
