@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  site: process.env.PUBLIC_SITE_URL || 'http://localhost:4321',
+  site: process.env.PUBLIC_SITE_URL || 'https://koozy.live',
   integrations: [react()],
   outDir: './dist-astro',
   vite: {

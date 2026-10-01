@@ -17,7 +17,7 @@ const {
   schema,
 } = Astro.props;
 
-const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'http://localhost:4321').toString().replace(/\/$/, '');
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'https://koozy.live').toString().replace(/\/$/, '');
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
 const fullTitle = title
   ? title.includes('Koozy')

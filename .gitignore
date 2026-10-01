@@ -104,3 +104,7 @@ htmlcov/
 .freebuff/
 # Documentation / temporary design files
 documents/
+
+staticfiles/
+backend/staticfiles/
+frontend/dist-astro/
