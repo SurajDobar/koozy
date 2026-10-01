@@ -10,15 +10,5 @@
   },
   "vars": {
     "BACKEND_URL": "https://koozy-backend.onrender.com"
-  },
-  "routes": [
-    {
-      "pattern": "koozy.live",
-      "custom_domain": true
-    },
-    {
-      "pattern": "www.koozy.live",
-      "custom_domain": true
-    }
-  ]
+  }
 }
