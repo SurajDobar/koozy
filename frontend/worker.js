@@ -2,7 +2,7 @@
  * Cloudflare Worker for Koozy (Frontend & Reverse Proxy).
  *
  * Serves Astro static assets from dist-astro via env.ASSETS.
- * Reverse-proxies dynamic requests (/api/*, /auth/google/*, /auth/logout*, /ws/*, /admin/*, /host/sessions/*)
+ * Reverse-proxies dynamic requests (/api/*, /auth/google/*, /auth/logout*, /ws/*, /admin/*, /host/sessions/*, /static/*)
  * to the Django + Daphne ASGI backend on Render.
  */
 
@@ -20,8 +20,10 @@ export default {
       pathname.startsWith('/ws/') ||
       pathname === '/admin' ||
       pathname.startsWith('/admin/') ||
+      pathname.startsWith('/static/quiz/') ||
       pathname.startsWith('/static/admin/') ||
       pathname.startsWith('/static/rest_framework/') ||
+      pathname.startsWith('/static/') ||
       pathname.startsWith('/host/sessions/') ||
       pathname.startsWith('/dev/') ||
       /^\/host\/quizzes\/\d+\/questions(\/|$)/.test(pathname) ||
