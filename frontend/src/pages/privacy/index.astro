@@ -79,18 +79,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       <!-- Section 4 -->
       <section>
         <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
-          4. Cookies and Local Storage
+          4. Cookies and Measurement
         </h2>
         <p>
-          Koozy uses only strictly necessary cookies and browser storage required for core functionality:
+          Koozy uses cookies and browser storage strictly for core functionality and aggregated site performance measurement:
         </p>
         <ul class="list-disc list-inside mt-2 space-y-1">
           <li><code class="font-mono text-xs bg-[#f7f5ef] px-1 py-0.5 rounded">sessionid</code>: An encrypted cookie used to maintain authenticated host sessions.</li>
           <li><code class="font-mono text-xs bg-[#f7f5ef] px-1 py-0.5 rounded">csrftoken</code>: A standard security cookie used to protect against Cross-Site Request Forgery (CSRF).</li>
           <li><code class="font-mono text-xs bg-[#f7f5ef] px-1 py-0.5 rounded">sessionStorage</code>: Tab-scoped local browser storage used to preserve draft answers so players do not lose progress if they accidentally refresh during an active quiz.</li>
+          <li><code class="font-mono text-xs bg-[#f7f5ef] px-1 py-0.5 rounded">_ga</code>, <code class="font-mono text-xs bg-[#f7f5ef] px-1 py-0.5 rounded">_ga_*</code>: First-party measurement cookies set by Google Analytics 4 (GA4, Measurement ID <code class="font-mono text-xs bg-[#f7f5ef] px-1 py-0.5 rounded">G-11PGPW5EJY</code>) to measure aggregated visitor traffic and platform usage.</li>
         </ul>
         <p class="mt-2">
-          We do not use third-party advertising tracking cookies, analytics pixels, or cross-site tracking scripts.
+          Google Analytics collects pseudonymous traffic metrics (such as page views, browser type, and approximate geographic region) to help us optimize platform responsiveness and user experience. We do not use third-party advertising tracking cookies, sell personal data, or engage in cross-site behavioral ad profiling.
         </p>
       </section>
 

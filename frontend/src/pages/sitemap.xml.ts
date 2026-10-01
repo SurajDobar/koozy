@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = ({ site, url }) => {
-  const siteUrl = (import.meta.env.PUBLIC_SITE_URL || site || url.origin).toString().replace(/\/$/, '');
+  const siteUrl = (import.meta.env.PUBLIC_SITE_URL || site || 'https://koozy.live').toString().replace(/\/$/, '');
   const now = new Date().toISOString().split('T')[0];
 
   const publicRoutes = [

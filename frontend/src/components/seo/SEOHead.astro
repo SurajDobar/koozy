@@ -13,7 +13,7 @@ const {
   description = 'Koozy is an interactive, real-time multiplayer quiz and trivia platform with Google Gemini AI. Simple for hosts, fast for players.',
   noindex = false,
   ogType = 'website',
-  ogImage = '/apple-touch-icon.png',
+  ogImage = '/web-app-manifest-512x512.png',
   schema,
 } = Astro.props;
 
@@ -27,13 +27,22 @@ const fullTitle = title
 const resolvedOgImage = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
 ---
 
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-11PGPW5EJY"></script>
+<script is:inline>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-11PGPW5EJY');
+</script>
+
 <!-- Core Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{fullTitle}</title>
 <meta name="title" content={fullTitle} />
 <meta name="description" content={description} />
-<link rel="canonical" href={canonicalUrl} />
+{!noindex && <link rel="canonical" href={canonicalUrl} />}
 <meta name="theme-color" content="#6c4de8" />
 
 <!-- Robots Indexing Control -->
@@ -49,14 +58,16 @@ const resolvedOgImage = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogIm
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={resolvedOgImage} />
+<meta property="og:image:width" content="512" />
+<meta property="og:image:height" content="512" />
 <meta property="og:site_name" content="Koozy" />
 
-<!-- Twitter Cards -->
-<meta property="twitter:card" content="summary" />
-<meta property="twitter:url" content={canonicalUrl} />
-<meta property="twitter:title" content={fullTitle} />
-<meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={resolvedOgImage} />
+<!-- Twitter / X Cards -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalUrl} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={resolvedOgImage} />
 
 <!-- Favicon & Touch Icons -->
 <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
