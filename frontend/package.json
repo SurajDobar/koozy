@@ -9,6 +9,7 @@
     "astro:dev": "astro dev --port 4321",
     "astro:build": "astro build",
     "astro:preview": "astro preview",
+    "deploy": "wrangler deploy",
     "lint": "oxlint",
     "preview": "vite preview"
   },
