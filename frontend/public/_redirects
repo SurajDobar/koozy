@@ -1,7 +1,0 @@
-/api/* https://koozy-backend.onrender.com/api/:splat 200
-/auth/google/* https://koozy-backend.onrender.com/auth/google/:splat 200
-/auth/logout https://koozy-backend.onrender.com/auth/logout 200
-/admin/* https://koozy-backend.onrender.com/admin/:splat 200
-/static/* https://koozy-backend.onrender.com/static/:splat 200
-/host/sessions/* https://koozy-backend.onrender.com/host/sessions/:splat 200
-/dev/* https://koozy-backend.onrender.com/dev/:splat 200
