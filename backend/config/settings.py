@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
+
+IS_TESTING = 'test' in sys.argv or 'test_coverage' in sys.argv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -60,6 +63,9 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days persistent host session
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_DOMAIN = os.environ.get('SESSION_COOKIE_DOMAIN', None)
+if not SESSION_COOKIE_DOMAIN and not DEBUG and not IS_TESTING:
+    SESSION_COOKIE_DOMAIN = '.koozy.live'
 
 # CSRF and Trusted Origins Configuration
 csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', '').strip()
@@ -89,6 +95,9 @@ if DEBUG:
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False  # Allows frontend JS to read csrftoken for X-CSRFToken header
 CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_DOMAIN = os.environ.get('CSRF_COOKIE_DOMAIN', None)
+if not CSRF_COOKIE_DOMAIN and not DEBUG and not IS_TESTING:
+    CSRF_COOKIE_DOMAIN = '.koozy.live'
 
 # Support reverse proxies (e.g. Render / Cloudflare SSL termination)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -234,4 +243,4 @@ MAILERS = {
 
 # Google Gemini AI Quiz Generator Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()

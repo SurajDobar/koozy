@@ -2752,6 +2752,40 @@ class DuplicateParticipantNameTests(TestCase):
         self.assertEqual(part_b.display_name, "Aryan")
 
 
+class OAuthCookieAndGeminiConfigTests(TestCase):
+    def test_session_and_csrf_cookie_settings(self):
+        from django.conf import settings
+        self.assertEqual(settings.SESSION_COOKIE_AGE, 60 * 60 * 24 * 30)
+        self.assertTrue(settings.SESSION_COOKIE_HTTPONLY)
+        self.assertEqual(settings.SESSION_COOKIE_SAMESITE, "Lax")
+        self.assertEqual(settings.CSRF_COOKIE_SAMESITE, "Lax")
+
+    def test_gemini_active_models_configuration(self):
+        from django.conf import settings
+        from .ai_service import generate_quiz_with_gemini
+        self.assertIn(settings.GEMINI_MODEL, ("gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.7-flash"))
+
+    @patch("quiz.ai_service.requests.post")
+    def test_gemini_fallback_handles_503_and_404(self, mock_post):
+        from django.conf import settings
+        from .ai_service import generate_quiz_with_gemini
+
+        # First call 503 (high demand), second call 200 (success)
+        mock_503 = MagicMock()
+        mock_503.status_code = 503
+        mock_503.text = "High demand spike"
+
+        mock_200 = _mock_gemini_response(question_count=3, title="Fallback Success Quiz")
+
+        mock_post.side_effect = [mock_503, mock_200]
+
+        result = generate_quiz_with_gemini("Science Facts", 3)
+        self.assertEqual(result["title"], "Fallback Success Quiz")
+        self.assertEqual(len(result["questions"]), 3)
+        self.assertEqual(mock_post.call_count, 2)
+
+
+
 
 
 

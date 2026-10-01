@@ -54,6 +54,12 @@ export default {
         forwardHeaders.set(key, value);
       }
 
+      // Explicitly preserve client Cookie header
+      const clientCookie = request.headers.get('cookie');
+      if (clientCookie) {
+        forwardHeaders.set('cookie', clientCookie);
+      }
+
       // Add proxy identity headers for Django
       forwardHeaders.set('X-Forwarded-Host', url.host);
       forwardHeaders.set('X-Forwarded-Proto', url.protocol.replace(':', ''));
@@ -85,25 +91,51 @@ export default {
       responseHeaders.delete('transfer-encoding');
       responseHeaders.delete('proxy-connection');
 
-      // Preserve all Set-Cookie headers cleanly
+      // Preserve and sanitize all Set-Cookie headers cleanly
+      let setCookies = [];
       if (typeof backendResponse.headers.getSetCookie === 'function') {
-        const cookies = backendResponse.headers.getSetCookie();
-        if (cookies && cookies.length > 0) {
-          responseHeaders.delete('Set-Cookie');
-          for (const cookie of cookies) {
-            responseHeaders.append('Set-Cookie', cookie);
+        setCookies = backendResponse.headers.getSetCookie();
+      }
+      if ((!setCookies || setCookies.length === 0) && backendResponse.headers.has('set-cookie')) {
+        const raw = backendResponse.headers.get('set-cookie');
+        if (raw) setCookies = [raw];
+      }
+
+      if (setCookies && setCookies.length > 0) {
+        responseHeaders.delete('Set-Cookie');
+        for (const cookie of setCookies) {
+          // Strip any internal backend domain (.onrender.com) so the browser accepts the cookie
+          let sanitized = cookie.replace(/Domain=[^;]+;?\s*/gi, '').trim();
+
+          // Bind cookie to .koozy.live for production persistence across koozy.live and subdomains
+          if (url.hostname.includes('koozy.live')) {
+            sanitized = sanitized.replace(/;?\s*$/, '; Domain=.koozy.live');
           }
+          if (!/;\s*Path=/i.test(sanitized)) {
+            sanitized = sanitized.replace(/;?\s*$/, '; Path=/');
+          }
+          if (!/;\s*SameSite=/i.test(sanitized)) {
+            sanitized = sanitized.replace(/;?\s*$/, '; SameSite=Lax');
+          }
+          if (url.protocol === 'https:' && !/;\s*Secure/i.test(sanitized)) {
+            sanitized = sanitized.replace(/;?\s*$/, '; Secure');
+          }
+          responseHeaders.append('Set-Cookie', sanitized);
         }
       }
 
-      // Rewrite Location header if backend redirected using its internal Render URL
+      // Rewrite Location header if backend redirected using internal Render URL or plain HTTP
       const location = responseHeaders.get('Location');
       if (location) {
-        if (location.startsWith(backendOrigin)) {
-          responseHeaders.set('Location', location.replace(backendOrigin, url.origin));
-        } else if (location.startsWith('http://koozy.live')) {
-          responseHeaders.set('Location', location.replace('http://koozy.live', 'https://koozy.live'));
+        let rewrittenLocation = location;
+        if (rewrittenLocation.startsWith(backendOrigin)) {
+          rewrittenLocation = rewrittenLocation.replace(backendOrigin, url.origin);
+        } else if (/^https?:\/\/[^\/]*onrender\.com/i.test(rewrittenLocation)) {
+          rewrittenLocation = rewrittenLocation.replace(/^https?:\/\/[^\/]*onrender\.com/i, url.origin);
+        } else if (/^http:\/\/([^\/]*koozy\.live)/i.test(rewrittenLocation)) {
+          rewrittenLocation = rewrittenLocation.replace(/^http:\/\//i, 'https://');
         }
+        responseHeaders.set('Location', rewrittenLocation);
       }
 
       return new Response(backendResponse.body, {

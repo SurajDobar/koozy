@@ -241,9 +241,16 @@ def generate_quiz_with_gemini(prompt: str, question_count: int) -> dict:
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY is not configured on the server.")
 
-    configured_model = getattr(settings, "GEMINI_MODEL", "gemini-3.6-flash").strip() or "gemini-3.6-flash"
+    configured_model = getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash").strip() or "gemini-3.8-flash"
     candidate_models = [configured_model]
-    for fallback in ("gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-2.5-pro"):
+    for fallback in (
+        "gemini-3.8-flash",
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-flash-latest",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-lite-latest",
+    ):
         if fallback not in candidate_models:
             candidate_models.append(fallback)
 
@@ -296,9 +303,9 @@ def generate_quiz_with_gemini(prompt: str, question_count: int) -> dict:
             raise RuntimeError("Gemini AI rate limit reached. Please wait a moment and try again.")
         if response.status_code in (401, 403):
             raise RuntimeError("Gemini API key is invalid or unauthorized. Please verify your GEMINI_API_KEY in .env.")
-        if response.status_code == 404:
-            # Model not found on Google's API, try next candidate model
-            last_error_msg = f"Gemini model '{model}' not found. Trying fallback..."
+        if response.status_code in (404, 503):
+            # Model not found or capacity spike on Google's API, try next candidate model
+            last_error_msg = f"Gemini model '{model}' unavailable ({response.status_code}). Trying fallback..."
             continue
         last_error_msg = f"Gemini API returned error code {response.status_code}."
 
