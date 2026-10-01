@@ -14,7 +14,7 @@ export default function HostCreateQuizPage() {
   const [error, setError] = useState('');
   const [showAIModal, setShowAIModal] = useState(false);
 
-  const config = window.__KOOZY_CONFIG__ || {};
+  const config = typeof window !== 'undefined' ? (window.__KOOZY_CONFIG__ || {}) : {};
   const user = config.user || null;
 
   const handleSubmit = async (e) => {

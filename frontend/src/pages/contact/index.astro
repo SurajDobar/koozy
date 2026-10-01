@@ -1,0 +1,95 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Contact & Support — Koozy"
+  description="Have feedback, found a bug, or want to say hello? Reach out to the Koozy team."
+  noindex={false}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10 md:py-16">
+    <div class="text-center max-w-2xl mx-auto mb-16">
+      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
+        We Would Love to Hear From You
+      </div>
+      <h1 class="text-4xl sm:text-5xl font-black text-[#191817] tracking-tight leading-tight mb-4">
+        Get in <span class="font-hand text-[#6c4de8] font-normal">Touch.</span>
+      </h1>
+      <p class="text-base text-[#77736c] leading-relaxed">
+        Whether you are an educator with classroom feedback, a developer interested in contributing, or a host who ran into a bug, we are here to help.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+      <!-- Bug Reports & GitHub -->
+      <div class="kz-card-tactile p-6 sm:p-8 bg-white flex flex-col justify-between">
+        <div>
+          <div class="w-10 h-10 rounded-xl bg-[#eeeafd] text-[#6c4de8] border-2 border-[#191817] flex items-center justify-center font-bold text-lg mb-4">
+            &bull;
+          </div>
+          <h2 class="text-xl font-black text-[#191817] mb-2">
+            Open Source & Issue Tracker
+          </h2>
+          <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed mb-4">
+            Koozy is actively maintained on GitHub. The best way to report bugs, suggest new quiz features, or track release updates is directly through our repository.
+          </p>
+          <div class="text-xs text-[#77736c] bg-[#f7f5ef] p-3 rounded-xl border border-[#d8d3ca] space-y-1">
+            <div><strong class="text-[#191817]">Repository:</strong> github.com/surajdobar/koozy</div>
+            <div><strong class="text-[#191817]">Issues:</strong> Bug reports & feature suggestions welcome</div>
+          </div>
+        </div>
+        <div class="mt-6 pt-4 border-t border-[#d8d3ca]">
+          <a
+            href="https://github.com/surajdobar/koozy"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="kz-btn-secondary py-2.5 px-4 rounded-xl text-xs font-bold block text-center"
+          >
+            Visit GitHub Repository &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- General Feedback & Inquiries -->
+      <div class="kz-card-tactile p-6 sm:p-8 bg-white flex flex-col justify-between">
+        <div>
+          <div class="w-10 h-10 rounded-xl bg-[#e6f9ff] text-[#05cdff] border-2 border-[#191817] flex items-center justify-center font-bold text-lg mb-4">
+            &bull;
+          </div>
+          <h2 class="text-xl font-black text-[#191817] mb-2">
+            Feedback & Community Support
+          </h2>
+          <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed mb-4">
+            Got an idea for improving the live quiz experience or prompt engineering in the Gemini generator? We review community feedback continuously to refine our platform.
+          </p>
+          <div class="text-xs text-[#77736c] bg-[#f7f5ef] p-3 rounded-xl border border-[#d8d3ca] space-y-1">
+            <div><strong class="text-[#191817]">Response Time:</strong> Typically within 1-2 business days</div>
+            <div><strong class="text-[#191817]">Support Scope:</strong> Live rooms, host tools, and AI generator</div>
+          </div>
+        </div>
+        <div class="mt-6 pt-4 border-t border-[#d8d3ca]">
+          <a
+            href="/faq/"
+            class="kz-btn-primary py-2.5 px-4 rounded-xl text-xs font-bold block text-center"
+          >
+            Check FAQs First &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- What to Include in a Bug Report -->
+    <div class="kz-card p-6 sm:p-8 bg-[#fffdf7] border-2 border-[#191817] rounded-3xl shadow-[4px_4px_0_#191817]">
+      <h3 class="font-black text-lg text-[#191817] mb-2">Reporting a Live Session Issue?</h3>
+      <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed mb-4">
+        To help us diagnose connection drops or scoring glitches quickly, please include:
+      </p>
+      <ul class="list-disc list-inside text-xs text-[#77736c] space-y-1.5">
+        <li>Your browser name and version (e.g. Chrome on Windows, Safari on iOS)</li>
+        <li>The 5-letter Game PIN used during the live session</li>
+        <li>Whether you were acting as the Host or a Participant</li>
+        <li>A brief description of what happened when the issue occurred</li>
+      </ul>
+    </div>
+  </div>
+</BaseLayout>

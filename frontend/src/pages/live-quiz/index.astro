@@ -1,0 +1,194 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'http://localhost:4321').toString().replace(/\/$/, '');
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  'name': 'Koozy Live Quiz Maker',
+  'url': `${siteUrl}/live-quiz/`,
+  'description': 'Host synchronized, real-time multiplayer quizzes and live trivia games. Players join with a 5-letter Game PIN and answer directly on their own devices.',
+  'applicationCategory': 'EducationalApplication',
+  'operatingSystem': 'All',
+  'offers': {
+    '@type': 'Offer',
+    'price': '0',
+    'priceCurrency': 'USD',
+  },
+  'featureList': [
+    'Real-time WebSocket multiplayer synchronization',
+    'Device-native question and answer view without screen sharing',
+    'Authoritative synchronized countdown timer',
+    'Host moderation: admit, kick, and early finish controls',
+    'Instant live leaderboard calculation'
+  ]
+};
+---
+
+<BaseLayout
+  title="Free Live Quiz Maker — Multiplayer Trivia & Quizzes | Koozy"
+  description="Host real-time live quizzes with friends, classes, or teams. Players join with a 5-letter Game PIN and answer directly on their phones with a synchronized global timer."
+  noindex={false}
+  schema={schema}
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10 md:py-16">
+    <!-- Hero Section -->
+    <section class="text-center max-w-3xl mx-auto mb-16">
+      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
+        Realtime Multiplayer Trivia
+      </div>
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-[#191817] tracking-tight leading-tight mb-4">
+        Host Real-Time Live Quizzes on <span class="font-hand text-[#6c4de8] font-normal">Any Device.</span>
+      </h1>
+      <p class="text-base sm:text-lg text-[#77736c] leading-relaxed mb-8">
+        No apps to download. No awkward screen sharing. Koozy renders questions and answer choices directly on every player's phone, laptop, or tablet with a synchronized countdown timer.
+      </p>
+
+      <div class="flex flex-wrap gap-4 justify-center items-center">
+        <a
+          href="/host/quizzes/"
+          class="kz-btn-primary px-8 py-3.5 rounded-xl font-bold text-base flex items-center gap-2"
+        >
+          <span>Host a Live Quiz</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
+        </a>
+        <a
+          href="/join/"
+          class="kz-btn-secondary px-8 py-3.5 rounded-xl font-bold text-base flex items-center gap-2"
+        >
+          <span>Enter Game PIN</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Core Differentiators -->
+    <section class="mb-16">
+      <div class="text-center mb-10">
+        <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
+          the koozy difference ✦
+        </div>
+        <h2 class="text-3xl font-black text-[#191817]">
+          Everything you need for an electric live trivia session.
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Feature 1 -->
+        <div class="kz-card-tactile p-6 sm:p-8 bg-white">
+          <div class="w-10 h-10 rounded-xl bg-[#e6f9ff] text-[#05cdff] border-2 border-[#191817] shadow-[2px_2px_0_#191817] flex items-center justify-center font-bold text-lg mb-4">
+            &check;
+          </div>
+          <h3 class="text-xl font-black text-[#191817] mb-2">
+            Device-Native Questions & Choices
+          </h3>
+          <p class="text-sm text-[#77736c] leading-relaxed">
+            Unlike traditional projector-based quiz setups that only show colored shape buttons on participant screens, Koozy renders the full question and all 4 options right on the player's screen. Perfect for in-person rooms, hybrid gatherings, and remote calls alike.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="kz-card-tactile p-6 sm:p-8 bg-white">
+          <div class="w-10 h-10 rounded-xl bg-[#eeeafd] text-[#6c4de8] border-2 border-[#191817] shadow-[2px_2px_0_#191817] flex items-center justify-center font-bold text-lg mb-4">
+            &bull;
+          </div>
+          <h3 class="text-xl font-black text-[#191817] mb-2">
+            Instant 5-Letter Game PIN
+          </h3>
+          <p class="text-sm text-[#77736c] leading-relaxed">
+            Every session generates an easy-to-read, 5-letter alphanumeric code (like <code class="font-mono font-bold bg-[#eeeafd] text-[#6c4de8] px-1.5 py-0.5 rounded">FAY2A</code>). Players navigate to <a href="/join/" class="text-[#6c4de8] underline font-bold">/join/</a> on any browser, enter their nickname, and they are in the waiting room in seconds.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="kz-card-tactile p-6 sm:p-8 bg-white">
+          <div class="w-10 h-10 rounded-xl bg-[#e6ffe6] text-[#00cc05] border-2 border-[#191817] shadow-[2px_2px_0_#191817] flex items-center justify-center font-bold text-lg mb-4">
+            &bull;
+          </div>
+          <h3 class="text-xl font-black text-[#191817] mb-2">
+            Synchronized Global Countdown
+          </h3>
+          <p class="text-sm text-[#77736c] leading-relaxed">
+            The session runs on an authoritative backend clock managed over high-speed WebSockets. All players start together, see the same seconds tick down, and submit their answers before the timer runs out.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="kz-card-tactile p-6 sm:p-8 bg-white">
+          <div class="w-10 h-10 rounded-xl bg-[#fee2e2] text-[#ff0000] border-2 border-[#191817] shadow-[2px_2px_0_#191817] flex items-center justify-center font-bold text-lg mb-4">
+            &bull;
+          </div>
+          <h3 class="text-xl font-black text-[#191817] mb-2">
+            Host Moderation & Control
+          </h3>
+          <p class="text-sm text-[#77736c] leading-relaxed">
+            Hosts enjoy total oversight from a live dashboard. Monitor who is in the waiting room, admit pending players, remove unwanted participants with one click, track submissions in real time, and end sessions early if everyone has finished.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Where Koozy Shines -->
+    <section class="mb-16 kz-card p-8 bg-[#fffdf7] border-2 border-[#191817] shadow-[4px_4px_0_#191817] rounded-3xl">
+      <h2 class="text-2xl sm:text-3xl font-black text-[#191817] mb-6 text-center">
+        Built for Every Group Setting
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <h3 class="text-lg font-black text-[#6c4de8] mb-1">Classrooms & Study Groups</h3>
+          <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+            Keep students engaged with quick knowledge checks. Students join on school Chromebooks or smartphones without requiring accounts or logins.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-black text-[#6c4de8] mb-1">Game Nights & Friends</h3>
+          <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+            Host custom trivia on movie quotes, music, or inside jokes over Discord, Zoom, or around the living room sofa.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-black text-[#6c4de8] mb-1">Team Icebreakers</h3>
+          <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+            Energize company all-hands, team standups, and onboarding sessions with zero friction or corporate paywalls.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Preview -->
+    <section class="mb-12">
+      <div class="text-center mb-8">
+        <h2 class="text-2xl font-black text-[#191817]">Questions about hosting live?</h2>
+        <p class="text-xs text-[#77736c] mt-1">Here is how live sessions operate on Koozy.</p>
+      </div>
+
+      <div class="space-y-4 max-w-2xl mx-auto">
+        <div class="p-5 bg-white border-2 border-[#191817] shadow-[3px_3px_0_#191817] rounded-2xl">
+          <h3 class="font-black text-sm text-[#191817] mb-1">Do players need an account to join my live quiz?</h3>
+          <p class="text-xs text-[#77736c] leading-relaxed">
+            No! Participants can join completely as guests. They simply navigate to <code class="font-mono text-xs">/join/</code>, enter your 5-letter Game PIN and their chosen nickname, and enter the lobby.
+          </p>
+        </div>
+
+        <div class="p-5 bg-white border-2 border-[#191817] shadow-[3px_3px_0_#191817] rounded-2xl">
+          <h3 class="font-black text-sm text-[#191817] mb-1">How many players can join a session?</h3>
+          <p class="text-xs text-[#77736c] leading-relaxed">
+            Koozy uses asynchronous Django Channels with WebSockets to broadcast live states to scores of players simultaneously with low latency.
+          </p>
+        </div>
+      </div>
+
+      <div class="text-center mt-6">
+        <a href="/faq/" class="text-xs font-bold text-[#6c4de8] hover:underline">
+          View all frequently asked questions &rarr;
+        </a>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

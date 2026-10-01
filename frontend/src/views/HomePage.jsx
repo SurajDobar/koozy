@@ -3,7 +3,7 @@ import { ArrowRight, Gamepad2 } from 'lucide-react';
 import UserProfileBadge from '../components/UserProfileBadge';
 
 export default function HomePage({ user = null }) {
-  const config = window.__KOOZY_CONFIG__ || {};
+  const config = typeof window !== 'undefined' ? (window.__KOOZY_CONFIG__ || {}) : {};
   const activeUser = user || config.user || null;
 
   return (

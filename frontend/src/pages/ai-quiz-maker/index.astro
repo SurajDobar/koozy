@@ -1,0 +1,219 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'http://localhost:4321').toString().replace(/\/$/, '');
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  'name': 'Koozy AI Quiz Maker',
+  'url': `${siteUrl}/ai-quiz-maker/`,
+  'description': 'Generate balanced, high-quality 4-option multiple-choice trivia and academic quizzes in seconds using Google Gemini AI.',
+  'applicationCategory': 'EducationalApplication',
+  'operatingSystem': 'All',
+  'offers': {
+    '@type': 'Offer',
+    'price': '0',
+    'priceCurrency': 'USD',
+  },
+  'featureList': [
+    'Prompt-to-quiz generation powered by Google Gemini AI',
+    'Strict 4-option MCQ schema validation (A, B, C, D)',
+    'Configurable question counts and difficulty tiers',
+    'Full post-generation host editing and question reordering',
+    'Direct integration into live WebSocket game lobbies'
+  ]
+};
+---
+
+<BaseLayout
+  title="AI Quiz Maker — Generate Multiplayer Quizzes with AI | Koozy"
+  description="Generate high-quality 4-option multiple choice quizzes in seconds using Google Gemini AI. Customize topic, question count, and difficulty for live multiplayer trivia."
+  noindex={false}
+  schema={schema}
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10 md:py-16">
+    <!-- Hero Section -->
+    <section class="text-center max-w-3xl mx-auto mb-16">
+      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
+        Powered by Google Gemini AI
+      </div>
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-[#191817] tracking-tight leading-tight mb-4">
+        Generate Complete Multiplayer Quizzes in <span class="font-hand text-[#6c4de8] font-normal">Seconds.</span>
+      </h1>
+      <p class="text-base sm:text-lg text-[#77736c] leading-relaxed mb-8">
+        No more spending hours manually writing questions and plausible wrong answers. Describe any topic, and Koozy's AI creates a balanced, factually grounded 4-option multiple-choice quiz ready to host live.
+      </p>
+
+      <div class="flex flex-wrap gap-4 justify-center items-center">
+        <a
+          href="/host/quizzes/create/"
+          class="kz-btn-primary px-8 py-3.5 rounded-xl font-bold text-base flex items-center gap-2"
+        >
+          <span>Generate Quiz with AI</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
+        </a>
+        <a
+          href="/how-it-works/"
+          class="kz-btn-secondary px-8 py-3.5 rounded-xl font-bold text-base flex items-center gap-2"
+        >
+          <span>See How It Works</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- How the AI Generator Operates -->
+    <section class="mb-16">
+      <div class="text-center mb-10">
+        <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
+          instant creation ✦
+        </div>
+        <h2 class="text-3xl font-black text-[#191817]">
+          From topic prompt to live lobby in 3 steps.
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Step 1 -->
+        <div class="kz-card-tactile p-6 bg-white flex flex-col justify-between">
+          <div>
+            <div class="text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-2 font-mono">
+              Step 01
+            </div>
+            <h3 class="text-xl font-black text-[#191817] mb-2">
+              Enter Topic & Instructions
+            </h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              Type what your quiz is about. For example: <span class="italic text-[#191817] font-semibold">"European Capital Cities"</span>, <span class="italic text-[#191817] font-semibold">"JavaScript Async/Await"</span>, or <span class="italic text-[#191817] font-semibold">"90s Movie Trivia"</span>.
+            </p>
+          </div>
+          <div class="mt-6 text-xs text-[#77736c] bg-[#f7f5ef] p-3 rounded-xl border border-[#d8d3ca]">
+            Supports custom difficulty and targeted age groups.
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="kz-card-tactile p-6 bg-white flex flex-col justify-between">
+          <div>
+            <div class="text-xs uppercase font-extrabold tracking-widest text-[#05cdff] mb-2 font-mono">
+              Step 02
+            </div>
+            <h3 class="text-xl font-black text-[#191817] mb-2">
+              Choose Question Count
+            </h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              Pick your desired length (from 5 to 15 questions). Koozy's backend strictly enforces the exact question count requested, avoiding incomplete or bloated generations.
+            </p>
+          </div>
+          <div class="mt-6 text-xs text-[#77736c] bg-[#f7f5ef] p-3 rounded-xl border border-[#d8d3ca]">
+            Every question receives exactly 4 options: A, B, C, D.
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="kz-card-tactile p-6 bg-white flex flex-col justify-between">
+          <div>
+            <div class="text-xs uppercase font-extrabold tracking-widest text-[#00cc05] mb-2 font-mono">
+              Step 03
+            </div>
+            <h3 class="text-xl font-black text-[#191817] mb-2">
+              Review, Edit, or Launch Live
+            </h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              The AI populates your quiz studio instantly. You maintain 100% control: change wording, adjust the correct answer, reorder questions, or launch straight into a live session.
+            </p>
+          </div>
+          <div class="mt-6 text-xs text-[#77736c] bg-[#f7f5ef] p-3 rounded-xl border border-[#d8d3ca]">
+            Save directly to your personal quiz library.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Koozy AI Is Reliable -->
+    <section class="mb-16 kz-card-tactile p-8 bg-[#fffdf7]">
+      <h2 class="text-2xl sm:text-3xl font-black text-[#191817] mb-4 text-center">
+        Engineered for Accuracy & Strict Structure
+      </h2>
+      <p class="text-sm text-[#77736c] text-center max-w-2xl mx-auto mb-8">
+        Generic chatbots frequently hallucinate formatting, forget question limits, or write confusing options. Koozy's backend AI pipeline implements strict validation guards.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-lg bg-[#eeeafd] text-[#6c4de8] font-bold flex items-center justify-center shrink-0 border border-[#c9bfff]">
+            1
+          </div>
+          <div>
+            <h3 class="font-black text-base text-[#191817] mb-1">Strict JSON Schema Validation</h3>
+            <p class="text-xs text-[#77736c] leading-relaxed">
+              Every generation is validated against Koozy's strict MCQ schema before being written to your library. Responses must contain exactly 4 options, a valid correct answer key, and zero markdown clutter.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-lg bg-[#e6f9ff] text-[#05cdff] font-bold flex items-center justify-center shrink-0 border border-[#05cdff]/30">
+            2
+          </div>
+          <div>
+            <h3 class="font-black text-base text-[#191817] mb-1">Plausible Distractors</h3>
+            <p class="text-xs text-[#77736c] leading-relaxed">
+              The AI is instructed to craft realistic incorrect options rather than silly trick answers, ensuring your quiz genuinely tests knowledge and creates competitive fun.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-lg bg-[#e6ffe6] text-[#00cc05] font-bold flex items-center justify-center shrink-0 border border-[#00cc05]/30">
+            3
+          </div>
+          <div>
+            <h3 class="font-black text-base text-[#191817] mb-1">Fair Daily Host Quota</h3>
+            <p class="text-xs text-[#77736c] leading-relaxed">
+              Every host receives a free daily quota of 8 full AI quiz generations, refreshed every 24 hours. No hidden fees or subscription lock-ins to start creating.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-lg bg-[#fee2e2] text-[#ff0000] font-bold flex items-center justify-center shrink-0 border border-[#fca5a5]">
+            4
+          </div>
+          <div>
+            <h3 class="font-black text-base text-[#191817] mb-1">Full Export & Portability</h3>
+            <p class="text-xs text-[#77736c] leading-relaxed">
+              Once generated, your quizzes can be exported as structured JSON backups with a single click, or imported back into your account at any time.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sample Prompt Ideas -->
+    <section class="mb-12">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-black text-[#191817]">Popular Quiz Prompt Ideas</h2>
+        <p class="text-xs text-[#77736c] mt-1">Try copying one of these into Koozy's AI creator:</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+        <div class="p-4 bg-white border-2 border-[#191817] rounded-xl text-xs font-mono shadow-[2px_2px_0_#191817]">
+          <span class="text-[#6c4de8] font-bold">History:</span> "10 medium questions on the Space Race and Apollo moon missions with key dates and astronauts."
+        </div>
+        <div class="p-4 bg-white border-2 border-[#191817] rounded-xl text-xs font-mono shadow-[2px_2px_0_#191817]">
+          <span class="text-[#6c4de8] font-bold">Science:</span> "8 multiple choice questions on the human circulatory system for high school biology."
+        </div>
+        <div class="p-4 bg-white border-2 border-[#191817] rounded-xl text-xs font-mono shadow-[2px_2px_0_#191817]">
+          <span class="text-[#6c4de8] font-bold">Tech:</span> "10 questions on Python data structures, list comprehensions, and dictionary methods."
+        </div>
+        <div class="p-4 bg-white border-2 border-[#191817] rounded-xl text-xs font-mono shadow-[2px_2px_0_#191817]">
+          <span class="text-[#6c4de8] font-bold">Pop Culture:</span> "10 fun trivia questions about 2000s animated movies from Pixar and DreamWorks."
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

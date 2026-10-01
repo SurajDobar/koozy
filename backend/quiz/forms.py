@@ -125,8 +125,10 @@ class ParticipantJoinForm(forms.ModelForm):
         display_name = self.cleaned_data["display_name"].strip()
         if self.live_session.status != LiveSession.Status.WAITING:
             raise forms.ValidationError("This session is no longer accepting participants.")
+        if not display_name:
+            raise forms.ValidationError("Please choose a display name.")
         if Participant.objects.filter(
             live_session=self.live_session, display_name__iexact=display_name
         ).exists():
-            raise forms.ValidationError("That display name is already in use for this session.")
+            raise forms.ValidationError("Name already in use")
         return display_name

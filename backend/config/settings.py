@@ -46,6 +46,27 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days persistent host session
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 
+# CSRF and Trusted Origins Configuration
+csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', '').strip()
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins_env.split(',') if o.strip()]
+
+if DEBUG:
+    # Ensure local development origins (Astro and Django dev servers) are trusted
+    for dev_origin in [
+        'http://localhost:4321',
+        'http://127.0.0.1:4321',
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]:
+        if dev_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(dev_origin)
+
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Allows frontend JS to read csrftoken for X-CSRFToken header
+
+# Support reverse proxies (e.g. Render / Cloudflare SSL termination)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Application definition
 

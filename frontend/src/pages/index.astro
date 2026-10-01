@@ -1,60 +1,62 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import UserProfileBadge from '../components/UserProfileBadge.jsx';
+
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'http://localhost:4321').toString().replace(/\/$/, '');
 
 const schema = {
   '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: 'Koozy',
-  description: 'Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players.',
-  applicationCategory: 'EducationalApplication',
-  operatingSystem: 'All',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${siteUrl}/#website`,
+      'url': `${siteUrl}/`,
+      'name': 'Koozy',
+      'description': 'Real-time multiplayer quiz and live trivia platform with Google Gemini AI.',
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': `${siteUrl}/#webapp`,
+      'name': 'Koozy',
+      'url': `${siteUrl}/`,
+      'description': 'Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players.',
+      'applicationCategory': 'EducationalApplication',
+      'operatingSystem': 'All',
+      'offers': {
+        '@type': 'Offer',
+        'price': '0',
+        'priceCurrency': 'USD',
+      },
+      'featureList': [
+        'Device-native question rendering without separate projector',
+        'Synchronized global countdown timer',
+        '5-letter PIN instant room joining without app download',
+        'Google Gemini AI multiple choice question generator',
+        'Real-time WebSocket lobby and live host dashboard',
+        'Automated scoring and leaderboard'
+      ]
+    }
+  ]
 };
 ---
 
 <BaseLayout
-  title="Koozy — Make learning play"
-  description="Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players."
+  title="Koozy — Make learning play | Free Live Multiplayer Quiz Platform"
+  description="Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Real-time multiplayer trivia with AI generation. Simple for hosts, fast for players."
   noindex={false}
   schema={schema}
+  showFooterCta={true}
 >
-  <div class="max-w-5xl mx-auto px-6 py-8 min-h-[90vh] flex flex-col justify-between">
-    <!-- Top Navbar -->
-    <header class="flex justify-between items-center pb-6 border-b border-[#d8d3ca]">
-      <a
-        href="/"
-        class="font-hand text-4xl text-[#191817] hover:text-[#6c4de8] transition-colors -rotate-2 select-none"
-      >
-        Koozy
-      </a>
-      <nav class="flex gap-3 sm:gap-4 items-center">
-        <a
-          href="/join/"
-          class="text-sm font-semibold text-[#191817] hover:text-[#6c4de8] transition-colors"
-        >
-          Join Room
-        </a>
-
-        <!-- Interactive Auth Profile Island -->
-        <UserProfileBadge client:load />
-      </nav>
-    </header>
-
-    <!-- Semantic Hero Section (Zero Client JS) -->
-    <main class="flex flex-col items-center justify-center text-center relative my-auto py-12 md:py-20">
-      <div class="hidden md:block absolute left-4 top-8 font-hand text-2xl text-[#77736c] -rotate-6 select-none">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 md:py-16">
+    <!-- Hero Section -->
+    <section class="flex flex-col items-center justify-center text-center relative py-8 md:py-16">
+      <div class="hidden md:block absolute left-4 top-4 font-hand text-2xl text-[#77736c] -rotate-6 select-none">
         learning doesn't have to be boring ✦
       </div>
-      <div class="hidden md:block absolute right-6 bottom-8 font-hand text-2xl text-[#77736c] rotate-6 select-none">
+      <div class="hidden md:block absolute right-4 bottom-4 font-hand text-2xl text-[#77736c] rotate-6 select-none">
         ready? <span class="text-[#6c4de8]">→</span>
       </div>
 
-      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
+      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-4 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
         A little quiz, a lot of chaos.
       </div>
 
@@ -62,8 +64,8 @@ const schema = {
         Make learning <span class="font-hand text-[#6c4de8] font-normal">play.</span>
       </h1>
 
-      <p class="text-[#77736c] text-base md:text-lg max-w-xl mx-auto mt-2 mb-10 leading-relaxed">
-        Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players.
+      <p class="text-[#77736c] text-base md:text-xl max-w-2xl mx-auto mt-2 mb-10 leading-relaxed font-medium">
+        Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Questions appear directly on every player's screen. Simple for hosts. Fast for players.
       </p>
 
       <!-- Primary Action CTAs -->
@@ -110,15 +112,152 @@ const schema = {
             <line x1="18" x2="18.01" y1="11" y2="11" />
             <rect width="20" height="12" x="2" y="6" rx="6" />
           </svg>
-          <span>Join a Quiz</span>
+          <span>Join a Quiz with PIN</span>
         </a>
       </div>
-    </main>
 
-    <!-- Footer -->
-    <footer class="pt-6 border-t border-[#d8d3ca] text-center text-xs text-[#77736c] flex flex-wrap justify-between items-center gap-4">
-      <span class="font-hand text-xl text-[#191817]">Koozy — Live Learning Play</span>
-      <span>Built for fast, interactive multiplayer quizzes.</span>
-    </footer>
+      <!-- Quick Trust Indicators -->
+      <div class="mt-8 flex flex-wrap justify-center items-center gap-6 text-xs font-bold text-[#77736c]">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#00cc05]"></span>
+          <span>No App Download</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#6c4de8]"></span>
+          <span>Google Gemini AI Inside</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#05cdff]"></span>
+          <span>Realtime WebSockets</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tactile Feature Highlights (Zero Client JS) -->
+    <section class="py-16 border-t border-[#d8d3ca]">
+      <div class="text-center mb-12">
+        <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
+          built different ✦
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-[#191817] tracking-tight">
+          Live trivia without the two-device headache.
+        </h2>
+        <p class="text-sm sm:text-base text-[#77736c] max-w-xl mx-auto mt-2">
+          Traditional quiz apps force players to stare at a shared TV screen while tapping colored shapes on their phones. Koozy puts the whole game right in their hands.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Feature 1 -->
+        <div class="kz-card-tactile p-6 bg-white flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-[#e6f9ff] text-[#05cdff] border-2 border-[#191817] shadow-[2px_2px_0_#191817] flex items-center justify-center font-mono font-black text-xl mb-4">
+              01
+            </div>
+            <h3 class="text-xl font-black text-[#191817] mb-2">
+              Device-Native Questions
+            </h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              Questions and all four multiple-choice options display directly on each participant's phone, tablet, or laptop. No projector or Zoom screen share required.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-[#d8d3ca]">
+            <a href="/live-quiz/" class="text-xs font-bold text-[#6c4de8] hover:underline flex items-center gap-1">
+              <span>Explore live multiplayer</span>
+              <span>&rarr;</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="kz-card-tactile p-6 bg-white flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-[#eeeafd] text-[#6c4de8] border-2 border-[#191817] shadow-[2px_2px_0_#191817] flex items-center justify-center font-mono font-black text-xl mb-4">
+              02
+            </div>
+            <h3 class="text-xl font-black text-[#191817] mb-2">
+              Google Gemini AI Engine
+            </h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              Type any topic and let Gemini generate balanced, verified 4-option multiple-choice questions instantly. Edit, reorder, or launch right away with daily quotas.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-[#d8d3ca]">
+            <a href="/ai-quiz-maker/" class="text-xs font-bold text-[#6c4de8] hover:underline flex items-center gap-1">
+              <span>How AI quiz generation works</span>
+              <span>&rarr;</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="kz-card-tactile p-6 bg-white flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-[#e6ffe6] text-[#00cc05] border-2 border-[#191817] shadow-[2px_2px_0_#191817] flex items-center justify-center font-mono font-black text-xl mb-4">
+              03
+            </div>
+            <h3 class="text-xl font-black text-[#191817] mb-2">
+              Global Timer & Live Lobby
+            </h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              Real-time WebSockets keep everyone in sync. The host controls the room, admits or kicks participants, starts the synchronized clock, and crowns the podium.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-[#d8d3ca]">
+            <a href="/how-it-works/" class="text-xs font-bold text-[#6c4de8] hover:underline flex items-center gap-1">
+              <span>Step-by-step walk-through</span>
+              <span>&rarr;</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="py-12 border-t border-[#d8d3ca]">
+      <div class="kz-card-tactile p-6 sm:p-8 bg-[#fffdf7]">
+        <h2 class="text-2xl sm:text-3xl font-black text-[#191817] mb-4 text-center">
+          Koozy vs. Traditional Projector-Based Trivia
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead>
+              <tr class="border-b-2 border-[#191817]">
+                <th class="py-3 px-4 font-black text-[#77736c] uppercase text-xs">Feature</th>
+                <th class="py-3 px-4 font-black text-[#6c4de8] text-sm sm:text-base">Koozy</th>
+                <th class="py-3 px-4 font-bold text-[#77736c]">Traditional Projector Trivia</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#d8d3ca]">
+              <tr>
+                <td class="py-3 px-4 font-bold text-[#191817]">Question & Option Display</td>
+                <td class="py-3 px-4 font-semibold text-[#191817] bg-[#eeeafd]/40">Directly on each player's screen (no projector required)</td>
+                <td class="py-3 px-4 text-[#77736c]">Questions on projector; player phones show color shapes</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-bold text-[#191817]">Player App Requirements</td>
+                <td class="py-3 px-4 font-semibold text-[#00cc05] bg-[#eeeafd]/40">&check; Zero app download — runs in any modern browser</td>
+                <td class="py-3 px-4 text-[#77736c]">Frequent prompts to download native mobile apps</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-bold text-[#191817]">AI Question Generation</td>
+                <td class="py-3 px-4 font-semibold text-[#191817] bg-[#eeeafd]/40">Built-in Google Gemini (8 generations/day quota)</td>
+                <td class="py-3 px-4 text-[#77736c]">Often gated behind paid tiers or external plugins</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-bold text-[#191817]">Room Access</td>
+                <td class="py-3 px-4 font-semibold text-[#191817] bg-[#eeeafd]/40">Memorable 5-letter PIN at <code class="font-mono text-xs">/join/</code></td>
+                <td class="py-3 px-4 text-[#77736c]">6-8 digit numeric codes or direct links</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-bold text-[#191817]">Core Host Experience</td>
+                <td class="py-3 px-4 font-semibold text-[#00cc05] bg-[#eeeafd]/40">&check; Free live hosting, scoring & question editor</td>
+                <td class="py-3 px-4 text-[#77736c]">Participant caps or paywalled gameplay controls</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </div>
 </BaseLayout>

@@ -247,20 +247,24 @@ class LiveSessionTests(TestCase):
             f"{reverse('participant_lobby', args=['ABCDE'])}?pt={participant.join_token}",
         )
 
-    def test_invalid_pin_duplicate_name_and_closed_session_are_rejected(self):
+    def test_invalid_pin_and_closed_session_are_rejected(self):
         live_session = LiveSession.objects.create(quiz=self.quiz, game_pin="ABCDE")
         guest_client = Client()
         invalid_pin = guest_client.post(reverse("join_game"), {"game_pin": "ZZZZZ"})
         self.assertContains(invalid_pin, "find that Game PIN")
 
         first_client = Client()
-        first_client.post(
+        resp1 = first_client.post(
             reverse("participant_join", args=["ABCDE"]), {"display_name": "Avery"}
         )
-        duplicate = guest_client.post(
+        self.assertEqual(resp1.status_code, 302)
+
+        # Duplicate display name from different client without token is rejected
+        resp2 = guest_client.post(
             reverse("participant_join", args=["ABCDE"]), {"display_name": "avery"}
         )
-        self.assertContains(duplicate, "already in use for this session")
+        self.assertEqual(resp2.status_code, 200)
+        self.assertContains(resp2, "Name already in use")
         self.assertEqual(live_session.participants.count(), 1)
 
         live_session.status = LiveSession.Status.ACTIVE
@@ -2382,6 +2386,372 @@ class AIQuizGeneratorTests(TestCase):
         data = resp.json()
         self.assertIn("prompt_template", data)
         self.assertIn("Koozy Quiz Generator Instructions", data["prompt_template"])
+
+
+class AstroOriginAndCSRFTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="host@koozy.live",
+            email="host@koozy.live",
+            first_name="Host User",
+        )
+        HostProfile.objects.create(
+            user=self.user,
+            google_id="google-sub-host-csrf",
+            avatar_url="",
+        )
+
+    def test_api_auth_me_sets_csrf_cookie(self):
+        client = Client()
+        resp = client.get(reverse("api_auth_me"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("csrftoken", resp.cookies)
+
+    def test_astro_origin_post_with_csrf_succeeds(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        # First get CSRF cookie via api_auth_me
+        auth_resp = client.get(reverse("api_auth_me"))
+        csrf_token = auth_resp.cookies["csrftoken"].value
+
+        # Make authenticated POST request with Astro origin
+        create_resp = client.post(
+            reverse("api_create_quiz"),
+            {"title": "Astro Origin Quiz", "difficulty": "easy", "time_limit": 300},
+            content_type="application/json",
+            HTTP_ORIGIN="http://localhost:4321",
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+        self.assertEqual(create_resp.status_code, 201)
+        self.assertEqual(create_resp.json()["title"], "Astro Origin Quiz")
+
+    def test_astro_127_origin_post_with_csrf_succeeds(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        auth_resp = client.get(reverse("api_auth_me"))
+        csrf_token = auth_resp.cookies["csrftoken"].value
+
+        create_resp = client.post(
+            reverse("api_create_quiz"),
+            {"title": "Astro 127 Origin Quiz", "difficulty": "easy", "time_limit": 300},
+            content_type="application/json",
+            HTTP_ORIGIN="http://127.0.0.1:4321",
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+        self.assertEqual(create_resp.status_code, 201)
+
+    def test_untrusted_origin_rejected_by_csrf(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        auth_resp = client.get(reverse("api_auth_me"))
+        csrf_token = auth_resp.cookies["csrftoken"].value
+
+        create_resp = client.post(
+            reverse("api_create_quiz"),
+            {"title": "Hacked Origin Quiz"},
+            content_type="application/json",
+            HTTP_ORIGIN="http://untrusted-malicious-site.com",
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+        self.assertEqual(create_resp.status_code, 403)
+        self.assertIn("CSRF Failed: Origin checking failed", create_resp.json().get("detail", ""))
+
+    def test_guest_join_from_astro_origin_passes_csrf(self):
+        quiz = Quiz.objects.create(
+            title="Join Test Quiz",
+            author=self.user,
+        )
+        ls = LiveSession.objects.create(
+            quiz=quiz,
+            game_pin="99887",
+            status=LiveSession.Status.WAITING,
+        )
+        client = Client(enforce_csrf_checks=True)
+        resp = client.post(
+            reverse("api_join_game"),
+            {"game_pin": "99887", "display_name": "AstroPlayer"},
+            content_type="application/json",
+            HTTP_ORIGIN="http://localhost:4321",
+        )
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.json()["display_name"], "AstroPlayer")
+
+
+class DuplicateParticipantNameTests(TestCase):
+    def setUp(self):
+        self.host = User.objects.create_user(
+            username="teacher@koozy.live",
+            email="teacher@koozy.live",
+            first_name="Teacher",
+        )
+        self.quiz = Quiz.objects.create(
+            title="Independence Quiz",
+            author=self.host,
+            time_limit=180,
+        )
+        self.q1 = _make_question(self.quiz, "What is 2 + 2?", correct="a")
+        self.session1 = LiveSession.objects.create(
+            quiz=self.quiz,
+            game_pin="RAHUL",
+            status=LiveSession.Status.WAITING,
+            total_time_limit=180,
+        )
+        self.session2 = LiveSession.objects.create(
+            quiz=self.quiz,
+            game_pin="OTHER",
+            status=LiveSession.Status.WAITING,
+            total_time_limit=180,
+        )
+
+    def test_same_name_no_token_rejected_name_already_in_use(self):
+        """Same name + no valid participant token -> reject: 'Name already in use'."""
+        client_a = Client()
+        client_b = Client()
+
+        # Participant A joins as "Rahul" without token
+        resp_a = client_a.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp_a.status_code, 201)
+        token_a = resp_a.json()["join_token"]
+
+        # Participant B joins as "Rahul" into the SAME session without a valid token
+        resp_b = client_b.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp_b.status_code, 400)
+        self.assertEqual(resp_b.json().get("detail"), "Name already in use")
+
+        # Session has only 1 participant and Participant A's state was not shared/hijacked
+        self.assertEqual(self.session1.participants.count(), 1)
+        part = self.session1.participants.first()
+        self.assertEqual(part.join_token, token_a)
+
+    def test_same_name_with_valid_token_reconnects_participant(self):
+        """Same name + valid existing participant token -> reconnect that participant."""
+        client = Client()
+
+        resp_join = client.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp_join.status_code, 201)
+        token = resp_join.json()["join_token"]
+
+        # Reconnect via header
+        resp_reconnect_header = client.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+            HTTP_X_PARTICIPANT_TOKEN=token,
+        )
+        self.assertEqual(resp_reconnect_header.status_code, 200)
+        self.assertEqual(resp_reconnect_header.json()["join_token"], token)
+
+        # Reconnect via payload join_token
+        resp_reconnect_body = client.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul", "join_token": token},
+            content_type="application/json",
+        )
+        self.assertEqual(resp_reconnect_body.status_code, 200)
+        self.assertEqual(resp_reconnect_body.json()["join_token"], token)
+
+        # Reconnect with case variation ("rahul")
+        resp_reconnect_case = client.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "rahul"},
+            content_type="application/json",
+            HTTP_X_PARTICIPANT_TOKEN=token,
+        )
+        self.assertEqual(resp_reconnect_case.status_code, 200)
+        self.assertEqual(resp_reconnect_case.json()["join_token"], token)
+
+        # Reconnect with case variation ("rahul")
+        resp_reconnect_case = client.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "rahul"},
+            content_type="application/json",
+            HTTP_X_PARTICIPANT_TOKEN=token,
+        )
+        self.assertEqual(resp_reconnect_case.status_code, 200)
+        self.assertEqual(resp_reconnect_case.json()["join_token"], token)
+
+        # Still only 1 participant row in db
+        self.assertEqual(self.session1.participants.count(), 1)
+
+    def test_ambient_cookies_do_not_authenticate_join_requests(self):
+        """Ambient browser cookies from another tab must NOT authenticate join requests.
+        Tab B in the same browser attempting to join with the same name must be rejected."""
+        client_a = Client()
+        resp_a = client_a.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        token_a = resp_a.json()["join_token"]
+
+        # Client B shares the cookie jar with Client A
+        client_b = Client()
+        client_b.cookies[f"kz_pt_{self.session1.id}"] = token_a
+
+        # Client B tries to join with same name without explicit token -> rejected
+        resp_b_same = client_b.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp_b_same.status_code, 400)
+        self.assertEqual(resp_b_same.json()["detail"], "Name already in use")
+
+        # Client B joins with different name -> succeeds
+        resp_b_diff = client_b.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Bob"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp_b_diff.status_code, 201)
+        self.assertNotEqual(resp_b_diff.json()["join_token"], token_a)
+
+    def test_kicked_participant_does_not_block_subsequent_joins(self):
+        """When a participant is kicked by the host:
+        - The kicked participant/token cannot rejoin as that kicked participant
+        - Other participants can still join freely
+        - A user joining with a new name is NOT blocked by a previous kicked token
+        """
+        client_a = Client()
+        resp_a = client_a.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        token_a = resp_a.json()["join_token"]
+        part_a = Participant.objects.get(join_token=token_a)
+
+        # Host kicks Participant A
+        host_client = Client()
+        host_client.force_login(self.host)
+        kick_resp = host_client.post(
+            reverse("api_host_kick_participant", args=["RAHUL"]),
+            {"participant_id": part_a.id},
+            content_type="application/json",
+        )
+        self.assertEqual(kick_resp.status_code, 200)
+        part_a.refresh_from_db()
+        self.assertTrue(part_a.is_kicked)
+
+        # 1. Kicked participant trying to reconnect with their kicked token is blocked (403)
+        rejoin_kicked = client_a.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+            HTTP_X_PARTICIPANT_TOKEN=token_a,
+        )
+        self.assertEqual(rejoin_kicked.status_code, 403)
+
+        # 2. Another user joins as "Bob" -> succeeds (201)
+        client_b = Client()
+        resp_b = client_b.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Bob"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp_b.status_code, 201)
+
+        # 3. Kicked client joining with a fresh/different name "Charlie" -> succeeds (201)
+        resp_c = client_a.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Charlie"},
+            content_type="application/json",
+            HTTP_X_PARTICIPANT_TOKEN=token_a,  # stale kicked token is ignored when joining under new name
+        )
+        self.assertEqual(resp_c.status_code, 201)
+
+    def test_never_identify_or_reuse_participant_by_name_alone(self):
+        """NEVER identify/reuse participants by display_name alone. A request without token
+        must never receive an existing participant's token or state."""
+        client_a = Client()
+        client_b = Client()
+
+        resp_a = client_a.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        token_a = resp_a.json()["join_token"]
+
+        # Client B sends same name, no token -> must NOT get token_a
+        resp_b = client_b.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp_b.status_code, 400)
+        self.assertNotIn("join_token", resp_b.json())
+        self.assertNotEqual(resp_b.json().get("join_token"), token_a)
+
+    def test_display_names_are_non_global_across_different_sessions(self):
+        """Keep display names non-global: same display name in different sessions is allowed."""
+        client1 = Client()
+        client2 = Client()
+
+        # "Rahul" in Session 1
+        resp1 = client1.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp1.status_code, 201)
+
+        # "Rahul" in Session 2
+        resp2 = client2.post(
+            reverse("api_join_game"),
+            {"game_pin": "OTHER", "display_name": "Rahul"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp2.status_code, 201)
+
+        self.assertEqual(self.session1.participants.count(), 1)
+        self.assertEqual(self.session2.participants.count(), 1)
+        self.assertNotEqual(resp1.json()["join_token"], resp2.json()["join_token"])
+
+    def test_cannot_rename_to_another_participant_display_name(self):
+        """A participant cannot rename themselves to a name already used by another participant in the session."""
+        client_a = Client()
+        client_b = Client()
+
+        token_a = client_a.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+        ).json()["join_token"]
+
+        token_b = client_b.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Aryan"},
+            content_type="application/json",
+        ).json()["join_token"]
+
+        # Participant B tries to rename to "Rahul"
+        resp_rename = client_b.post(
+            reverse("api_join_game"),
+            {"game_pin": "RAHUL", "display_name": "Rahul"},
+            content_type="application/json",
+            HTTP_X_PARTICIPANT_TOKEN=token_b,
+        )
+        self.assertEqual(resp_rename.status_code, 400)
+        self.assertEqual(resp_rename.json().get("detail"), "Name already in use")
+
+        # Participant B remains "Aryan"
+        part_b = Participant.objects.get(join_token=token_b)
+        self.assertEqual(part_b.display_name, "Aryan")
+
+
 
 
 

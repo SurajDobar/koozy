@@ -1,0 +1,151 @@
+---
+interface Props {
+  showCta?: boolean;
+}
+
+const { showCta = true } = Astro.props;
+---
+
+<footer class="mt-20 border-t-2 border-[#191817] bg-[#fffdf7]">
+  {showCta && (
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 -translate-y-10">
+      <div class="kz-card-tactile p-6 sm:p-8 bg-[#6c4de8] text-white flex flex-col md:flex-row items-center justify-between gap-6">
+        <div>
+          <div class="font-hand text-2xl text-[#05cdff] -rotate-2 select-none mb-1">
+            ready to make learning play? ✦
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            Host your next live quiz on Koozy.
+          </h2>
+          <p class="text-xs sm:text-sm text-[#eeeafd] mt-1 max-w-lg leading-relaxed">
+            Create questions by hand or generate a 4-option MCQ quiz with Gemini AI. Free for hosts and players.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
+          <a
+            href="/host/quizzes/"
+            class="px-5 py-3 rounded-xl bg-white text-[#191817] border-2 border-[#191817] shadow-[3px_3px_0_#191817] hover:shadow-[4px_4px_0_#191817] font-bold text-sm transition-all"
+          >
+            Host a Quiz
+          </a>
+          <a
+            href="/join/"
+            class="px-5 py-3 rounded-xl bg-[#eeeafd] text-[#6c4de8] border-2 border-[#191817] shadow-[3px_3px_0_#191817] hover:shadow-[4px_4px_0_#191817] font-bold text-sm transition-all"
+          >
+            Enter Game PIN
+          </a>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+      <!-- Brand & Mission -->
+      <div class="md:col-span-1 space-y-3">
+        <a href="/" class="font-hand text-4xl text-[#191817] hover:text-[#6c4de8] transition-colors -rotate-2 inline-block select-none">
+          Koozy
+        </a>
+        <p class="text-xs text-[#77736c] leading-relaxed">
+          Tactile live multiplayer quiz platform with global countdown timers, room PINs, and Google Gemini AI generation.
+        </p>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-[#6c4de8] bg-[#eeeafd] px-2.5 py-1 rounded-lg border border-[#c9bfff] inline-block">
+          Fast &bull; Synchronized &bull; Tactile
+        </div>
+      </div>
+
+      <!-- Product Links -->
+      <div>
+        <h3 class="text-xs font-black uppercase tracking-wider text-[#191817] mb-3">
+          Platform
+        </h3>
+        <ul class="space-y-2 text-xs font-semibold text-[#77736c]">
+          <li>
+            <a href="/live-quiz/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              Live Multiplayer Quiz
+            </a>
+          </li>
+          <li>
+            <a href="/ai-quiz-maker/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              AI Quiz Maker
+            </a>
+          </li>
+          <li>
+            <a href="/how-it-works/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              How It Works
+            </a>
+          </li>
+          <li>
+            <a href="/faq/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              Frequently Asked Questions
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Quick Play Links -->
+      <div>
+        <h3 class="text-xs font-black uppercase tracking-wider text-[#191817] mb-3">
+          Play & Host
+        </h3>
+        <ul class="space-y-2 text-xs font-semibold text-[#77736c]">
+          <li>
+            <a href="/join/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              Join with Game PIN
+            </a>
+          </li>
+          <li>
+            <a href="/host/quizzes/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              Host Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="/host/quizzes/create/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              Create New Quiz
+            </a>
+          </li>
+          <li>
+            <a href="/auth/login/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              Host Google Sign-In
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Trust & Legal Links -->
+      <div>
+        <h3 class="text-xs font-black uppercase tracking-wider text-[#191817] mb-3">
+          Trust & Legal
+        </h3>
+        <ul class="space-y-2 text-xs font-semibold text-[#77736c]">
+          <li>
+            <a href="/about/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              About Koozy
+            </a>
+          </li>
+          <li>
+            <a href="/contact/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              Contact & Support
+            </a>
+          </li>
+          <li>
+            <a href="/privacy/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              Privacy Policy
+            </a>
+          </li>
+          <li>
+            <a href="/terms/" class="hover:text-[#6c4de8] hover:underline transition-colors">
+              Terms of Service
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom Copyright & Architecture Notice -->
+    <div class="pt-6 border-t border-[#d8d3ca] flex flex-wrap justify-between items-center gap-4 text-xs text-[#77736c]">
+      <span>&copy; 2026 Koozy &bull; Live Learning Play. All rights reserved.</span>
+      <span>Device-native questions &bull; Realtime WebSockets &bull; Zero app downloads</span>
+    </div>
+  </div>
+</footer>

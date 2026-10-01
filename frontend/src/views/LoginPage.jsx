@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, LogIn, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
@@ -7,6 +7,17 @@ export default function LoginPage() {
   const search = typeof window !== 'undefined' ? window.location.search : '';
   const queryParams = new URLSearchParams(search);
   const errorParam = queryParams.get('error') || config.error || '';
+
+  useEffect(() => {
+    fetch('/api/auth/me/')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.is_authenticated) {
+          window.location.href = '/host/quizzes/';
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleGoogleSignIn = () => {
     setLoading(true);

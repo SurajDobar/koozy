@@ -1,0 +1,214 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  'name': 'How to Host and Play a Live Quiz on Koozy',
+  'description': 'A complete step-by-step guide explaining how hosts create and run live multiplayer quizzes, and how participants join with a 5-letter Game PIN.',
+  'totalTime': 'PT3M',
+  'step': [
+    {
+      '@type': 'HowToStep',
+      'name': 'Create or AI-Generate a Quiz',
+      'text': 'Log in with Google, navigate to your host dashboard, and create a quiz manually or generate multiple-choice questions instantly using Google Gemini AI.'
+    },
+    {
+      '@type': 'HowToStep',
+      'name': 'Launch a Live Session',
+      'text': 'Click Launch Live Session on any quiz to generate a unique 5-letter Game PIN and open the real-time waiting lobby.'
+    },
+    {
+      '@type': 'HowToStep',
+      'name': 'Participants Join at /join/',
+      'text': 'Players visit /join/ on any browser, enter the 5-letter Game PIN and a nickname. No app download or account creation needed.'
+    },
+    {
+      '@type': 'HowToStep',
+      'name': 'Play with a Global Countdown Timer',
+      'text': 'The host starts the quiz. All players see the questions and four answer options directly on their own devices with synchronized countdown timers.'
+    },
+    {
+      '@type': 'HowToStep',
+      'name': 'Review Instant Results & Leaderboard',
+      'text': 'When the timer expires or all answers are submitted, scores are calculated instantly, revealing player scorecards and the host podium.'
+    }
+  ]
+};
+---
+
+<BaseLayout
+  title="How It Works — Step-by-Step Guide to Hosting & Playing | Koozy"
+  description="Learn how to create, host, and join live multiplayer quizzes on Koozy. A complete guide for hosts and participants from PIN entry to final leaderboards."
+  noindex={false}
+  schema={schema}
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10 md:py-16">
+    <!-- Header Hero -->
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
+        Host & Participant Guide
+      </div>
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-[#191817] tracking-tight leading-tight mb-4">
+        How Koozy Works: <span class="font-hand text-[#6c4de8] font-normal">From PIN to Podium.</span>
+      </h1>
+      <p class="text-base sm:text-lg text-[#77736c] leading-relaxed">
+        Whether you are a teacher running a classroom check, a friend hosting trivia night, or a player joining from your phone, here is how Koozy operates from start to finish.
+      </p>
+    </div>
+
+    <!-- The 2 Paths: Host vs Participant -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+      <!-- HOST JOURNEY -->
+      <div class="kz-card-tactile p-6 sm:p-8 bg-white flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-6">
+            <span class="w-8 h-8 rounded-xl bg-[#eeeafd] text-[#6c4de8] font-black text-sm flex items-center justify-center border-2 border-[#191817]">
+              H
+            </span>
+            <h2 class="text-2xl font-black text-[#191817]">
+              The Host Experience
+            </h2>
+          </div>
+
+          <ol class="space-y-6 text-xs sm:text-sm text-[#77736c]">
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#6c4de8] shrink-0">01</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">Sign in with Google</strong>
+                Hosts sign in via Google OAuth. This securely manages your quiz library and tracks your daily AI creation quota.
+              </div>
+            </li>
+
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#6c4de8] shrink-0">02</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">Create or Generate Questions</strong>
+                Build a quiz manually with our tactile question editor, or use the built-in Gemini AI generator to create a balanced MCQ set in seconds.
+              </div>
+            </li>
+
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#6c4de8] shrink-0">03</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">Launch Waiting Lobby & Share PIN</strong>
+                Click "Start Live Session" to generate a 5-letter PIN (e.g. <code class="font-mono font-bold bg-[#eeeafd] text-[#6c4de8] px-1 py-0.5 rounded">FAY2A</code>). Share the PIN with your players.
+              </div>
+            </li>
+
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#6c4de8] shrink-0">04</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">Manage Waiting Room & Start</strong>
+                See players connect in real time via WebSockets. When everyone is in the room, click "Start Live Quiz" to trigger the synchronized global timer.
+              </div>
+            </li>
+
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#6c4de8] shrink-0">05</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">View Real-Time Progress & Leaderboard</strong>
+                Monitor incoming answer submissions live, close questions early if everyone has answered, and celebrate top 3 podium winners.
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-[#d8d3ca]">
+          <a href="/host/quizzes/" class="kz-btn-primary py-3 px-6 rounded-xl font-bold text-xs block text-center">
+            Go to Host Dashboard &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- PARTICIPANT JOURNEY -->
+      <div class="kz-card-tactile p-6 sm:p-8 bg-[#fffdf7] flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-6">
+            <span class="w-8 h-8 rounded-xl bg-[#e6f9ff] text-[#05cdff] font-black text-sm flex items-center justify-center border-2 border-[#191817]">
+              P
+            </span>
+            <h2 class="text-2xl font-black text-[#191817]">
+              The Participant Experience
+            </h2>
+          </div>
+
+          <ol class="space-y-6 text-xs sm:text-sm text-[#77736c]">
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#05cdff] shrink-0">01</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">Navigate to /join/</strong>
+                Open any web browser on your phone, tablet, or laptop. No app installation, app store downloads, or account registrations required.
+              </div>
+            </li>
+
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#05cdff] shrink-0">02</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">Enter PIN and Choose Nickname</strong>
+                Type the 5-letter PIN shown by the host and enter your display name to enter the waiting room immediately.
+              </div>
+            </li>
+
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#05cdff] shrink-0">03</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">Questions Render on Your Device</strong>
+                When the host starts the quiz, you do NOT have to strain to read a distant TV or projector screen. Questions, options, and countdown timer appear directly in front of you.
+              </div>
+            </li>
+
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#05cdff] shrink-0">04</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">Tap Answers & Submit</strong>
+                Tap choice A, B, C, or D. Answers are automatically saved in local browser state and submitted to the server securely.
+              </div>
+            </li>
+
+            <li class="flex gap-4">
+              <span class="font-mono font-bold text-base text-[#05cdff] shrink-0">05</span>
+              <div>
+                <strong class="text-[#191817] font-extrabold text-sm block mb-1">Instant Score & Answer Review</strong>
+                Once the session ends, see your total score, correct answer breakdown, and position on the leaderboard.
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-[#d8d3ca]">
+          <a href="/join/" class="kz-btn-secondary py-3 px-6 rounded-xl font-bold text-xs block text-center">
+            Join a Live Room Now &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scoring & Timing Rules -->
+    <section class="kz-card-tactile p-6 sm:p-8 bg-white mb-16">
+      <h2 class="text-2xl font-black text-[#191817] mb-4">
+        Scoring & Timer Mechanics
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs sm:text-sm text-[#77736c]">
+        <div>
+          <h3 class="font-black text-[#191817] text-base mb-1">1,000 Points per Correct Answer</h3>
+          <p class="leading-relaxed">
+            Every question answered correctly awards exactly 1,000 points. Incorrect or unsubmitted questions receive 0 points.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-black text-[#191817] text-base mb-1">Synchronized Global Countdown</h3>
+          <p class="leading-relaxed">
+            The session timer is tracked on the server to prevent device clock tampering. When time expires, answers are automatically locked.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-black text-[#191817] text-base mb-1">Protected Answer Privacy</h3>
+          <p class="leading-relaxed">
+            Correct answers remain encrypted on the server while the game is live. No participant can peek at answers in network logs.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

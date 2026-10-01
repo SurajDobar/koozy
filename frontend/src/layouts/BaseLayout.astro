@@ -1,6 +1,8 @@
 ---
 import '../index.css';
 import SEOHead from '../components/seo/SEOHead.astro';
+import Header from '../components/navigation/Header.astro';
+import Footer from '../components/navigation/Footer.astro';
 
 interface Props {
   title?: string;
@@ -9,6 +11,9 @@ interface Props {
   ogType?: 'website' | 'article';
   ogImage?: string;
   schema?: Record<string, any>;
+  showHeader?: boolean;
+  showFooter?: boolean;
+  showFooterCta?: boolean;
 }
 
 const {
@@ -18,6 +23,9 @@ const {
   ogType = 'website',
   ogImage,
   schema,
+  showHeader = true,
+  showFooter = true,
+  showFooterCta = true,
 } = Astro.props;
 ---
 
@@ -33,7 +41,11 @@ const {
       schema={schema}
     />
   </head>
-  <body class="bg-[#f7f5ef] text-[#191817] min-h-screen">
-    <slot />
+  <body class="bg-[#f7f5ef] text-[#191817] min-h-screen flex flex-col justify-between selection:bg-[#c9bfff] selection:text-[#191817]">
+    {showHeader && <Header />}
+    <main class="flex-1">
+      <slot />
+    </main>
+    {showFooter && <Footer showCta={showFooterCta} />}
   </body>
 </html>

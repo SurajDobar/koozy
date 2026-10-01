@@ -6,7 +6,9 @@ import LoginPage from '../../views/LoginPage.jsx';
 <BaseLayout
   title="Host Sign In — Koozy"
   description="Sign in with your Google account to create, manage, and host live multiplayer quizzes on Koozy."
-  noindex={false}
+  noindex={true}
+  showHeader={false}
+  showFooter={false}
 >
   <LoginPage client:load />
 </BaseLayout>

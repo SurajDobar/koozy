@@ -197,9 +197,21 @@ export async function createLiveSession(quizId) {
 }
 
 export async function joinGame(gamePin, displayName) {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  const csrfCookie = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('csrftoken='));
+  if (csrfCookie) {
+    headers['X-CSRFToken'] = csrfCookie.split('=')[1];
+  } else if (window.__KOOZY_CONFIG__?.csrfToken) {
+    headers['X-CSRFToken'] = window.__KOOZY_CONFIG__.csrfToken;
+  }
+
   const res = await fetch(`/api/join/`, {
     method: 'POST',
-    headers: getHeaders(gamePin),
+    headers,
     body: JSON.stringify({ game_pin: gamePin, display_name: displayName }),
   });
   if (!res.ok) {

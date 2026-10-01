@@ -1,0 +1,128 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Privacy Policy — Koozy"
+  description="Learn how Koozy handles your data. Transparent information regarding Google OAuth, participant nicknames, session cookies, and Gemini AI processing."
+  noindex={false}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10 md:py-16">
+    <div class="mb-12">
+      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
+        Legal & Privacy
+      </div>
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-[#191817] tracking-tight mb-2">
+        Privacy Policy
+      </h1>
+      <p class="text-xs text-[#77736c]">
+        Last updated: October 2026 &bull; Effective immediately
+      </p>
+    </div>
+
+    <div class="kz-card-tactile p-6 sm:p-10 bg-white space-y-8 text-xs sm:text-sm text-[#77736c] leading-relaxed">
+      <!-- Section 1 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          1. Introduction
+        </h2>
+        <p>
+          At Koozy, we believe in privacy by design. We build tools that make learning playful and interactive without invading user privacy, harvesting contacts, or selling user behavioral profiles to advertisers. This Privacy Policy describes exactly what information we collect, how it is used, and how your privacy is protected.
+        </p>
+      </section>
+
+      <!-- Section 2 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          2. Information We Collect
+        </h2>
+        <div class="space-y-3">
+          <div>
+            <strong class="text-[#191817] font-extrabold block">A. For Quiz Hosts (Authenticated Users)</strong>
+            When you sign in as a host using Google OAuth 2.0, we receive basic public profile information:
+            <ul class="list-disc list-inside mt-1 space-y-1">
+              <li>Your first and last name (or public Google username)</li>
+              <li>Your email address</li>
+              <li>Your Google profile picture URL (used solely to render your host avatar)</li>
+            </ul>
+            We do NOT request access to your Google contacts, Google Drive, calendar, or any other private Google services.
+          </div>
+
+          <div>
+            <strong class="text-[#191817] font-extrabold block">B. For Quiz Participants (Guests)</strong>
+            Participants do NOT create accounts or submit personal identifiers. When joining a live quiz, we store only:
+            <ul class="list-disc list-inside mt-1 space-y-1">
+              <li>The temporary nickname you choose for that specific session</li>
+              <li>An ephemeral participant token generated to manage your session state</li>
+              <li>Your submitted quiz answers and calculated score</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          3. How We Use Your Information
+        </h2>
+        <p>
+          We use the collected information exclusively to provide the Koozy service:
+        </p>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li>To identify you as the host of your custom quizzes and live sessions.</li>
+          <li>To display participant nicknames on the live waiting room and final leaderboard.</li>
+          <li>To synchronize real-time game state and calculate accurate scores.</li>
+          <li>To enforce fair usage quotas on the AI quiz generator (8 generations daily per host).</li>
+        </ul>
+      </section>
+
+      <!-- Section 4 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          4. Cookies and Local Storage
+        </h2>
+        <p>
+          Koozy uses only strictly necessary cookies and browser storage required for core functionality:
+        </p>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li><code class="font-mono text-xs bg-[#f7f5ef] px-1 py-0.5 rounded">sessionid</code>: An encrypted cookie used to maintain authenticated host sessions.</li>
+          <li><code class="font-mono text-xs bg-[#f7f5ef] px-1 py-0.5 rounded">csrftoken</code>: A standard security cookie used to protect against Cross-Site Request Forgery (CSRF).</li>
+          <li><code class="font-mono text-xs bg-[#f7f5ef] px-1 py-0.5 rounded">sessionStorage</code>: Tab-scoped local browser storage used to preserve draft answers so players do not lose progress if they accidentally refresh during an active quiz.</li>
+        </ul>
+        <p class="mt-2">
+          We do not use third-party advertising tracking cookies, analytics pixels, or cross-site tracking scripts.
+        </p>
+      </section>
+
+      <!-- Section 5 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          5. AI Quiz Generation & Google Gemini
+        </h2>
+        <p>
+          When a host uses the AI Quiz Generator, the text prompt entered (e.g. topic name and instructions) is transmitted to the Google Gemini API to produce structured multiple-choice questions. No personal host data or participant answers are shared with the AI model during this process.
+        </p>
+      </section>
+
+      <!-- Section 6 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          6. Data Security
+        </h2>
+        <p>
+          All communication between your browser and Koozy is encrypted in transit using industry-standard TLS (HTTPS and secure WSS WebSockets). Correct quiz answers are held strictly on the server and are never exposed to participant clients until the session is completed.
+        </p>
+      </section>
+
+      <!-- Section 7 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          7. Contact Regarding Privacy
+        </h2>
+        <p>
+          If you have questions or concerns about this Privacy Policy or your data, please contact us via our <a href="/contact/" class="text-[#6c4de8] font-bold underline">Contact Page</a> or submit an inquiry through our official repository.
+        </p>
+      </section>
+    </div>
+  </div>
+</BaseLayout>

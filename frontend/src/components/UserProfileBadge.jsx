@@ -22,7 +22,7 @@ export default function UserProfileBadge({ user = null }) {
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data && data.is_authenticated && data.user) {
-            setActiveUser(data.user);
+            setActiveUser({ ...data.user, is_authenticated: true });
           }
         })
         .catch(() => {});
@@ -51,7 +51,8 @@ export default function UserProfileBadge({ user = null }) {
     };
   }, [isOpen]);
 
-  if (!activeUser || !activeUser.is_authenticated) {
+  const isAuthenticated = Boolean(activeUser && (activeUser.is_authenticated !== false) && (activeUser.is_authenticated || activeUser.email));
+  if (!isAuthenticated) {
     return (
       <a
         href="/auth/login/"

@@ -1,0 +1,115 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Terms of Service — Koozy"
+  description="The terms governing your use of Koozy. Read our guidelines on host responsibilities, AI generator quota rules, and community conduct."
+  noindex={false}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10 md:py-16">
+    <div class="mb-12">
+      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
+        Legal & Compliance
+      </div>
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-[#191817] tracking-tight mb-2">
+        Terms of Service
+      </h1>
+      <p class="text-xs text-[#77736c]">
+        Last updated: October 2026 &bull; Effective immediately
+      </p>
+    </div>
+
+    <div class="kz-card-tactile p-6 sm:p-10 bg-white space-y-8 text-xs sm:text-sm text-[#77736c] leading-relaxed">
+      <!-- Section 1 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          1. Acceptance of Terms
+        </h2>
+        <p>
+          By accessing or using Koozy (whether as an authenticated host or a guest participant), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the platform.
+        </p>
+      </section>
+
+      <!-- Section 2 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          2. Host Accounts & Responsibilities
+        </h2>
+        <p>
+          To create, manage, or host quizzes, you must sign in using a valid Google Account. As a host, you are solely responsible for:
+        </p>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li>The content of the quizzes, questions, and answer choices you create or publish.</li>
+          <li>Maintaining the security of your device and session login.</li>
+          <li>Moderating your live sessions, including exercising discretion when admitting or kicking participants.</li>
+        </ul>
+      </section>
+
+      <!-- Section 3 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          3. Participant Guidelines
+        </h2>
+        <p>
+          Participants join live sessions as guests using a 5-letter Game PIN provided by the host. When participating:
+        </p>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li>You agree to choose respectful nicknames that do not contain offensive, defamatory, or hateful language.</li>
+          <li>You understand that the host maintains complete authority over the session and may remove you from the room at any time.</li>
+          <li>You agree not to attempt to reverse engineer, inspect, or intercept network traffic to cheat or reveal correct answers prior to session completion.</li>
+        </ul>
+      </section>
+
+      <!-- Section 4 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          4. AI Quiz Generation & Fair Use
+        </h2>
+        <p>
+          Koozy provides an integrated AI quiz generator powered by Google Gemini. Use of the AI generator is subject to the following rules:
+        </p>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li><strong class="text-[#191817]">Daily Quota:</strong> Each host is allocated a quota of 8 AI generations per rolling 24-hour window. This limit is enforced to ensure reliable performance for all users.</li>
+          <li><strong class="text-[#191817]">Prompt Safety:</strong> You agree not to submit prompts designed to generate illegal content, promote hate speech, or attempt prompt injection to bypass system controls.</li>
+          <li><strong class="text-[#191817]">Verification:</strong> While our AI pipeline uses strict validation guards, AI models may occasionally generate inaccurate trivia. Hosts are encouraged to review questions prior to hosting.</li>
+        </ul>
+      </section>
+
+      <!-- Section 5 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          5. Prohibited Conduct
+        </h2>
+        <p>
+          Users agree not to:
+        </p>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li>Transmit spam, malware, or destructive code through quiz titles or question text.</li>
+          <li>Attempt to disrupt, overload, or flood our WebSocket servers or REST APIs.</li>
+          <li>Scrape or bulk-harvest participant nicknames or quiz data without written authorization.</li>
+        </ul>
+      </section>
+
+      <!-- Section 6 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          6. Disclaimer of Warranties
+        </h2>
+        <p>
+          Koozy is provided on an "as is" and "as available" basis without warranties of any kind, either express or implied. We do not guarantee uninterrupted, error-free, or 100% latency-free live multiplayer sessions, particularly over variable cellular networks.
+        </p>
+      </section>
+
+      <!-- Section 7 -->
+      <section>
+        <h2 class="text-lg sm:text-xl font-black text-[#191817] mb-3">
+          7. Changes to Terms
+        </h2>
+        <p>
+          We may update these terms occasionally to reflect new features or platform improvements. Continued use of Koozy after changes are posted constitutes your acceptance of the updated terms.
+        </p>
+      </section>
+    </div>
+  </div>
+</BaseLayout>

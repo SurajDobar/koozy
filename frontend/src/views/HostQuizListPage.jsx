@@ -14,7 +14,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
   const [importError, setImportError] = useState('');
   const [importing, setImporting] = useState(false);
 
-  const config = window.__KOOZY_CONFIG__ || {};
+  const config = typeof window !== 'undefined' ? (window.__KOOZY_CONFIG__ || {}) : {};
   const user = config.user || null;
 
   useEffect(() => {

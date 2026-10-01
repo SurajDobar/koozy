@@ -1,0 +1,112 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="About Koozy — The Tactile Live Learning Platform"
+  description="Learn why we built Koozy: to make learning playful, tactile, and fast without corporate paywalls or clunky two-device setups."
+  noindex={false}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10 md:py-16">
+    <div class="text-center max-w-2xl mx-auto mb-16">
+      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
+        Our Mission
+      </div>
+      <h1 class="text-4xl sm:text-5xl font-black text-[#191817] tracking-tight leading-tight mb-4">
+        Making Learning <span class="font-hand text-[#6c4de8] font-normal">Play.</span>
+      </h1>
+      <p class="text-base text-[#77736c] leading-relaxed">
+        We believe that competitive, live trivia is one of the most effective ways to learn, retain information, and bring groups together.
+      </p>
+    </div>
+
+    <!-- The Problem We Saw -->
+    <section class="kz-card-tactile p-6 sm:p-8 bg-white mb-12">
+      <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
+        why we started ✦
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-black text-[#191817] mb-4">
+        Live quizzes should not require two screens.
+      </h2>
+      <div class="space-y-4 text-xs sm:text-sm text-[#77736c] leading-relaxed">
+        <p>
+          For years, live classroom and party trivia was dominated by formats that forced a rigid, awkward experience: the host needed to project questions onto a shared screen, and participants were stuck squinting across a room or straining at a tiny Zoom screen-share while tapping anonymous colored buttons on their phones.
+        </p>
+        <p>
+          Meanwhile, aggressive corporate paywalls, participant caps, and intrusive mobile app download prompts turned what should have been a fun 5-minute activity into a frustrating chore.
+        </p>
+        <p>
+          We built <strong class="text-[#191817]">Koozy</strong> to change that.
+        </p>
+      </div>
+    </section>
+
+    <!-- The Three Pillars -->
+    <section class="mb-16">
+      <h2 class="text-2xl font-black text-[#191817] mb-8 text-center">
+        The Principles Behind Koozy
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="kz-card-tactile p-6 bg-[#fffdf7]">
+          <div class="w-10 h-10 rounded-xl bg-[#e6f9ff] text-[#05cdff] font-mono font-bold flex items-center justify-center border-2 border-[#191817] mb-3">
+            01
+          </div>
+          <h3 class="text-lg font-black text-[#191817] mb-2">Zero Friction</h3>
+          <p class="text-xs text-[#77736c] leading-relaxed">
+            Players should never be forced to install an app or create an account to play a 5-minute quiz. A 5-letter PIN and a nickname is all anyone needs.
+          </p>
+        </div>
+
+        <div class="kz-card-tactile p-6 bg-[#fffdf7]">
+          <div class="w-10 h-10 rounded-xl bg-[#eeeafd] text-[#6c4de8] font-mono font-bold flex items-center justify-center border-2 border-[#191817] mb-3">
+            02
+          </div>
+          <h3 class="text-lg font-black text-[#191817] mb-2">Device-Native UI</h3>
+          <p class="text-xs text-[#77736c] leading-relaxed">
+            Questions, options, and timers live directly on the device you are holding. Play in person, over a Discord voice chat, or across continents seamlessly.
+          </p>
+        </div>
+
+        <div class="kz-card-tactile p-6 bg-[#fffdf7]">
+          <div class="w-10 h-10 rounded-xl bg-[#e6ffe6] text-[#00cc05] font-mono font-bold flex items-center justify-center border-2 border-[#191817] mb-3">
+            03
+          </div>
+          <h3 class="text-lg font-black text-[#191817] mb-2">Tactile Delight</h3>
+          <p class="text-xs text-[#77736c] leading-relaxed">
+            We reject sterile, boring corporate SaaS design. Koozy embraces hand-drawn accents, bold tactile buttons, and playful micro-interactions that make learning feel like a game.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture & Technology -->
+    <section class="kz-card-tactile p-6 sm:p-8 bg-white mb-12">
+      <h2 class="text-2xl font-black text-[#191817] mb-4">
+        Modern Real-Time Architecture
+      </h2>
+      <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed mb-6">
+        Behind Koozy's playful exterior is an asynchronous real-time engine:
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 bg-[#f7f5ef] rounded-xl border border-[#d8d3ca]">
+          <strong class="text-[#191817] block mb-1 font-bold">Django Channels & Daphne</strong>
+          Asynchronous WebSocket brokers managing real-time lobby state, timer synchronization, and live answer broadcasts.
+        </div>
+        <div class="p-4 bg-[#f7f5ef] rounded-xl border border-[#d8d3ca]">
+          <strong class="text-[#191817] block mb-1 font-bold">Google Gemini AI</strong>
+          Integrated generation pipeline producing balanced 4-option MCQs with strict validation schemas.
+        </div>
+        <div class="p-4 bg-[#f7f5ef] rounded-xl border border-[#d8d3ca]">
+          <strong class="text-[#191817] block mb-1 font-bold">Astro 5 & React 19</strong>
+          Zero-JS static delivery for public presentation, paired with interactive React islands for live multiplayer sessions.
+        </div>
+        <div class="p-4 bg-[#f7f5ef] rounded-xl border border-[#d8d3ca]">
+          <strong class="text-[#191817] block mb-1 font-bold">Google OAuth 2.0</strong>
+          Frictionless, secure host authentication without passwords to manage.
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

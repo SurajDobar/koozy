@@ -72,7 +72,7 @@ export default function ParticipantLobby({ session, participant }) {
 
           <div className="flex flex-wrap justify-center gap-2 max-h-[160px] overflow-y-auto p-1">
             {participants.map((p) => {
-              const isMe = p.id === participant?.id || p.display_name === participant?.display_name;
+              const isMe = Boolean(participant?.id && p.id === participant.id);
               return (
                 <div
                   key={p.id}

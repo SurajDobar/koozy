@@ -6,8 +6,14 @@ export const GET: APIRoute = ({ site, url }) => {
 
   const publicRoutes = [
     { path: '/', priority: '1.0', changefreq: 'weekly' },
-    { path: '/join/', priority: '0.8', changefreq: 'monthly' },
-    { path: '/auth/login/', priority: '0.6', changefreq: 'monthly' },
+    { path: '/live-quiz/', priority: '0.9', changefreq: 'weekly' },
+    { path: '/ai-quiz-maker/', priority: '0.9', changefreq: 'weekly' },
+    { path: '/how-it-works/', priority: '0.8', changefreq: 'monthly' },
+    { path: '/faq/', priority: '0.8', changefreq: 'monthly' },
+    { path: '/about/', priority: '0.6', changefreq: 'monthly' },
+    { path: '/contact/', priority: '0.5', changefreq: 'monthly' },
+    { path: '/privacy/', priority: '0.3', changefreq: 'yearly' },
+    { path: '/terms/', priority: '0.3', changefreq: 'yearly' },
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

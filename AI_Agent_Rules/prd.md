@@ -62,6 +62,27 @@ Join Quiz
 
 Guest participants must have a unique display name within a session.
 
+### Participant Identity, Uniqueness & Reconnection Architecture
+
+- **Scoped Display Name Uniqueness (Non-Global)**:
+  - Display names are unique **only per live session** (`unique_participant_name_per_session`).
+  - Two participants in different sessions/quizzes can have the same display name without conflict.
+- **Authoritative Identity by Token Only**:
+  - Participants are **NEVER** identified or reused by `display_name` alone.
+  - Participant identity is strictly determined by unique `join_token`.
+- **Duplicate Name & Reconnection Handling (`/api/join/` and `ParticipantJoinForm`)**:
+  - **Same Name + Valid Existing Participant Token**:
+    The request is treated as a reconnecting participant (e.g., page refresh or reconnection). The existing participant record is returned and reconnected.
+  - **Same Name + No Valid Participant Token**:
+    The request is rejected with `{"detail": "Name already in use"}` (HTTP 400). A newcomer cannot hijack an existing player's session or adopt another player's state.
+  - **Renaming Protection**:
+    A participant holding a valid token cannot change their nickname to a display name already in use by another participant in that session.
+  - **Kicked State & Multi-Tab Isolation**:
+    - If a participant or nickname was kicked by the host, re-entry with that kicked token or name is blocked with HTTP 403.
+    - `POST /api/join/` must **NEVER** inspect ambient browser cookies (`request.COOKIES`) to authenticate or reconnect a participant. Cookies are shared across all tabs in a browser; reading them leaks participant identity across tabs (bypassing duplicate-name rejection) and causes kicked cookies to poison all subsequent joins in that browser.
+    - Frontend `joinGame()` sends only clean join payloads without previous participant tokens from `sessionStorage`.
+    - Stale or kicked participant tokens must never block other users or new joins under different nicknames.
+
 ---
 
 ## 5. Quiz

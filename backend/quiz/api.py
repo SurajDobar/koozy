@@ -23,6 +23,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import F
 from django.http import HttpResponse
 from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -48,6 +49,7 @@ POINTS_INCORRECT = 0
 # ---------------------------------------------------------------------------
 
 @api_view(["GET"])
+@ensure_csrf_cookie
 def api_auth_me(request):
     """Returns current host user and profile data."""
     if not request.user.is_authenticated:
@@ -61,6 +63,7 @@ def api_auth_me(request):
     return Response({
         "is_authenticated": True,
         "user": {
+            "is_authenticated": True,
             "name": request.user.first_name or request.user.username,
             "email": request.user.email,
             "avatar_url": avatar_url,
@@ -925,25 +928,82 @@ def api_join_game(request):
     if ls.status == LiveSession.Status.COMPLETED:
         return Response({"detail": "This quiz has already ended."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Check for existing participant with same nickname (reconnection/refresh support)
-    existing = Participant.objects.filter(live_session=ls, display_name__iexact=name).first()
-    if existing:
-        if existing.is_kicked:
-            return Response({"detail": "You have been removed from this quiz. Ask the host if you need to rejoin."}, status=status.HTTP_403_FORBIDDEN)
-        res = Response({
-            "join_token": existing.join_token,
-            "game_pin": ls.game_pin,
-            "display_name": existing.display_name,
-            "is_admitted": existing.is_admitted,
-        }, status=status.HTTP_200_OK)
-        res.set_cookie(
-            _participant_cookie_name(ls),
-            existing.join_token,
-            max_age=60 * 60 * 24,
-            httponly=True,
-            samesite="Lax",
+    # Check for existing participant via explicit authoritative token only (never ambient browser cookies)
+    existing_token = (
+        request.headers.get("X-Participant-Token")
+        or request.data.get("join_token")
+        or request.data.get("participant_token")
+        or request.GET.get("pt")
+    )
+    if existing_token:
+        existing = Participant.objects.filter(live_session=ls, join_token=existing_token).first()
+        if existing:
+            if existing.is_kicked:
+                # If this kicked participant is trying to rejoin with their kicked name/token
+                if existing.display_name.lower() == name.lower():
+                    return Response(
+                        {"detail": "You have been removed from this quiz. Ask the host if you need to rejoin."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                # If they provided a stale kicked token but are joining with a different name,
+                # do not let the old token block them; treat as a fresh join attempt.
+                existing = None
+            elif existing.display_name.lower() == name.lower():
+                # Legitimate participant reconnecting with their own display name
+                res = Response({
+                    "join_token": existing.join_token,
+                    "game_pin": ls.game_pin,
+                    "display_name": existing.display_name,
+                    "is_admitted": existing.is_admitted,
+                }, status=status.HTTP_200_OK)
+                res.set_cookie(
+                    _participant_cookie_name(ls),
+                    existing.join_token,
+                    max_age=60 * 60 * 24,
+                    httponly=True,
+                    samesite="Lax",
+                )
+                return res
+            else:
+                # Participant attempting to rename themselves
+                if Participant.objects.filter(live_session=ls, display_name__iexact=name).exclude(id=existing.id).exists():
+                    return Response({"detail": "Name already in use"}, status=status.HTTP_400_BAD_REQUEST)
+                if Participant.objects.filter(live_session=ls, display_name__iexact=name, is_kicked=True).exclude(id=existing.id).exists():
+                    return Response(
+                        {"detail": "You have been removed from this quiz. Ask the host if you need to rejoin."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                existing.display_name = name
+                existing.save(update_fields=["display_name"])
+                publish_lobby_state(ls)
+                res = Response({
+                    "join_token": existing.join_token,
+                    "game_pin": ls.game_pin,
+                    "display_name": existing.display_name,
+                    "is_admitted": existing.is_admitted,
+                }, status=status.HTTP_200_OK)
+                res.set_cookie(
+                    _participant_cookie_name(ls),
+                    existing.join_token,
+                    max_age=60 * 60 * 24,
+                    httponly=True,
+                    samesite="Lax",
+                )
+                return res
+
+    # Check if this name is already taken or was kicked in this session
+    existing_named = Participant.objects.filter(live_session=ls, display_name__iexact=name).first()
+    if existing_named:
+        if existing_named.is_kicked:
+            return Response(
+                {"detail": "You have been removed from this quiz. Ask the host if you need to rejoin."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        # Same name + no valid participant token -> reject: "Name already in use"
+        return Response(
+            {"detail": "Name already in use"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
-        return res
 
     is_admitted = (ls.status == LiveSession.Status.WAITING)
 
