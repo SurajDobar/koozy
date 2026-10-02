@@ -3,6 +3,7 @@ import { ArrowLeft, Sparkles, HelpCircle } from 'lucide-react';
 import { createQuiz } from '../utils/api';
 import UserProfileBadge from '../components/UserProfileBadge';
 import AIGeneratorModal from '../components/AIGeneratorModal';
+import { playSfx, playSfxAndNavigate } from '../utils/sfx';
 
 export default function HostCreateQuizPage() {
   const [title, setTitle] = useState('');
@@ -19,7 +20,9 @@ export default function HostCreateQuizPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    playSfx('button');
     if (!title.trim()) {
+      playSfx('error');
       setError('Quiz title is required');
       return;
     }
@@ -36,9 +39,9 @@ export default function HostCreateQuizPage() {
         time_limit: parseInt(timeLimit, 10),
       });
 
-      // Redirect to Add Questions page
-      window.location.href = `/host/quizzes/${data.id}/questions/`;
+      playSfxAndNavigate('success', `/host/quizzes/${data.id}/questions/`, 450);
     } catch (err) {
+      playSfx('error');
       setError(err.message);
       setLoading(false);
     }
@@ -154,7 +157,10 @@ export default function HostCreateQuizPage() {
                   min="30"
                   max="3600"
                   value={timeLimit}
-                  onChange={(e) => setTimeLimit(e.target.value)}
+                  onChange={(e) => {
+                    playSfx('tick-immersive');
+                    setTimeLimit(e.target.value);
+                  }}
                   className="w-full px-4 py-2.5 bg-white border-2 border-[#d8d3ca] focus:border-[#6c4de8] rounded-xl text-sm font-semibold font-mono outline-none transition-colors"
                 />
               </div>

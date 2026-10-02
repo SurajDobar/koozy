@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Gamepad2, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 import { joinGame, setParticipantToken } from '../utils/api';
 import UserProfileBadge from '../components/UserProfileBadge';
+import { playSfx } from '../utils/sfx';
 
 export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
   const [name, setName] = useState('');
@@ -20,12 +21,15 @@ export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
 
   const handleJoin = async (e) => {
     e.preventDefault();
+    playSfx('button');
     if (!name.trim()) {
       setError('Please enter your nickname');
+      playSfx('error');
       return;
     }
     if (!pin.trim()) {
       setError('Please enter a Game PIN');
+      playSfx('error');
       return;
     }
 
@@ -35,13 +39,17 @@ export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
 
     try {
       const res = await joinGame(cleanPin, name.trim());
+      playSfx('koozy-connect');
       setParticipantToken(res.join_token, cleanPin);
       if (onJoinSuccess) {
         onJoinSuccess(cleanPin, res.join_token);
       } else {
-        window.location.href = `/join/${cleanPin}/lobby/?pt=${res.join_token}`;
+        setTimeout(() => {
+          window.location.href = `/join/${cleanPin}/lobby/?pt=${res.join_token}`;
+        }, 500);
       }
     } catch (err) {
+      playSfx('koozy-unsucess');
       setError(err.message || 'Could not join session. Check Game PIN.');
       setLoading(false);
     }

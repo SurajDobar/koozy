@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Play, ArrowLeft, ArrowUp, ArrowDown, Edit3, Check, X, RotateCcw } from 'lucide-react';
 import { fetchQuizDetail, addQuestion, updateQuestion, deleteQuestion, createLiveSession, reorderQuestions } from '../utils/api';
 import UserProfileBadge from '../components/UserProfileBadge';
+import { playSfx, playSfxAndNavigate } from '../utils/sfx';
 
 export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
   const [quiz, setQuiz] = useState(initialQuiz);
@@ -99,6 +100,7 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
       if (editingQuestionId) {
         // Edit existing question
         const res = await updateQuestion(targetQuizId, editingQuestionId, payload);
+        playSfx('success');
         setQuestions((prev) =>
           prev.map((q) => (q.id === editingQuestionId ? res.question : q))
         );
@@ -106,6 +108,7 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
       } else {
         // Add new question
         const res = await addQuestion(targetQuizId, payload);
+        playSfx('success');
         setQuestions((prev) => [...prev, res.question]);
         setQuestionText('');
         setOptionA('');
@@ -116,6 +119,7 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
       }
       setSubmitting(false);
     } catch (err) {
+      playSfx('error');
       setError(err.message || 'Failed to save question');
       setSubmitting(false);
     }
@@ -126,6 +130,7 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
     const targetQuizId = qid || quiz?.id;
     if (!targetQuizId) return;
 
+    playSfx('disconnect');
     setDeletingId(questionId);
     const previousQuestions = [...questions];
     // Optimistic UI update — remove immediately
@@ -146,6 +151,7 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
   const handleMove = async (index, direction) => {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= questions.length) return;
+    playSfx('tick-immersive');
 
     const newQuestions = [...questions];
     const temp = newQuestions[index];
@@ -163,10 +169,12 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
 
   const handleStartSession = async () => {
     setStarting(true);
+    playSfx('button');
     try {
       const res = await createLiveSession(qid);
-      window.location.href = `/host/sessions/${res.session_id}/`;
+      playSfxAndNavigate('success', `/host/sessions/${res.session_id}/`, 450);
     } catch (err) {
+      playSfx('error');
       alert(err.message || 'Failed to create live session');
       setStarting(false);
     }
@@ -354,7 +362,11 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
                         <button
                           type="button"
                           id={`option-btn-${key}`}
-                          onClick={() => setCorrectAnswer(key)}
+                          data-sfx-special="true"
+                          onClick={() => {
+                            playSfx('choose-answer-pop-button');
+                            setCorrectAnswer(key);
+                          }}
                           className={`w-9 h-9 rounded-lg font-black text-sm flex items-center justify-center shrink-0 border-2 transition-all cursor-pointer ${
                             isCorrect
                               ? 'bg-[#191817] text-white border-[#191817] shadow-sm'
@@ -377,7 +389,11 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
                         {isCorrect ? (
                           <button
                             type="button"
-                            onClick={() => setCorrectAnswer(key)}
+                            data-sfx-special="true"
+                            onClick={() => {
+                              playSfx('choose-answer-pop-button');
+                              setCorrectAnswer(key);
+                            }}
                             className="text-[11px] font-black uppercase tracking-wider text-[#08660a] bg-[#e6ffe6] px-2.5 py-1 rounded-lg border border-[#a3ffa5] shrink-0 cursor-pointer shadow-xs"
                           >
                             ✓ Correct
@@ -385,7 +401,11 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
                         ) : (
                           <button
                             type="button"
-                            onClick={() => setCorrectAnswer(key)}
+                            data-sfx-special="true"
+                            onClick={() => {
+                              playSfx('choose-answer-pop-button');
+                              setCorrectAnswer(key);
+                            }}
                             className="text-[11px] font-bold uppercase tracking-wider text-[#77736c] hover:text-[#191817] bg-[#f7f5ef] hover:bg-[#eeeafd] hover:text-[#6c4de8] px-2.5 py-1 rounded-lg border border-[#d8d3ca] shrink-0 cursor-pointer transition-colors"
                           >
                             Mark Correct
@@ -500,6 +520,7 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
                     <div className="flex items-center gap-1">
                       <button
                         id={`edit-question-btn-${q.id}`}
+                        data-sfx="tick"
                         onClick={() => handleStartEdit(q)}
                         className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                           isEditingThis

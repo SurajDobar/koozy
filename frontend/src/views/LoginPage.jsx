@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, LogIn, AlertCircle } from 'lucide-react';
+import { playSfx } from '../utils/sfx';
 
 export default function LoginPage() {
   const config = typeof window !== 'undefined' ? (window.__KOOZY_CONFIG__ || {}) : {};
@@ -7,6 +8,12 @@ export default function LoginPage() {
   const search = typeof window !== 'undefined' ? window.location.search : '';
   const queryParams = new URLSearchParams(search);
   const errorParam = queryParams.get('error') || config.error || '';
+
+  useEffect(() => {
+    if (errorParam) {
+      playSfx('error2_harrd');
+    }
+  }, [errorParam]);
 
   useEffect(() => {
     fetch('/api/auth/me/')

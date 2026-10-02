@@ -15,7 +15,41 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Patrick+Hand&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'quiz/dist/assets/bundle.css' %}?v=1.5">
+    <link rel="stylesheet" href="{% static 'quiz/dist/assets/bundle.css' %}?v=1.6">
+    <!-- Instant Game SFX Preload Cache -->
+    <script>
+      (function() {
+        var soundUrls = [
+          '/sounds/backward-swish.mp3',
+          '/sounds/choose-answer-pop-button-sfx.mp3',
+          '/sounds/error2_harrd.mp3',
+          '/sounds/forward-swish.mp3',
+          '/sounds/koozy-button.mp3',
+          '/sounds/koozy-connect.mp3',
+          '/sounds/koozy-disconnect.mp3',
+          '/sounds/koozy-error.mp3',
+          '/sounds/Koozy-loose.mp3',
+          '/sounds/koozy-submitted.mp3',
+          '/sounds/koozy-success.mp3',
+          '/sounds/koozy-unsucess.mp3',
+          '/sounds/Koozy-win.mp3',
+          '/sounds/tick-immersive.mp3',
+          '/sounds/url.mp3'
+        ];
+        function preload() {
+          soundUrls.forEach(function(url) {
+            var audio = new Audio();
+            audio.preload = 'auto';
+            audio.src = url;
+          });
+        }
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(preload);
+        } else {
+          setTimeout(preload, 100);
+        }
+      })();
+    </script>
 </head>
 <body class="bg-[#f7f5ef] text-[#191817] min-h-screen">
     <div id="root"></div>
@@ -34,6 +68,6 @@
         }
         window.__KOOZY_CONFIG__.csrfToken = "{{ csrf_token }}";
     </script>
-    <script type="module" src="{% static 'quiz/dist/assets/bundle.js' %}?v=1.5"></script>
+    <script type="module" src="{% static 'quiz/dist/assets/bundle.js' %}?v=1.6"></script>
 </body>
 </html>

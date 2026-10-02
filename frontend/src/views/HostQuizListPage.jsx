@@ -3,6 +3,7 @@ import { Plus, Play, Edit3, Trash2, BookOpen, Clock, Download, Upload, Sparkles 
 import { fetchHostQuizzes, createLiveSession, deleteQuiz, importQuiz } from '../utils/api';
 import UserProfileBadge from '../components/UserProfileBadge';
 import AIGeneratorModal from '../components/AIGeneratorModal';
+import { playSfx, playSfxAndNavigate } from '../utils/sfx';
 
 export default function HostQuizListPage({ initialQuizzes = [] }) {
   const [quizzes, setQuizzes] = useState(initialQuizzes);
@@ -30,11 +31,13 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
   }, []);
 
   const handleStartSession = async (quizId) => {
+    playSfx('button');
     setActionLoading(quizId);
     try {
       const res = await createLiveSession(quizId);
-      window.location.href = `/host/sessions/${res.session_id}/`;
+      playSfxAndNavigate('success', `/host/sessions/${res.session_id}/`, 450);
     } catch (err) {
+      playSfx('error');
       alert(err.message || 'Failed to start live session');
       setActionLoading(null);
     }
@@ -43,9 +46,11 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
   const handleDelete = async (quizId, title) => {
     if (!window.confirm(`Are you sure you want to delete quiz "${title}"?`)) return;
     try {
+      playSfx('disconnect');
       await deleteQuiz(quizId);
       setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
     } catch (err) {
+      playSfx('error');
       alert(err.message || 'Failed to delete quiz');
     }
   };
@@ -62,10 +67,13 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
       a.href = url;
       const safeName = (title || 'quiz').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
       a.download = `${safeName}.json`;
+      a.setAttribute('data-sfx-special', 'true');
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 1500);
     } catch (err) {
       window.location.href = `/api/host/quizzes/${quizId}/export/`;
     }
@@ -98,6 +106,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
     try {
       const parsed = JSON.parse(importJsonText);
       const res = await importQuiz(parsed);
+      playSfx('success');
       setShowImportModal(false);
       setImportJsonText('');
       setImporting(false);
@@ -105,6 +114,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
       const updated = await fetchHostQuizzes();
       setQuizzes(updated.quizzes || []);
     } catch (err) {
+      playSfx('error2_harrd');
       setImportError(err.message || 'Failed to import quiz. Verify JSON format.');
       setImporting(false);
     }
@@ -293,6 +303,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
                     href={`/host/quizzes/${quiz.id}/questions/add/`}
                     className="p-2 border border-[#d8d3ca] hover:border-[#191817] rounded-xl text-[#77736c] hover:text-[#191817] transition-colors"
                     title="Edit Questions"
+                    data-sfx="tick"
                   >
                     <Edit3 size={15} />
                   </a>
@@ -301,6 +312,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
                     onClick={() => handleExport(quiz.id, quiz.title)}
                     className="p-2 border border-[#d8d3ca] hover:border-[#191817] rounded-xl text-[#77736c] hover:text-[#191817] transition-colors cursor-pointer"
                     title="Export Quiz JSON"
+                    data-sfx="tick"
                   >
                     <Download size={15} />
                   </button>
@@ -309,6 +321,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
                     onClick={() => handleDelete(quiz.id, quiz.title)}
                     className="p-2 border border-[#d8d3ca] hover:border-[#ff0000] hover:bg-[#fee2e2] rounded-xl text-[#77736c] hover:text-[#ff0000] transition-colors cursor-pointer"
                     title="Delete Quiz"
+                    data-sfx="tick"
                   >
                     <Trash2 size={15} />
                   </button>

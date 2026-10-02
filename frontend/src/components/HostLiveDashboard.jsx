@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Users, CheckCircle2, Square, UserCheck, AlertTriangle } from 'lucide-react';
 import { endQuiz, admitParticipant } from '../utils/api';
+import { playSfx } from '../utils/sfx';
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -32,6 +33,9 @@ export default function HostLiveDashboard({ session, onEndSuccess, isSettling = 
         if (prev <= 1) {
           clearInterval(timer);
           return 0;
+        }
+        if (prev <= 11 && prev > 1) {
+          playSfx('tick', { volume: 0.6 });
         }
         return prev - 1;
       });
@@ -71,6 +75,7 @@ export default function HostLiveDashboard({ session, onEndSuccess, isSettling = 
   }, [settling, submissionsCount, participantCount, onEndSuccess]);
 
   const confirmEndQuiz = async () => {
+    playSfx('button');
     setEnding(true);
     setShowConfirmEnd(false);
     setSettling(true);
@@ -86,11 +91,13 @@ export default function HostLiveDashboard({ session, onEndSuccess, isSettling = 
   };
 
   const handleManualFinalize = () => {
+    playSfx('button');
     if (onEndSuccess) onEndSuccess();
   };
 
   const handleAdmit = async (id) => {
     setAdmittingId(id);
+    playSfx('success');
     try {
       await admitParticipant(session.game_pin, id);
       setAdmittingId(null);
@@ -206,7 +213,11 @@ export default function HostLiveDashboard({ session, onEndSuccess, isSettling = 
         {/* Actions */}
         <div className="mt-10 pt-6 border-t border-[#d8d3ca] flex justify-end">
           <button
-            onClick={() => setShowConfirmEnd(true)}
+            data-sfx-special="true"
+            onClick={() => {
+              playSfx('koozy-error');
+              setShowConfirmEnd(true);
+            }}
             className="flex items-center gap-2 bg-white hover:bg-[#fee2e2] text-[#ff0000] hover:text-[#990000] border-2 border-[#ff0000] px-5 py-2.5 rounded-xl font-bold text-sm shadow-[2px_2px_0_#ff0000] hover:shadow-[3px_3px_0_#990000] transition-all cursor-pointer"
           >
             <Square size={16} fill="currentColor" />

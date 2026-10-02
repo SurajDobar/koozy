@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, Play, Copy, Check, Clock, UserCheck, AlertCircle } from 'lucide-react';
 import { kickParticipant, admitParticipant, startQuiz } from '../utils/api';
+import { playSfx } from '../utils/sfx';
 
 export default function HostLobby({ session, onStartSuccess }) {
   const [starting, setStarting] = useState(false);
@@ -19,6 +20,7 @@ export default function HostLobby({ session, onStartSuccess }) {
   const count = session.participant_count || participants.length;
 
   const handleCopyPin = () => {
+    playSfx('tick-immersive');
     navigator.clipboard.writeText(session.game_pin);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -27,6 +29,7 @@ export default function HostLobby({ session, onStartSuccess }) {
   const handleKick = async (id, name) => {
     if (!window.confirm(`Kick ${name} from the lobby?`)) return;
     try {
+      playSfx('disconnect');
       await kickParticipant(session.game_pin, id);
     } catch (err) {
       console.error(err);
@@ -35,6 +38,7 @@ export default function HostLobby({ session, onStartSuccess }) {
 
   const handleAdmit = async (id) => {
     setAdmittingId(id);
+    playSfx('success');
     try {
       await admitParticipant(session.game_pin, id);
       setAdmittingId(null);
@@ -56,10 +60,13 @@ export default function HostLobby({ session, onStartSuccess }) {
     const totalSeconds = calculateTotalSeconds();
     setStarting(true);
     setError('');
+    playSfx('button');
     try {
       const res = await startQuiz(session.game_pin, totalSeconds);
+      playSfx('success');
       if (onStartSuccess) onStartSuccess(res);
     } catch (err) {
+      playSfx('error');
       setError(err.message || 'Failed to start quiz');
       setStarting(false);
     }
@@ -169,7 +176,10 @@ export default function HostLobby({ session, onStartSuccess }) {
                 min="0"
                 max="23"
                 value={hours.toString().padStart(2, '0')}
-                onChange={(e) => setHours(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                onChange={(e) => {
+                  playSfx('tick-immersive');
+                  setHours(Math.max(0, parseInt(e.target.value, 10) || 0));
+                }}
                 className="w-16 py-1.5 text-center font-mono font-extrabold text-xl bg-[#f7f5ef] border border-[#d8d3ca] rounded-lg focus:border-[#6c4de8] outline-none"
               />
             </div>
@@ -183,7 +193,10 @@ export default function HostLobby({ session, onStartSuccess }) {
                 min="0"
                 max="59"
                 value={minutes.toString().padStart(2, '0')}
-                onChange={(e) => setMinutes(Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)))}
+                onChange={(e) => {
+                  playSfx('tick-immersive');
+                  setMinutes(Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)));
+                }}
                 className="w-16 py-1.5 text-center font-mono font-extrabold text-xl bg-[#f7f5ef] border border-[#d8d3ca] rounded-lg focus:border-[#6c4de8] outline-none"
               />
             </div>
@@ -197,7 +210,10 @@ export default function HostLobby({ session, onStartSuccess }) {
                 min="0"
                 max="59"
                 value={seconds.toString().padStart(2, '0')}
-                onChange={(e) => setSeconds(Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)))}
+                onChange={(e) => {
+                  playSfx('tick-immersive');
+                  setSeconds(Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)));
+                }}
                 className="w-16 py-1.5 text-center font-mono font-extrabold text-xl bg-[#f7f5ef] border border-[#d8d3ca] rounded-lg focus:border-[#6c4de8] outline-none"
               />
             </div>

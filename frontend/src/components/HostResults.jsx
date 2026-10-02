@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Trophy, Medal, ArrowRight, RotateCcw, Award } from 'lucide-react';
 import { fetchHostResult } from '../utils/api';
+import { playSfx } from '../utils/sfx';
 
 export default function HostResults({ session }) {
   const [resultData, setResultData] = useState(null);
@@ -11,6 +12,7 @@ export default function HostResults({ session }) {
       .then((data) => {
         setResultData(data);
         setLoading(false);
+        playSfx('win');
       })
       .catch((err) => {
         console.error(err);

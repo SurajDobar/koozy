@@ -10,6 +10,7 @@ import ParticipantSubmittedWaiting from './ParticipantSubmittedWaiting';
 import { fetchSessionState, clearParticipantToken } from '../utils/api';
 import { createLobbySocket } from '../utils/websocket';
 import { AlertTriangle, UserX } from 'lucide-react';
+import { playSfx } from '../utils/sfx';
 
 export default function LiveSessionController({ pin, isHost, config = {} }) {
   const [session, setSession] = useState(null);
@@ -64,6 +65,7 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
             };
           });
         } else if (msg.event === 'quiz_start') {
+          playSfx('success');
           setSession((prev) => {
             if (!prev) return prev;
             return {
@@ -76,6 +78,7 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
           });
           loadState();
         } else if (msg.event === 'submission_update') {
+          playSfx('tick-immersive');
           setSession((prev) => {
             if (!prev) return prev;
             return {
@@ -85,6 +88,7 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
             };
           });
         } else if (msg.event === 'quiz_complete') {
+          playSfx('koozy-success');
           setSession((prev) => {
             if (!prev) return prev;
             return {
@@ -93,14 +97,18 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
             };
           });
         } else if (msg.event === 'participant_kicked' || msg.event === 'participant_admitted') {
+          if (msg.event === 'participant_kicked') playSfx('koozy-disconnect');
+          if (msg.event === 'participant_admitted') playSfx('koozy-connect');
           loadState();
         }
       },
       (status) => {
         if (status === 'connected') {
+          playSfx('koozy-connect');
           setWsConnected(true);
           setIsReconnecting(false);
         } else if (status === 'disconnected') {
+          playSfx('koozy-disconnect');
           setWsConnected(false);
           setIsReconnecting(true);
         }

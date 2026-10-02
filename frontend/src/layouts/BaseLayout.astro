@@ -37,9 +37,42 @@ const {
       description={description}
       noindex={noindex}
       ogType={ogType}
-      ogImage={ogImage}
       schema={schema}
     />
+    <!-- Instant Game SFX Preload Cache -->
+    <script is:inline>
+      (function() {
+        var soundUrls = [
+          '/sounds/backward-swish.mp3',
+          '/sounds/choose-answer-pop-button-sfx.mp3',
+          '/sounds/error2_harrd.mp3',
+          '/sounds/forward-swish.mp3',
+          '/sounds/koozy-button.mp3',
+          '/sounds/koozy-connect.mp3',
+          '/sounds/koozy-disconnect.mp3',
+          '/sounds/koozy-error.mp3',
+          '/sounds/Koozy-loose.mp3',
+          '/sounds/koozy-submitted.mp3',
+          '/sounds/koozy-success.mp3',
+          '/sounds/koozy-unsucess.mp3',
+          '/sounds/Koozy-win.mp3',
+          '/sounds/tick-immersive.mp3',
+          '/sounds/url.mp3'
+        ];
+        function preload() {
+          soundUrls.forEach(function(url) {
+            var audio = new Audio();
+            audio.preload = 'auto';
+            audio.src = url;
+          });
+        }
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(preload);
+        } else {
+          setTimeout(preload, 100);
+        }
+      })();
+    </script>
   </head>
   <body class="bg-[#f7f5ef] text-[#191817] min-h-screen flex flex-col justify-between selection:bg-[#c9bfff] selection:text-[#191817]">
     {showHeader && <Header />}
@@ -47,5 +80,9 @@ const {
       <slot />
     </main>
     {showFooter && <Footer showCta={showFooterCta} />}
+    <!-- Koozy Interactive Sound Engine -->
+    <script>
+      import '../utils/sfx.js';
+    </script>
   </body>
 </html>

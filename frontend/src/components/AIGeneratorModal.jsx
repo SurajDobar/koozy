@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, X, Copy, Check, AlertCircle, Loader2, BookOpen, Layers, HelpCircle, FileCode } from 'lucide-react';
 import { generateAIQuiz, fetchAIQuota, fetchAIPromptTemplate } from '../utils/api';
+import { playSfx } from '../utils/sfx';
 
 const STARTER_PROMPTS = [
   'Python Data Structures (Lists, Dictionaries, Sets & Tuples)',
@@ -49,18 +50,22 @@ export default function AIGeneratorModal({ isOpen, onClose, onGenerated }) {
 
   const handleGenerate = async (e) => {
     e.preventDefault();
+    playSfx('button');
     if (!prompt.trim()) {
+      playSfx('error');
       setError('Please describe your quiz topic or instructions.');
       return;
     }
 
     const count = parseInt(questionCount, 10);
     if (isNaN(count) || count < 1 || count > 25) {
+      playSfx('error');
       setError('Please choose between 1 and 25 questions.');
       return;
     }
 
     if (quota.remaining <= 0) {
+      playSfx('errorHard');
       setError('Daily AI generation limit reached (8/8 attempts used today). Please try again tomorrow.');
       return;
     }
@@ -74,13 +79,17 @@ export default function AIGeneratorModal({ isOpen, onClose, onGenerated }) {
         question_count: count,
       });
 
+      playSfx('koozy-success');
       setLoading(false);
-      if (onGenerated) {
-        onGenerated(res.quiz_id || res.id);
-      } else {
-        window.location.href = `/host/quizzes/${res.quiz_id || res.id}/questions/add/`;
-      }
+      setTimeout(() => {
+        if (onGenerated) {
+          onGenerated(res.quiz_id || res.id);
+        } else {
+          window.location.href = `/host/quizzes/${res.quiz_id || res.id}/questions/`;
+        }
+      }, 500);
     } catch (err) {
+      playSfx('error2_harrd');
       console.error(err);
       setError(err.message || 'Failed to generate quiz. Please try again.');
       setLoading(false);
@@ -91,6 +100,7 @@ export default function AIGeneratorModal({ isOpen, onClose, onGenerated }) {
 
   const handleCopyTemplate = () => {
     if (!promptTemplate) return;
+    playSfx('url');
     navigator.clipboard.writeText(promptTemplate);
     setCopiedPrompt(true);
     setTimeout(() => setCopiedPrompt(false), 2500);

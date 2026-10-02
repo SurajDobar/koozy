@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Trophy, CheckCircle2, XCircle, ChevronDown, ChevronUp, ArrowRight, RotateCcw } from 'lucide-react';
 import { fetchParticipantResult, submitQuizAnswers } from '../utils/api';
+import { playSfx } from '../utils/sfx';
 
 export default function ParticipantResults({ session, participant }) {
   const [results, setResults] = useState(null);
@@ -28,6 +29,14 @@ export default function ParticipantResults({ session, participant }) {
       try {
         const data = await fetchParticipantResult(pin);
         setResults(data);
+        const correct = data?.correct_count || 0;
+        const total = data?.total_questions || session.question_count || 1;
+        const acc = data?.accuracy !== undefined ? data.accuracy : Math.round((correct / total) * 100);
+        if (acc >= 50) {
+          playSfx('koozy-win');
+        } else {
+          playSfx('koozy-loose');
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -104,7 +113,10 @@ export default function ParticipantResults({ session, participant }) {
         {answers.length > 0 && (
           <div className="mb-6">
             <button
-              onClick={() => setShowReview(!showReview)}
+              onClick={() => {
+                playSfx('button');
+                setShowReview(!showReview);
+              }}
               className="kz-btn-secondary px-5 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-2 cursor-pointer"
             >
               <span>{showReview ? 'Hide Answers' : 'Review Your Answers'}</span>

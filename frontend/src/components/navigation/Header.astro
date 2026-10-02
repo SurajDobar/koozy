@@ -1,22 +1,13 @@
 ---
 import UserProfileBadge from '../UserProfileBadge.jsx';
-
-const currentPath = Astro.url.pathname;
-
-const navLinks = [
-  { href: '/live-quiz/', label: 'Live Quiz' },
-  { href: '/ai-quiz-maker/', label: 'AI Maker' },
-  { href: '/how-it-works/', label: 'How It Works' },
-  { href: '/faq/', label: 'FAQ' },
-];
 ---
 
 <header class="border-b border-[#d8d3ca] bg-[#f7f5ef]/90 backdrop-blur-xs sticky top-0 z-40">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 sm:gap-4">
     <!-- Brand Logo -->
     <a
       href="/"
-      class="font-hand text-3xl sm:text-4xl text-[#191817] hover:text-[#6c4de8] transition-colors -rotate-2 select-none tracking-tight flex items-center gap-1.5"
+      class="font-hand text-2xl sm:text-4xl text-[#191817] hover:text-[#6c4de8] transition-colors -rotate-2 select-none tracking-tight flex items-center gap-1.5 shrink-0"
     >
       <span>Koozy</span>
       <span class="text-xs font-sans font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#eeeafd] text-[#6c4de8] border border-[#c9bfff] rotate-2">
@@ -24,31 +15,11 @@ const navLinks = [
       </span>
     </a>
 
-    <!-- Primary Navigation Links -->
-    <nav class="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-bold text-[#191817]" aria-label="Main Navigation">
-      {navLinks.map((link) => {
-        const isActive = currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href));
-        return (
-          <a
-            href={link.href}
-            class:list={[
-              'px-2.5 sm:px-3 py-1.5 rounded-xl transition-all',
-              isActive
-                ? 'bg-[#ffffff] text-[#6c4de8] border-2 border-[#191817] shadow-[2px_2px_0_#191817]'
-                : 'hover:text-[#6c4de8] hover:bg-[#fffdf7] border-2 border-transparent'
-            ]}
-          >
-            {link.label}
-          </a>
-        );
-      })}
-    </nav>
-
     <!-- Action Group: Join with PIN & User Badge -->
-    <div class="flex items-center gap-2 sm:gap-3">
+    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
       <a
         href="/join/"
-        class="kz-btn-secondary px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5"
+        class="kz-btn-secondary px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

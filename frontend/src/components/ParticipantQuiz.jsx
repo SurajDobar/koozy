@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Clock, Send, ChevronLeft, ChevronRight, AlertCircle, CheckCircle2, HelpCircle, Loader2 } from 'lucide-react';
 import { submitQuizAnswers } from '../utils/api';
+import { playSfx } from '../utils/sfx';
 
 const OPTION_THEMES = {
   a: {
@@ -83,6 +84,15 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
 
   const answersRef = useRef(answers);
   answersRef.current = answers;
+  const navigatorRef = useRef(null);
+
+  // Keep current active question number visible within the bottom bar bounds
+  useEffect(() => {
+    const activeEl = document.getElementById(`nav-q-${currentIndex}`);
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [currentIndex]);
 
   // Persist answers draft to sessionStorage
   useEffect(() => {
@@ -131,6 +141,9 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
           handleAutoSubmit();
           return 0;
         }
+        if (prev <= 11 && prev > 1) {
+          playSfx('tick', { volume: 0.6 });
+        }
         return prev - 1;
       });
     }, 1000);
@@ -140,6 +153,7 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
 
   const handleSelectOption = (questionId, optionKey) => {
     if (submitting) return;
+    playSfx('choose-answer-pop-button');
     setAnswers((prev) => {
       const current = prev[questionId];
       const updated = { ...prev };
@@ -157,11 +171,13 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
     setShowConfirmModal(false);
     setSubmitting(true);
     setSubmitError('');
+    playSfx('koozy-submitted');
     try {
       const res = await submitQuizAnswers(pin, answers);
       sessionStorage.removeItem(draftKey);
       if (onSubmitSuccess) onSubmitSuccess(res);
     } catch (err) {
+      playSfx('koozy-unsucess');
       setSubmitError(err.message || 'Failed to submit quiz.');
       setSubmitting(false);
     }
@@ -262,6 +278,7 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
             return (
               <button
                 key={key}
+                data-sfx-special="true"
                 onClick={() => handleSelectOption(currentQ.id, key)}
                 disabled={submitting}
                 className={`p-4 md:p-5 rounded-2xl text-left transition-all flex items-start gap-3.5 cursor-pointer relative ${
@@ -304,21 +321,28 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
       </div>
 
       {/* Bottom Question Navigator with Circular Buttons & Previous/Next (Spec Section 12) */}
-      <div className="kz-card p-4 md:p-6 bg-[#fffdf7] border-2 border-[#191817] shadow-[3px_3px_0_#191817] flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="kz-card p-3 sm:p-4 md:p-5 bg-[#fffdf7] border-2 border-[#191817] shadow-[3px_3px_0_#191817] flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4 w-full overflow-hidden">
         {/* Circular Navigator Strip with Prev/Next Controls */}
-        <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
+        <div className="flex items-center gap-1.5 sm:gap-2 w-full min-w-0 md:flex-1">
           {/* Previous Question Button */}
           <button
-            onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+            data-sfx-special="true"
+            onClick={() => {
+              playSfx('backward-swish');
+              setCurrentIndex((prev) => Math.max(0, prev - 1));
+            }}
             disabled={currentIndex === 0}
-            className="p-2.5 bg-white hover:bg-[#eeeafd] disabled:opacity-30 disabled:cursor-not-allowed text-[#191817] rounded-xl border-2 border-[#191817] shadow-[2px_2px_0_#191817] cursor-pointer transition-all shrink-0"
+            className="p-2 sm:p-2.5 bg-white hover:bg-[#eeeafd] disabled:opacity-30 disabled:cursor-not-allowed text-[#191817] rounded-xl border-2 border-[#191817] shadow-[2px_2px_0_#191817] cursor-pointer transition-all shrink-0"
             title="Previous Question"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={18} />
           </button>
 
           {/* Circular Question Numbers */}
-          <div className="flex items-center gap-2 overflow-x-auto py-1 px-1 max-w-full justify-center">
+          <div
+            ref={navigatorRef}
+            className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1 px-1 min-w-0 flex-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
             {questions.map((q, idx) => {
               const isAnswered = Boolean(answers[q.id]);
               const isCurrent = idx === currentIndex;
@@ -326,10 +350,15 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
               return (
                 <button
                   key={q.id || idx}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`w-10 h-10 rounded-full font-bold text-sm flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                  id={`nav-q-${idx}`}
+                  data-sfx-special="true"
+                  onClick={() => {
+                    playSfx('tick-immersive');
+                    setCurrentIndex(idx);
+                  }}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full font-bold text-xs sm:text-sm flex items-center justify-center transition-all cursor-pointer shrink-0 ${
                     isCurrent
-                      ? 'border-3 border-[#6c4de8] ring-3 ring-[#6c4de8]/30 scale-110 shadow-md font-black ' +
+                      ? 'border-2.5 border-[#6c4de8] ring-3 ring-[#6c4de8]/30 scale-105 shadow-md font-black ' +
                         (isAnswered ? 'bg-[#6c4de8] text-white' : 'bg-white text-[#6c4de8]')
                       : isAnswered
                       ? 'bg-[#6c4de8] text-white border-2 border-[#191817] shadow-[1.5px_1.5px_0_#191817]'
@@ -345,24 +374,32 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
 
           {/* Next Question Button */}
           <button
-            onClick={() => setCurrentIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
+            data-sfx-special="true"
+            onClick={() => {
+              playSfx('forward-swish');
+              setCurrentIndex((prev) => Math.min(totalQuestions - 1, prev + 1));
+            }}
             disabled={currentIndex === totalQuestions - 1}
-            className="p-2.5 bg-white hover:bg-[#eeeafd] disabled:opacity-30 disabled:cursor-not-allowed text-[#191817] rounded-xl border-2 border-[#191817] shadow-[2px_2px_0_#191817] cursor-pointer transition-all shrink-0"
+            className="p-2 sm:p-2.5 bg-white hover:bg-[#eeeafd] disabled:opacity-30 disabled:cursor-not-allowed text-[#191817] rounded-xl border-2 border-[#191817] shadow-[2px_2px_0_#191817] cursor-pointer transition-all shrink-0"
             title="Next Question"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={18} />
           </button>
         </div>
 
         {/* Submit Quiz Action Button (Bottom) */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+        <div className="flex items-center gap-3 w-full md:w-auto justify-end shrink-0">
           {submitError && (
             <span className="text-xs font-bold text-[#ff0000]">{submitError}</span>
           )}
           <button
-            onClick={() => setShowConfirmModal(true)}
+            data-sfx-special="true"
+            onClick={() => {
+              playSfx('koozy-error');
+              setShowConfirmModal(true);
+            }}
             disabled={submitting}
-            className="kz-btn-primary px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 cursor-pointer w-full md:w-auto justify-center disabled:opacity-50"
+            className="kz-btn-primary px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm flex items-center gap-2 cursor-pointer w-full md:w-auto justify-center disabled:opacity-50 shrink-0"
           >
             <Send size={16} />
             <span>{submitting ? 'Submitting...' : 'Submit Quiz →'}</span>
