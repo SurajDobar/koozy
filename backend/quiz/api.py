@@ -244,6 +244,7 @@ def session_state(request, game_pin):
             "seconds_elapsed": round(ls.seconds_elapsed(), 2),
             "seconds_remaining": ls.seconds_remaining(),
             "quiz_started_at": ls.quiz_started_at.isoformat() if ls.quiz_started_at else None,
+            "music_track": ls.get_bg_music_track() if ls.status == LiveSession.Status.ACTIVE else None,
             "question_count": total,
             "is_quiz_open": ls.is_quiz_open(),
             "questions": questions_data,
@@ -445,12 +446,14 @@ def host_start_quiz(request, game_pin):
         ls.status = LiveSession.Status.ACTIVE
         ls.quiz_started_at = timezone.now()
         ls.current_question_index = 0
+        if not ls.bg_music_track:
+            ls.bg_music_track = secrets.choice(["game1.mp3", "game2.mp3", "game3.mp3", "game4.mp3"])
         custom_limit = request.data.get("total_time_limit") or request.data.get("time_limit")
         if custom_limit and int(custom_limit) > 0:
             ls.total_time_limit = int(custom_limit)
         elif not ls.total_time_limit:
             ls.total_time_limit = getattr(ls.quiz, "time_limit", 300) or 300
-        ls.save(update_fields=["status", "quiz_started_at", "current_question_index", "total_time_limit"])
+        ls.save(update_fields=["status", "quiz_started_at", "current_question_index", "total_time_limit", "bg_music_track"])
         publish_quiz_start(ls)
         publish_lobby_state(ls)
 
@@ -459,6 +462,7 @@ def host_start_quiz(request, game_pin):
         "quiz_started_at": ls.quiz_started_at.isoformat() if ls.quiz_started_at else None,
         "total_time_limit": ls.total_time_limit,
         "seconds_remaining": ls.seconds_remaining(),
+        "music_track": ls.get_bg_music_track(),
     })
 
 

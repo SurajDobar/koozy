@@ -124,6 +124,7 @@ class LiveSession(models.Model):
     total_time_limit = models.PositiveIntegerField(default=300)
     ended_at = models.DateTimeField(null=True, blank=True)
     current_question_closed = models.BooleanField(default=False)
+    bg_music_track = models.CharField(max_length=50, blank=True, default="")
 
     class Meta:
         constraints = [
@@ -148,6 +149,14 @@ class LiveSession(models.Model):
     def can_start(self):
         """A session can only start if its quiz has valid questions."""
         return self.quiz.has_valid_questions()
+
+    def get_bg_music_track(self):
+        """Return the background music track selected for this session."""
+        if self.bg_music_track:
+            return self.bg_music_track
+        tracks = ["game1.mp3", "game2.mp3", "game3.mp3", "game4.mp3"]
+        idx = (self.id or (hash(self.game_pin) if self.game_pin else 0)) % len(tracks)
+        return tracks[idx]
 
     def save(self, *args, **kwargs):
         if not self.game_pin:

@@ -375,7 +375,10 @@ def start_live_session(request, session_id):
         live_session.current_question_index = 0
         if not live_session.total_time_limit:
             live_session.total_time_limit = getattr(live_session.quiz, "time_limit", 300) or 300
-        live_session.save(update_fields=["status", "quiz_started_at", "question_started_at", "current_question_closed", "current_question_index", "total_time_limit"])
+        if not live_session.bg_music_track:
+            import secrets
+            live_session.bg_music_track = secrets.choice(["game1.mp3", "game2.mp3", "game3.mp3", "game4.mp3"])
+        live_session.save(update_fields=["status", "quiz_started_at", "question_started_at", "current_question_closed", "current_question_index", "total_time_limit", "bg_music_track"])
         publish_lobby_state(live_session)
         publish_quiz_start(live_session)
     return redirect("host_lobby", session_id=live_session.id)

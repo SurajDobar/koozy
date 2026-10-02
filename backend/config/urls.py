@@ -24,6 +24,6 @@ SOUNDS_DIR = os.path.join(settings.BASE_DIR, 'quiz', 'static', 'quiz', 'sounds')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    re_path(r'^sounds/(?P<path>.*)$', serve, {'document_root': SOUNDS_DIR}),
+    re_path(r'^(?:sounds|sound)/(?P<path>.*)$', serve, {'document_root': SOUNDS_DIR}),
     path('', include('quiz.urls')),
 ]

@@ -11,6 +11,7 @@ import { fetchSessionState, clearParticipantToken } from '../utils/api';
 import { createLobbySocket } from '../utils/websocket';
 import { AlertTriangle, UserX } from 'lucide-react';
 import { playSfx } from '../utils/sfx';
+import { startMusic, stopMusic } from '../utils/bgMusic';
 
 export default function LiveSessionController({ pin, isHost, config = {} }) {
   const [session, setSession] = useState(null);
@@ -43,6 +44,23 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
     loadState();
   }, [loadState]);
 
+  // Background music management synchronized with session state
+  useEffect(() => {
+    if (!session) return;
+    if (session.status === 'ACTIVE' && session.music_track) {
+      startMusic(session.music_track, session.quiz_started_at);
+    } else if (session.status === 'COMPLETED' || session.status === 'WAITING') {
+      stopMusic();
+    }
+  }, [session?.status, session?.music_track, session?.quiz_started_at]);
+
+  // Clean up on component unmount (leaving live session)
+  useEffect(() => {
+    return () => {
+      stopMusic();
+    };
+  }, []);
+
   // Real-time WebSocket connection (Primary event source)
   useEffect(() => {
     if (!pin) return;
@@ -62,6 +80,8 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
               pending_participants: msg.pending_participants ?? prev.pending_participants,
               pending_count: msg.pending_count ?? prev.pending_count,
               seconds_remaining: msg.seconds_remaining ?? prev.seconds_remaining,
+              quiz_started_at: msg.quiz_started_at ?? prev.quiz_started_at,
+              music_track: msg.music_track ?? prev.music_track,
             };
           });
         } else if (msg.event === 'quiz_start') {
@@ -74,8 +94,12 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
               seconds_remaining: msg.seconds_remaining ?? prev.seconds_remaining,
               total_time_limit: msg.total_time_limit ?? prev.total_time_limit,
               quiz_started_at: msg.quiz_started_at ?? prev.quiz_started_at,
+              music_track: msg.music_track ?? prev.music_track,
             };
           });
+          if (msg.music_track) {
+            startMusic(msg.music_track, msg.quiz_started_at);
+          }
           loadState();
         } else if (msg.event === 'submission_update') {
           playSfx('tick-immersive');
@@ -89,6 +113,7 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
           });
         } else if (msg.event === 'quiz_complete') {
           playSfx('koozy-success');
+          stopMusic();
           setSession((prev) => {
             if (!prev) return prev;
             return {
@@ -211,6 +236,7 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
         isReconnecting={isReconnecting}
         onExit={() => {
           if (window.confirm('Leave this live quiz session?')) {
+            stopMusic();
             clearParticipantToken(pin);
             window.location.href = isHost ? '/host/quizzes/' : '/';
           }

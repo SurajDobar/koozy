@@ -1,8 +1,9 @@
 import React from 'react';
 import { LogOut, WifiOff } from 'lucide-react';
 import UserProfileBadge from './UserProfileBadge';
+import MusicVolumeControl from './MusicVolumeControl';
 
-export default function Navbar({ title, pin, isHost, participantName, isReconnecting, onExit, user }) {
+export default function Navbar({ title, pin, isHost, participantName, isReconnecting, onExit, user, showMusicControl = true }) {
   const hostUser = user || window.__KOOZY_CONFIG__?.user;
 
   return (
@@ -19,6 +20,8 @@ export default function Navbar({ title, pin, isHost, participantName, isReconnec
       </div>
 
       <div className="flex items-center gap-3">
+        {showMusicControl && <MusicVolumeControl />}
+
         {isReconnecting && (
           <div className="flex items-center gap-1.5 bg-[#fff3cd] border border-[#ffeeba] text-[#856404] px-2.5 py-1 rounded-lg text-xs font-bold animate-pulse">
             <WifiOff size={13} />

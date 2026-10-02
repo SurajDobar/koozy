@@ -48,6 +48,8 @@ def lobby_state(live_session):
         "submissions_count": sum(1 for p in admitted if p["has_submitted"]),
         "seconds_remaining": live_session.seconds_remaining(),
         "total_time_limit": live_session.total_time_limit,
+        "quiz_started_at": live_session.quiz_started_at.isoformat() if live_session.quiz_started_at else None,
+        "music_track": live_session.get_bg_music_track() if live_session.status == "ACTIVE" else None,
     }
 
 
@@ -95,6 +97,7 @@ def publish_quiz_start(live_session):
                 "total_time_limit": live_session.total_time_limit,
                 "seconds_remaining": live_session.seconds_remaining(),
                 "quiz_started_at": live_session.quiz_started_at.isoformat() if live_session.quiz_started_at else None,
+                "music_track": live_session.get_bg_music_track(),
             },
         },
     )
