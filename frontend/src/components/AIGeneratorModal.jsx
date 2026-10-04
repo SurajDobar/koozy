@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, X, Copy, Check, AlertCircle, Loader2, BookOpen, Layers, HelpCircle, FileCode } from 'lucide-react';
 import { generateAIQuiz, fetchAIQuota, fetchAIPromptTemplate } from '../utils/api';
 import { playSfx } from '../utils/sfx';
+import { trackAIQuizGenerated, trackQuizCreated } from '../utils/analytics';
 
 const STARTER_PROMPTS = [
   'Python Data Structures (Lists, Dictionaries, Sets & Tuples)',
@@ -78,6 +79,10 @@ export default function AIGeneratorModal({ isOpen, onClose, onGenerated }) {
         prompt: prompt.trim(),
         question_count: count,
       });
+
+      const newQuizId = res.quiz_id || res.id;
+      trackAIQuizGenerated({ quizId: newQuizId, questionCount: count });
+      trackQuizCreated({ quizId: newQuizId, questionCount: count, method: 'ai' });
 
       playSfx('koozy-success');
       setLoading(false);

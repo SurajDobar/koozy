@@ -4,6 +4,7 @@ import { fetchHostQuizzes, createLiveSession, deleteQuiz, importQuiz } from '../
 import UserProfileBadge from '../components/UserProfileBadge';
 import AIGeneratorModal from '../components/AIGeneratorModal';
 import { playSfx, playSfxAndNavigate } from '../utils/sfx';
+import { trackQuizCreated } from '../utils/analytics';
 
 export default function HostQuizListPage({ initialQuizzes = [] }) {
   const [quizzes, setQuizzes] = useState(initialQuizzes);
@@ -106,6 +107,7 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
     try {
       const parsed = JSON.parse(importJsonText);
       const res = await importQuiz(parsed);
+      trackQuizCreated({ quizId: res.quiz_id || res.id, method: 'import' });
       playSfx('success');
       setShowImportModal(false);
       setImportJsonText('');

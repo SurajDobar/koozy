@@ -4,6 +4,7 @@ import { createQuiz } from '../utils/api';
 import UserProfileBadge from '../components/UserProfileBadge';
 import AIGeneratorModal from '../components/AIGeneratorModal';
 import { playSfx, playSfxAndNavigate } from '../utils/sfx';
+import { trackQuizCreated } from '../utils/analytics';
 
 export default function HostCreateQuizPage() {
   const [title, setTitle] = useState('');
@@ -39,6 +40,7 @@ export default function HostCreateQuizPage() {
         time_limit: parseInt(timeLimit, 10),
       });
 
+      trackQuizCreated({ quizId: data.id, method: 'manual' });
       playSfxAndNavigate('success', `/host/quizzes/${data.id}/questions/`, 450);
     } catch (err) {
       playSfx('error');

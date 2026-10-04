@@ -12,6 +12,7 @@ import { createLobbySocket } from '../utils/websocket';
 import { AlertTriangle, UserX } from 'lucide-react';
 import { playSfx } from '../utils/sfx';
 import { startMusic, stopMusic } from '../utils/bgMusic';
+import { trackQuizStarted, trackQuizCompleted } from '../utils/analytics';
 
 export default function LiveSessionController({ pin, isHost, config = {} }) {
   const [session, setSession] = useState(null);
@@ -53,6 +54,23 @@ export default function LiveSessionController({ pin, isHost, config = {} }) {
       stopMusic();
     }
   }, [session?.status, session?.music_track, session?.quiz_started_at]);
+
+  // GA4 Product Event Tracking (quiz_started & quiz_completed)
+  // Deduplicated by session PIN so re-renders/polling never re-fire events
+  useEffect(() => {
+    if (!session || !pin) return;
+    if (session.status === 'ACTIVE') {
+      trackQuizStarted(pin, {
+        participantCount: session.participant_count ?? (session.participants || []).length,
+        totalTimeLimit: session.total_time_limit,
+      });
+    } else if (session.status === 'COMPLETED') {
+      trackQuizCompleted(pin, {
+        questionCount: session.question_count,
+        participantCount: session.participant_count ?? (session.participants || []).length,
+      });
+    }
+  }, [session?.status, pin, session?.participant_count, session?.total_time_limit, session?.question_count, session?.participants]);
 
   // Clean up on component unmount (leaving live session)
   useEffect(() => {

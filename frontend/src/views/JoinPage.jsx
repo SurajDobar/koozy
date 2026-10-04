@@ -3,6 +3,7 @@ import { Gamepad2, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 import { joinGame, setParticipantToken } from '../utils/api';
 import UserProfileBadge from '../components/UserProfileBadge';
 import { playSfx } from '../utils/sfx';
+import { trackPlayerJoined } from '../utils/analytics';
 
 export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
   const [name, setName] = useState('');
@@ -39,6 +40,7 @@ export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
 
     try {
       const res = await joinGame(cleanPin, name.trim());
+      trackPlayerJoined(cleanPin, res.join_token);
       playSfx('koozy-connect');
       setParticipantToken(res.join_token, cleanPin);
       if (onJoinSuccess) {
