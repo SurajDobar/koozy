@@ -9,6 +9,18 @@
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const hostname = url.hostname.toLowerCase();
+
+    // 1. Enforce HTTPS and apex domain (https://koozy.live) in a single 301 Permanent Redirect
+    const isWww = hostname === 'www.koozy.live';
+    const isHttp = url.protocol === 'http:' && !hostname.includes('localhost') && !hostname.includes('127.0.0.1');
+
+    if (isWww || isHttp) {
+      const canonicalHostname = isWww ? 'koozy.live' : hostname;
+      const canonicalUrl = `https://${canonicalHostname}${url.pathname}${url.search}`;
+      return Response.redirect(canonicalUrl, 301);
+    }
+
     const pathname = url.pathname;
 
     // Backend route definitions matching Django & Daphne ASGI routes
@@ -148,6 +160,20 @@ export default {
     }
 
     // Serve Astro static pages and assets from ./dist-astro
-    return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Not found', { status: 404 });
+    if (!env.ASSETS) {
+      return new Response('Not found', { status: 404 });
+    }
+
+    const assetResponse = await env.ASSETS.fetch(request);
+    if (assetResponse.status === 200) {
+      const response = new Response(assetResponse.body, assetResponse);
+      if (pathname.startsWith('/_astro/') || pathname.startsWith('/sounds/') || pathname.startsWith('/sound/')) {
+        response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+      } else if (!response.headers.has('Cache-Control')) {
+        response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      }
+      return response;
+    }
+    return assetResponse;
   },
 };
