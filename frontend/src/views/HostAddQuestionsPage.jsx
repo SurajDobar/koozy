@@ -269,10 +269,11 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
 
             <form onSubmit={handleSubmitQuestion} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1">
+                <label htmlFor="question-text-input" className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1">
                   Question Text *
                 </label>
                 <textarea
+                  id="question-text-input"
                   placeholder="e.g. Which of the following is an immutable data type in Python?"
                   value={questionText}
                   onChange={(e) => setQuestionText(e.target.value)}
@@ -287,9 +288,9 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
                 {/* Segmented Correct Answer Selector Bar */}
                 <div className="p-3.5 bg-[#f7f5ef] border-2 border-[#191817] rounded-2xl mb-4">
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-[#191817]">
+                    <span className="block text-xs font-black uppercase tracking-wider text-[#191817]">
                       Which option is correct? *
-                    </label>
+                    </span>
                     <span className="text-[11px] font-bold text-[#6c4de8]">
                       {correctAnswer ? `Option ${correctAnswer.toUpperCase()} selected` : 'Required (click to select)'}
                     </span>
@@ -333,9 +334,9 @@ export default function HostAddQuestionsPage({ quizId, initialQuiz = null }) {
                 </div>
 
                 <div className="flex justify-between items-center mb-2">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#191817]">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-[#191817]">
                     Option Text & Values *
-                  </label>
+                  </span>
                   <span className="text-[11px] font-bold text-[#77736c]">
                     Fill in all 4 choices
                   </span>

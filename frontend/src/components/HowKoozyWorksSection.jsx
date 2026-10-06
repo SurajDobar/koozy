@@ -288,18 +288,18 @@ function HostCreateVisual() {
 
       <div className="space-y-2.5 text-left mb-3">
         <div>
-          <label className="block text-[10px] font-bold text-[#191817] uppercase tracking-wider mb-1">
+          <span className="block text-[10px] font-bold text-[#191817] uppercase tracking-wider mb-1">
             QUIZ TITLE *
-          </label>
+          </span>
           <div className="w-full bg-[#fcfbf9] border-2 border-[#d8d3ca] rounded-xl px-3 py-1.5 text-xs text-[#191817] font-medium">
             Python Fundamentals Quick Check
           </div>
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-[#191817] uppercase tracking-wider mb-1">
+          <span className="block text-[10px] font-bold text-[#191817] uppercase tracking-wider mb-1">
             DESCRIPTION (OPTIONAL)
-          </label>
+          </span>
           <div className="w-full bg-[#fcfbf9] border-2 border-[#d8d3ca] rounded-xl px-3 py-1.5 text-xs text-[#77736c]">
             Short summary for your students...
           </div>
@@ -307,26 +307,26 @@ function HostCreateVisual() {
 
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <label className="block text-[9px] font-bold text-[#191817] uppercase mb-0.5">
+            <span className="block text-[9px] font-bold text-[#191817] uppercase mb-0.5">
               CATEGORY
-            </label>
+            </span>
             <div className="bg-[#fcfbf9] border-2 border-[#d8d3ca] rounded-xl px-2 py-1 text-xs font-semibold text-[#191817]">
               General
             </div>
           </div>
           <div>
-            <label className="block text-[9px] font-bold text-[#191817] uppercase mb-0.5">
+            <span className="block text-[9px] font-bold text-[#191817] uppercase mb-0.5">
               DIFFICULTY
-            </label>
+            </span>
             <div className="bg-[#fcfbf9] border-2 border-[#d8d3ca] rounded-xl px-2 py-1 text-xs font-semibold text-[#191817] flex items-center justify-between">
               <span>Medium</span>
               <span className="text-[9px] text-[#77736c]">▼</span>
             </div>
           </div>
           <div>
-            <label className="block text-[9px] font-bold text-[#191817] uppercase mb-0.5">
+            <span className="block text-[9px] font-bold text-[#191817] uppercase mb-0.5">
               TIME (SEC)
-            </label>
+            </span>
             <div className="bg-[#fcfbf9] border-2 border-[#d8d3ca] rounded-xl px-2 py-1 text-xs font-mono font-semibold text-[#191817]">
               300
             </div>
@@ -603,18 +603,18 @@ function PlayerJoinVisual() {
 
       <div className="space-y-3 text-left mb-4">
         <div>
-          <label className="block text-[10px] font-bold text-[#191817] uppercase tracking-wider mb-1">
+          <span className="block text-[10px] font-bold text-[#191817] uppercase tracking-wider mb-1">
             YOUR NICKNAME
-          </label>
+          </span>
           <div className="w-full bg-white border-2 border-[#6c4de8] rounded-xl px-3 py-2 text-xs font-semibold text-[#191817]">
             Sam
           </div>
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-[#191817] uppercase tracking-wider mb-1">
+          <span className="block text-[10px] font-bold text-[#191817] uppercase tracking-wider mb-1">
             GAME PIN
-          </label>
+          </span>
           <div className="w-full bg-[#fcfbf9] border-2 border-[#d8d3ca] rounded-xl px-3 py-2 text-center font-mono font-bold text-sm tracking-widest text-[#77736c]">
             E.G.  FAY2A
           </div>

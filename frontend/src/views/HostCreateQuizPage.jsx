@@ -95,10 +95,11 @@ export default function HostCreateQuizPage() {
         <div className="kz-card p-8 md:p-10 bg-[#fffdf7]">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
+              <label htmlFor="create-quiz-title-input" className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
                 Quiz Title *
               </label>
               <input
+                id="create-quiz-title-input"
                 type="text"
                 placeholder="e.g. Python Fundamentals Quick Check"
                 value={title}
@@ -109,10 +110,11 @@ export default function HostCreateQuizPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
+              <label htmlFor="create-quiz-desc-input" className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
                 Description (Optional)
               </label>
               <textarea
+                id="create-quiz-desc-input"
                 placeholder="Short summary for your students..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -123,10 +125,11 @@ export default function HostCreateQuizPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
+                <label htmlFor="create-quiz-category-input" className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
                   Category
                 </label>
                 <input
+                  id="create-quiz-category-input"
                   type="text"
                   placeholder="e.g. Computer Science"
                   value={category}
@@ -136,10 +139,11 @@ export default function HostCreateQuizPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
+                <label htmlFor="create-quiz-difficulty-select" className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
                   Difficulty
                 </label>
                 <select
+                  id="create-quiz-difficulty-select"
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
                   className="w-full px-4 py-2.5 bg-white border-2 border-[#d8d3ca] focus:border-[#6c4de8] rounded-xl text-sm font-semibold outline-none transition-colors"
@@ -151,10 +155,11 @@ export default function HostCreateQuizPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
+                <label htmlFor="create-quiz-timelimit-input" className="block text-xs font-bold uppercase tracking-wider text-[#191817] mb-1.5">
                   Time Limit (Sec)
                 </label>
                 <input
+                  id="create-quiz-timelimit-input"
                   type="number"
                   min="30"
                   max="3600"

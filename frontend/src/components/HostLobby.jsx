@@ -170,8 +170,9 @@ export default function HostLobby({ session, onStartSuccess }) {
 
           <div className="flex items-center justify-center gap-2 bg-white p-3 rounded-2xl border-2 border-[#191817] shadow-[3px_3px_0_#191817]">
             <div className="flex flex-col items-center">
-              <label className="text-[10px] font-bold text-[#77736c] uppercase mb-1">Hour</label>
+              <label htmlFor="timer-hours-input" className="text-[10px] font-bold text-[#77736c] uppercase mb-1">Hour</label>
               <input
+                id="timer-hours-input"
                 type="number"
                 min="0"
                 max="23"
@@ -187,8 +188,9 @@ export default function HostLobby({ session, onStartSuccess }) {
             <span className="font-mono text-2xl font-black text-[#77736c] pt-4">:</span>
 
             <div className="flex flex-col items-center">
-              <label className="text-[10px] font-bold text-[#77736c] uppercase mb-1">Min</label>
+              <label htmlFor="timer-minutes-input" className="text-[10px] font-bold text-[#77736c] uppercase mb-1">Min</label>
               <input
+                id="timer-minutes-input"
                 type="number"
                 min="0"
                 max="59"
@@ -204,8 +206,9 @@ export default function HostLobby({ session, onStartSuccess }) {
             <span className="font-mono text-2xl font-black text-[#77736c] pt-4">:</span>
 
             <div className="flex flex-col items-center">
-              <label className="text-[10px] font-bold text-[#77736c] uppercase mb-1">Sec</label>
+              <label htmlFor="timer-seconds-input" className="text-[10px] font-bold text-[#77736c] uppercase mb-1">Sec</label>
               <input
+                id="timer-seconds-input"
                 type="number"
                 min="0"
                 max="59"

@@ -2763,7 +2763,7 @@ class OAuthCookieAndGeminiConfigTests(TestCase):
     def test_gemini_active_models_configuration(self):
         from django.conf import settings
         from .ai_service import generate_quiz_with_gemini
-        self.assertIn(settings.GEMINI_MODEL, ("gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.7-flash"))
+        self.assertIn(settings.GEMINI_MODEL, ("gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.7-flash"))
 
     @patch("quiz.ai_service.requests.post")
     def test_gemini_fallback_handles_503_and_404(self, mock_post):

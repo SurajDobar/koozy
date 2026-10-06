@@ -96,10 +96,11 @@ export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
           <form onSubmit={handleJoin} className="space-y-4 text-left">
             {/* 1. NICKNAME FIRST (Per spec section 6) */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#77736c] mb-1.5">
+              <label htmlFor="join-nickname-input" className="block text-xs font-bold uppercase tracking-wider text-[#77736c] mb-1.5">
                 Your Nickname
               </label>
               <input
+                id="join-nickname-input"
                 type="text"
                 placeholder="e.g. Sam"
                 value={name}
@@ -111,10 +112,11 @@ export default function JoinPage({ initialPin = '', onJoinSuccess = null }) {
 
             {/* 2. GAME PIN SECOND (Per spec section 6) */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#77736c] mb-1.5">
+              <label htmlFor="join-gamepin-input" className="block text-xs font-bold uppercase tracking-wider text-[#77736c] mb-1.5">
                 Game PIN
               </label>
               <input
+                id="join-gamepin-input"
                 type="text"
                 placeholder="e.g. FAY2A"
                 value={pin}

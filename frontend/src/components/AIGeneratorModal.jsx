@@ -11,15 +11,36 @@ const STARTER_PROMPTS = [
   'Biology: Cell Structure, Mitosis & Photosynthesis',
 ];
 
+const AI_GENERATION_STEPS = [
+  { label: 'Connecting to Gemini AI engine...', progress: 18 },
+  { label: 'Analyzing your topic & structure requirements...', progress: 42 },
+  { label: 'Drafting questions & plausible answer choices...', progress: 68 },
+  { label: 'Balancing distractors & verifying correct answers...', progress: 88 },
+  { label: 'Finalizing 4-option quiz payload...', progress: 96 },
+];
+
 export default function AIGeneratorModal({ isOpen, onClose, onGenerated }) {
   const [activeTab, setActiveTab] = useState('generate'); // 'generate' | 'copy_prompt'
   const [prompt, setPrompt] = useState('');
   const [questionCount, setQuestionCount] = useState(5);
   const [loading, setLoading] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
   const [error, setError] = useState('');
   const [quota, setQuota] = useState({ remaining: 8, limit: 8 });
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [promptTemplate, setPromptTemplate] = useState('');
+
+  // Cycle through background AI states during generation
+  useEffect(() => {
+    if (!loading) {
+      setStepIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setStepIndex((prev) => (prev < AI_GENERATION_STEPS.length - 1 ? prev + 1 : prev));
+    }, 1300);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   // Load quota and prompt template on open
   useEffect(() => {
@@ -197,13 +218,14 @@ export default function AIGeneratorModal({ isOpen, onClose, onGenerated }) {
 
               {/* Prompt Input */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-[#191817] mb-2 flex items-center justify-between">
+                <label htmlFor="ai-quiz-prompt-input" className="block text-xs font-black uppercase tracking-wider text-[#191817] mb-2 flex items-center justify-between">
                   <span>Quiz Topic & Specifications *</span>
                   <span className="text-[11px] text-[#77736c] font-bold lowercase">
                     {prompt.length}/1000
                   </span>
                 </label>
                 <textarea
+                  id="ai-quiz-prompt-input"
                   rows={4}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
@@ -238,9 +260,9 @@ export default function AIGeneratorModal({ isOpen, onClose, onGenerated }) {
               {/* Question Count Selector (1-25) */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-[#191817]">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#191817]">
                     Number of Questions (1 – 25)
-                  </label>
+                  </span>
                   <span className="text-xs font-black bg-[#6c4de8] text-white px-2.5 py-0.5 rounded-lg">
                     {questionCount} Questions
                   </span>
@@ -265,6 +287,37 @@ export default function AIGeneratorModal({ isOpen, onClose, onGenerated }) {
                 </div>
               </div>
 
+              {/* Dynamic AI Background State & Progress Bar */}
+              {loading && (
+                <div className="bg-[#f0ecfc] border-2 border-[#191817] shadow-[2.5px_2.5px_0px_#191817] rounded-2xl p-3.5 space-y-2 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 font-black text-[#6c4de8]">
+                      <Sparkles size={14} className="animate-spin text-[#6c4de8]" />
+                      <span className="font-mono text-[11px] uppercase tracking-wider">AI Generation in Progress</span>
+                    </div>
+                    <span className="text-[11px] font-mono font-bold text-[#77736c]">
+                      {AI_GENERATION_STEPS[stepIndex].progress}%
+                    </span>
+                  </div>
+
+                  {/* Changing Status Text */}
+                  <div className="text-xs font-bold text-[#191817] flex items-center gap-2 min-h-[20px]">
+                    <span className="w-2 h-2 rounded-full bg-[#6c4de8] animate-ping shrink-0" />
+                    <span className="transition-all duration-300">
+                      {AI_GENERATION_STEPS[stepIndex].label}
+                    </span>
+                  </div>
+
+                  {/* Koozy tactile progress bar */}
+                  <div className="w-full bg-white border border-[#191817] h-2 rounded-full overflow-hidden p-0.5">
+                    <div
+                      className="bg-[#6c4de8] h-full rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${AI_GENERATION_STEPS[stepIndex].progress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="pt-2 flex items-center justify-end gap-3">
                 <button
@@ -284,7 +337,7 @@ export default function AIGeneratorModal({ isOpen, onClose, onGenerated }) {
                   {loading ? (
                     <>
                       <Loader2 size={18} className="animate-spin" />
-                      <span>Generating with Gemini...</span>
+                      <span>Generating Quiz...</span>
                     </>
                   ) : (
                     <>

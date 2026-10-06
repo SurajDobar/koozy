@@ -348,10 +348,11 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
 
             <form onSubmit={handleImportSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#191817] mb-1.5">
+                <label htmlFor="import-json-file-input" className="block text-xs font-bold text-[#191817] mb-1.5">
                   Upload .json file:
                 </label>
                 <input
+                  id="import-json-file-input"
                   type="file"
                   accept=".json"
                   onChange={handleFileUpload}
@@ -360,10 +361,11 @@ export default function HostQuizListPage({ initialQuizzes = [] }) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#191817] mb-1">
+                <label htmlFor="import-json-text-input" className="block text-xs font-bold text-[#191817] mb-1">
                   Or paste JSON directly:
                 </label>
                 <textarea
+                  id="import-json-text-input"
                   value={importJsonText}
                   onChange={(e) => setImportJsonText(e.target.value)}
                   placeholder='{\n  "title": "Python Quiz",\n  "questions": [...]\n}'
