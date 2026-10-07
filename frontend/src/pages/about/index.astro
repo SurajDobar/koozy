@@ -1,11 +1,29 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'https://koozy.live').toString().replace(/\/$/, '');
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  'name': 'About Koozy',
+  'url': `${siteUrl}/about/`,
+  'description': 'Learn why we built Koozy: live multiplayer quizzes without projectors, app downloads, or paywalls. Simple for hosts, fun for players.',
+  'mainEntity': {
+    '@type': 'Organization',
+    '@id': `${siteUrl}/#organization`,
+    'name': 'Koozy',
+    'url': `${siteUrl}/`,
+    'logo': `${siteUrl}/favicon-96x96.png`
+  }
+};
 ---
 
 <BaseLayout
   title="About Koozy — Simple, Fast Live Multiplayer Quizzes"
   description="Learn why we built Koozy: live multiplayer quizzes without projectors, app downloads, or paywalls. Simple for hosts, fun for players."
   noindex={false}
+  schema={schema}
 >
   <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10 md:py-16">
     <div class="text-center max-w-2xl mx-auto mb-16">

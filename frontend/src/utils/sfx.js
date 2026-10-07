@@ -78,10 +78,21 @@ const UNIQUE_SOUND_URLS = [
   ...new Set(Object.values(SOUND_FILES)),
 ];
 
+// Essential UI sounds needed for initial navigation and button feedback (~18KB total)
+const ESSENTIAL_UI_SOUNDS = [
+  '/sounds/koozy-button.mp3',
+  '/sounds/url.mp3',
+  '/sounds/tick-immersive.mp3',
+];
+
+// Remaining in-game audio files deferred until user interaction or game entry
+const IN_GAME_SOUNDS = UNIQUE_SOUND_URLS.filter((url) => !ESSENTIAL_UI_SOUNDS.includes(url));
+
 let audioCtx = null;
 const audioBuffers = new Map();
 const audioElements = new Map();
 let isAudioUnlocked = false;
+let isEssentialPreloaded = false;
 let isPreloaded = false;
 
 /**
@@ -122,40 +133,62 @@ export function unlockAudio() {
 }
 
 /**
- * Preload all sounds into memory beforehand so zero latency or network delay occurs during gameplay.
+ * Preload lightweight essential UI sounds during idle time without blocking LCP or main thread.
+ */
+export async function preloadEssentialAudio() {
+  if (typeof window === 'undefined' || isEssentialPreloaded) return;
+  isEssentialPreloaded = true;
+
+  const ctx = getAudioContext();
+  for (const url of ESSENTIAL_UI_SOUNDS) {
+    if (!audioElements.has(url)) {
+      try {
+        const audio = new Audio();
+        audio.preload = 'auto';
+        audio.src = url;
+        audioElements.set(url, audio);
+      } catch (e) {}
+    }
+    if (ctx && !audioBuffers.has(url)) {
+      fetch(url)
+        .then((res) => (res.ok ? res.arrayBuffer() : null))
+        .then((buf) => (buf && ctx ? ctx.decodeAudioData(buf) : null))
+        .then((decoded) => {
+          if (decoded) audioBuffers.set(url, decoded);
+        })
+        .catch(() => {});
+    }
+  }
+}
+
+/**
+ * Preload full in-game sound catalog (triggered after user interaction or entering a game).
  */
 export async function preloadAudio() {
   if (typeof window === 'undefined' || isPreloaded) return;
   isPreloaded = true;
 
+  // Ensure essential UI sounds are ready
+  await preloadEssentialAudio();
+
   const ctx = getAudioContext();
-
-  // 1. Preload HTMLAudio elements as warm network & playback fallback
-  for (const url of UNIQUE_SOUND_URLS) {
-    try {
-      const audio = new Audio();
-      audio.preload = 'auto';
-      audio.src = url;
-      audio.load();
-      audioElements.set(url, audio);
-    } catch (e) {}
-  }
-
-  // 2. Decode into Web Audio API buffers for zero-latency instant multi-channel firing
-  if (ctx) {
-    for (const url of UNIQUE_SOUND_URLS) {
+  for (const url of IN_GAME_SOUNDS) {
+    if (!audioElements.has(url)) {
+      try {
+        const audio = new Audio();
+        audio.preload = 'auto';
+        audio.src = url;
+        audioElements.set(url, audio);
+      } catch (e) {}
+    }
+    if (ctx && !audioBuffers.has(url)) {
       fetch(url)
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.arrayBuffer();
+        .then((res) => (res.ok ? res.arrayBuffer() : null))
+        .then((buf) => (buf && ctx ? ctx.decodeAudioData(buf) : null))
+        .then((decoded) => {
+          if (decoded) audioBuffers.set(url, decoded);
         })
-        .then((arrayBuf) => ctx.decodeAudioData(arrayBuf))
-        .then((decodedBuf) => {
-          audioBuffers.set(url, decodedBuf);
-        })
-        .catch(() => {
-          // If fetch or decode fails, HTMLAudioElement fallback remains ready
-        });
+        .catch(() => {});
     }
   }
 }
@@ -230,14 +263,29 @@ export function playSfxAndNavigate(soundName, destinationUrl, delay = 400) {
 // Auto-register global link and mechanical button sound listeners in the browser
 if (typeof window !== 'undefined') {
   const attachListeners = () => {
-    preloadAudio();
+    // Schedule essential UI sounds during idle window (after initial paint/LCP)
+    const scheduleIdlePreload = () => {
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => preloadEssentialAudio(), { timeout: 3000 });
+      } else {
+        setTimeout(preloadEssentialAudio, 1500);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      scheduleIdlePreload();
+    } else {
+      window.addEventListener('load', scheduleIdlePreload, { once: true });
+    }
 
     const unlockHandler = () => {
       unlockAudio();
+      // On first user interaction, begin warm background loading of in-game audio
+      preloadAudio();
     };
-    window.addEventListener('pointerdown', unlockHandler, { passive: true });
-    window.addEventListener('touchstart', unlockHandler, { passive: true });
-    window.addEventListener('keydown', unlockHandler, { passive: true });
+    window.addEventListener('pointerdown', unlockHandler, { passive: true, once: true });
+    window.addEventListener('touchstart', unlockHandler, { passive: true, once: true });
+    window.addEventListener('keydown', unlockHandler, { passive: true, once: true });
 
     // Global click listener for links (url.mp3) and mechanical buttons (koozy-button)
     document.addEventListener('click', (e) => {

@@ -1,11 +1,29 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'https://koozy.live').toString().replace(/\/$/, '');
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'ContactPage',
+  'name': 'Contact Koozy',
+  'url': `${siteUrl}/contact/`,
+  'description': 'Get in touch with the Koozy team. Submit feedback, report bugs directly via email at surajdobardev@gmail.com, or inquire about classroom and team quiz hosting.',
+  'mainEntity': {
+    '@type': 'Organization',
+    '@id': `${siteUrl}/#organization`,
+    'name': 'Koozy',
+    'url': `${siteUrl}/`,
+    'email': 'surajdobardev@gmail.com'
+  }
+};
 ---
 
 <BaseLayout
   title="Contact & Support — Koozy"
   description="Get in touch with the Koozy team. Submit feedback, report bugs directly via email at surajdobardev@gmail.com, or inquire about classroom and team quiz hosting."
   noindex={false}
+  schema={schema}
 >
   <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10 md:py-16">
     <div class="text-center max-w-2xl mx-auto mb-16">

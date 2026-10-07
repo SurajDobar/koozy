@@ -39,56 +39,29 @@ const {
       ogType={ogType}
       schema={schema}
     />
-    <!-- BEGIN PLERDY CODE -->
+    <!-- BEGIN PLERDY CODE (Deferred until window load for optimal LCP) -->
     <script data-plerdy_code="1" is:inline>
       (function(w,d){
-        if(w.__plerdyCode)return;
-        w.__plerdyCode=1;
-        w._protocol=w.location.protocol==="https:"?"https://":"http://";
-        w._site_hash_code="8e04f2b192c313f2dc4a86e81c3098ad";
-        w._suid=81663;
-        var s=d.createElement("script");
-        s.async=true;
-        s.referrerPolicy="strict-origin-when-cross-origin";
-        s.src="https://a.plerdy.com/public/js/click/main.js?v="+Math.random();
-        d.head.appendChild(s);
+        function initPlerdy() {
+          if(w.__plerdyCode)return;
+          w.__plerdyCode=1;
+          w._protocol=w.location.protocol==="https:"?"https://":"http://";
+          w._site_hash_code="8e04f2b192c313f2dc4a86e81c3098ad";
+          w._suid=81663;
+          var s=d.createElement("script");
+          s.async=true;
+          s.referrerPolicy="strict-origin-when-cross-origin";
+          s.src="https://a.plerdy.com/public/js/click/main.js?v="+Math.random();
+          d.head.appendChild(s);
+        }
+        if (d.readyState === "complete") {
+          initPlerdy();
+        } else {
+          w.addEventListener("load", initPlerdy);
+        }
       })(window,document);
     </script>
     <!-- END PLERDY CODE -->
-    <!-- Instant Game SFX Preload Cache -->
-    <script is:inline>
-      (function() {
-        var soundUrls = [
-          '/sounds/backward-swish.mp3',
-          '/sounds/choose-answer-pop-button-sfx.mp3',
-          '/sounds/error2_harrd.mp3',
-          '/sounds/forward-swish.mp3',
-          '/sounds/koozy-button.mp3',
-          '/sounds/koozy-connect.mp3',
-          '/sounds/koozy-disconnect.mp3',
-          '/sounds/koozy-error.mp3',
-          '/sounds/Koozy-loose.mp3',
-          '/sounds/koozy-submitted.mp3',
-          '/sounds/koozy-success.mp3',
-          '/sounds/koozy-unsucess.mp3',
-          '/sounds/Koozy-win.mp3',
-          '/sounds/tick-immersive.mp3',
-          '/sounds/url.mp3'
-        ];
-        function preload() {
-          soundUrls.forEach(function(url) {
-            var audio = new Audio();
-            audio.preload = 'auto';
-            audio.src = url;
-          });
-        }
-        if (window.requestIdleCallback) {
-          window.requestIdleCallback(preload);
-        } else {
-          setTimeout(preload, 100);
-        }
-      })();
-    </script>
   </head>
   <body class="bg-[#f7f5ef] text-[#191817] min-h-screen flex flex-col justify-between selection:bg-[#c9bfff] selection:text-[#191817]">
     {showHeader && <Header />}

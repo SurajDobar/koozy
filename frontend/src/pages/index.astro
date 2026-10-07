@@ -8,11 +8,28 @@ const schema = {
   '@context': 'https://schema.org',
   '@graph': [
     {
+      '@type': 'Organization',
+      '@id': `${siteUrl}/#organization`,
+      'name': 'Koozy',
+      'url': `${siteUrl}/`,
+      'logo': `${siteUrl}/favicon-96x96.png`,
+      'description': 'Real-time multiplayer quiz and live trivia platform with Google Gemini AI.',
+      'contactPoint': {
+        '@type': 'ContactPoint',
+        'email': 'surajdobardev@gmail.com',
+        'contactType': 'customer support'
+      }
+    },
+    {
       '@type': 'WebSite',
       '@id': `${siteUrl}/#website`,
       'url': `${siteUrl}/`,
       'name': 'Koozy',
       'description': 'Real-time multiplayer quiz and live trivia platform with Google Gemini AI.',
+      'publisher': {
+        '@id': `${siteUrl}/#organization`
+      },
+      'inLanguage': 'en-US'
     },
     {
       '@type': 'WebApplication',
@@ -20,12 +37,16 @@ const schema = {
       'name': 'Koozy',
       'url': `${siteUrl}/`,
       'description': 'Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players.',
-      'applicationCategory': 'EducationalApplication',
+      'applicationCategory': 'GameApplication',
       'operatingSystem': 'All',
+      'browserRequirements': 'Requires JavaScript and modern web browser with WebSocket support',
       'offers': {
         '@type': 'Offer',
         'price': '0',
-        'priceCurrency': 'USD',
+        'priceCurrency': 'USD'
+      },
+      'publisher': {
+        '@id': `${siteUrl}/#organization`
       },
       'featureList': [
         'Device-native question rendering without separate projector',
@@ -146,7 +167,7 @@ const schema = {
     </section>
 
     <!-- SECTION 2: See how Koozy works — Interactive Visual Walkthrough -->
-    <HowKoozyWorksSection client:load />
+    <HowKoozyWorksSection client:visible />
 
     <!-- SECTION 3: AI Quiz Generation Section (Matching actual Koozy AIGeneratorModal) -->
     <section class="py-14 md:py-18 border-t border-[#d8d3ca]">
