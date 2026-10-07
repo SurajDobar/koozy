@@ -8,6 +8,7 @@ They bridge into the async channel layer via async_to_sync.
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db import transaction
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from .models import LiveSession, Participant
@@ -135,16 +136,18 @@ def publish_participant_admitted(live_session, participant_id):
 
 def publish_submission_update(live_session):
     """Broadcast when a participant submits their quiz answers."""
+    counts = live_session.participants.filter(is_kicked=False).aggregate(
+        total=Count("id"),
+        submitted=Count("id", filter=Q(submitted_at__isnull=False)),
+    )
     _send(
         live_session.id,
         {
             "type": "submission.update",
             "payload": {
                 "event": "submission_update",
-                "submissions_count": live_session.participants.filter(
-                    is_kicked=False, submitted_at__isnull=False
-                ).count(),
-                "participant_count": live_session.participants.filter(is_kicked=False).count(),
+                "submissions_count": counts["submitted"] or 0,
+                "participant_count": counts["total"] or 0,
             },
         },
     )

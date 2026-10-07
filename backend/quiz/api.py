@@ -20,7 +20,7 @@ import json
 import secrets
 
 from django.db import IntegrityError, transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -120,7 +120,7 @@ def session_state(request, game_pin):
     Returns current session + global timer + questions + participant state.
     Safe: correct_answer is never exposed to unsubmitted participants during ACTIVE quiz.
     """
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper()).first()
+    ls = LiveSession.objects.filter(game_pin=game_pin.upper()).select_related("quiz", "host").first()
     if ls is None:
         return Response({"detail": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -177,9 +177,10 @@ def session_state(request, game_pin):
     if ls.status in (LiveSession.Status.ACTIVE, LiveSession.Status.COMPLETED):
         can_see_correct = (
             ls.status == LiveSession.Status.COMPLETED
-            or ls.current_question_closed
-            or (participant is not None and participant.submitted_at is not None)
-            or (request.user.is_authenticated and ls.quiz.author_id == request.user.id)
+            or (
+                request.user.is_authenticated
+                and (ls.quiz.author_id == request.user.id or ls.host_id == request.user.id)
+            )
         )
         questions_data = []
         for idx, q in enumerate(questions):
@@ -283,8 +284,30 @@ def submit_quiz_answers(request, game_pin):
             status=status.HTTP_403_FORBIDDEN,
         )
 
+    if participant.is_kicked:
+        return Response(
+            {"detail": "You have been removed from this quiz. Ask the host if you need to rejoin."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    if not participant.is_admitted:
+        return Response(
+            {"detail": "You have not been admitted to this session yet."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
     if ls.status not in (LiveSession.Status.ACTIVE, LiveSession.Status.COMPLETED):
-        return Response({"detail": "Quiz is not active or completed."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Quiz is not active."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # If quiz has completed, only allow submissions within a 15-second grace window to capture in-flight drafts
+    if ls.status == LiveSession.Status.COMPLETED:
+        if ls.ended_at and (timezone.now() - ls.ended_at).total_seconds() > 15:
+            return Response(
+                {"detail": "Quiz has ended and the submission window has closed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    elif ls.seconds_remaining() <= 0:
+        maybe_complete_quiz(ls)
 
     answers_input = request.data.get("answers") or {}
     questions_by_id = {q.id: q for q in ls.quiz.questions.all()}
@@ -301,6 +324,13 @@ def submit_quiz_answers(request, game_pin):
 
             total_score = 0
             correct_count = 0
+            submissions_to_create = []
+
+            # Pre-fetch existing submissions for this participant to avoid duplicate insert errors
+            existing_submissions = {
+                s.question_id: s
+                for s in AnswerSubmission.objects.filter(participant=locked_participant)
+            }
 
             for q_id_str, selected_opt in answers_input.items():
                 try:
@@ -322,15 +352,25 @@ def submit_quiz_answers(request, game_pin):
                     correct_count += 1
                     total_score += points
 
-                AnswerSubmission.objects.update_or_create(
-                    participant=locked_participant,
-                    question=question,
-                    defaults={
-                        "selected_option": selected,
-                        "is_correct": is_correct,
-                        "points_awarded": points,
-                    },
-                )
+                if qid in existing_submissions:
+                    sub = existing_submissions[qid]
+                    sub.selected_option = selected
+                    sub.is_correct = is_correct
+                    sub.points_awarded = points
+                    sub.save(update_fields=["selected_option", "is_correct", "points_awarded"])
+                else:
+                    submissions_to_create.append(
+                        AnswerSubmission(
+                            participant=locked_participant,
+                            question=question,
+                            selected_option=selected,
+                            is_correct=is_correct,
+                            points_awarded=points,
+                        )
+                    )
+
+            if submissions_to_create:
+                AnswerSubmission.objects.bulk_create(submissions_to_create, ignore_conflicts=True)
 
             locked_participant.score = total_score
             locked_participant.submitted_at = timezone.now()
@@ -371,6 +411,18 @@ def submit_answer(request, game_pin):
     if participant is None:
         return Response(
             {"detail": "You are not a participant in this session."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    if participant.is_kicked:
+        return Response(
+            {"detail": "You have been removed from this quiz. Ask the host if you need to rejoin."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    if not participant.is_admitted:
+        return Response(
+            {"detail": "You have not been admitted to this session yet."},
             status=status.HTTP_403_FORBIDDEN,
         )
 
@@ -436,7 +488,10 @@ def host_start_quiz(request, game_pin):
     if not request.user.is_authenticated:
         return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
+    ls = LiveSession.objects.filter(
+        Q(host=request.user) | Q(quiz__author=request.user),
+        game_pin=game_pin.upper(),
+    ).first()
     if ls is None:
         return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -472,7 +527,10 @@ def host_end_quiz(request, game_pin):
     if not request.user.is_authenticated:
         return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
+    ls = LiveSession.objects.filter(
+        Q(host=request.user) | Q(quiz__author=request.user),
+        game_pin=game_pin.upper(),
+    ).first()
     if ls is None:
         return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -492,7 +550,10 @@ def host_kick_participant(request, game_pin):
     if not request.user.is_authenticated:
         return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
+    ls = LiveSession.objects.filter(
+        Q(host=request.user) | Q(quiz__author=request.user),
+        game_pin=game_pin.upper(),
+    ).first()
     if ls is None:
         return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -517,7 +578,10 @@ def host_admit_participant(request, game_pin):
     if not request.user.is_authenticated:
         return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
+    ls = LiveSession.objects.filter(
+        Q(host=request.user) | Q(quiz__author=request.user),
+        game_pin=game_pin.upper(),
+    ).first()
     if ls is None:
         return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -639,7 +703,10 @@ def host_result(request, game_pin):
     if not request.user.is_authenticated:
         return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    ls = LiveSession.objects.filter(game_pin=game_pin.upper(), quiz__author=request.user).first()
+    ls = LiveSession.objects.filter(
+        Q(host=request.user) | Q(quiz__author=request.user),
+        game_pin=game_pin.upper(),
+    ).first()
     if ls is None:
         return Response({"detail": "Session not found or unauthorized."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -696,7 +763,11 @@ def api_create_quiz(request):
     description = (request.data.get("description") or "").strip()
     category = (request.data.get("category") or "General").strip() or "General"
     difficulty = (request.data.get("difficulty") or "easy").strip() or "easy"
-    time_limit = int(request.data.get("time_limit") or 300)
+    try:
+        raw_limit = int(request.data.get("time_limit") or 300)
+        time_limit = max(10, min(3600, raw_limit))
+    except (ValueError, TypeError):
+        time_limit = 300
 
     quiz = Quiz.objects.create(
         title=title,
@@ -785,8 +856,8 @@ def api_add_question(request, quiz_id):
     correct = (request.data.get("correct_answer") or "").lower().strip()
     time_limit = int(request.data.get("time_limit") or 20)
 
-    if not text or not opt_a or not opt_b:
-        return Response({"detail": "Question text and Options A & B are required."}, status=status.HTTP_400_BAD_REQUEST)
+    if not text or not opt_a or not opt_b or not opt_c or not opt_d:
+        return Response({"detail": "Question text and all 4 options (A, B, C, D) are required."}, status=status.HTTP_400_BAD_REQUEST)
 
     if correct not in ("a", "b", "c", "d"):
         return Response({"detail": "Correct answer must be one of: 'a', 'b', 'c', or 'd'."}, status=status.HTTP_400_BAD_REQUEST)
@@ -924,6 +995,8 @@ def api_join_game(request):
         return Response({"detail": "Game PIN is required."}, status=status.HTTP_400_BAD_REQUEST)
     if not name:
         return Response({"detail": "Nickname is required."}, status=status.HTTP_400_BAD_REQUEST)
+    if len(name) > 40:
+        return Response({"detail": "Nickname cannot exceed 40 characters."}, status=status.HTTP_400_BAD_REQUEST)
 
     ls = LiveSession.objects.filter(game_pin=pin).first()
     if ls is None:
@@ -1006,6 +1079,12 @@ def api_join_game(request):
         # Same name + no valid participant token -> reject: "Name already in use"
         return Response(
             {"detail": "Name already in use"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if ls.participants.filter(is_kicked=False).count() >= 300:
+        return Response(
+            {"detail": "This session has reached maximum capacity (300 players)."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -1236,11 +1315,11 @@ def api_ai_generate_quiz(request):
     from .ai_service import (
         consume_daily_quota_atomic,
         generate_quiz_with_gemini,
-        get_remaining_daily_quota,
+        restore_daily_quota_atomic,
     )
 
-    remaining_quota = get_remaining_daily_quota(request.user)
-    if remaining_quota <= 0:
+    consumed, remaining = consume_daily_quota_atomic(request.user)
+    if not consumed:
         return Response(
             {"detail": "Daily AI generation limit reached (8/8 attempts used today). Please try again tomorrow."},
             status=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -1249,27 +1328,22 @@ def api_ai_generate_quiz(request):
     try:
         validated_quiz = generate_quiz_with_gemini(prompt, question_count)
     except ValueError as err:
+        restore_daily_quota_atomic(request.user)
         return Response(
             {"detail": f"The generated quiz couldn't be validated: {err}"},
             status=status.HTTP_400_BAD_REQUEST,
         )
     except RuntimeError as err:
+        restore_daily_quota_atomic(request.user)
         return Response(
             {"detail": str(err)},
             status=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
     except Exception as err:
+        restore_daily_quota_atomic(request.user)
         return Response(
             {"detail": "We couldn't generate the quiz right now. Please try again."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-    # Successfully generated and validated — consume 1 quota attempt atomically
-    consumed, remaining = consume_daily_quota_atomic(request.user)
-    if not consumed:
-        return Response(
-            {"detail": "Daily AI generation limit reached (8/8 attempts used today). Please try again tomorrow."},
-            status=status.HTTP_429_TOO_MANY_REQUESTS,
         )
 
     # Atomically create Quiz and Question records

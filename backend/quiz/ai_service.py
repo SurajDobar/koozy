@@ -68,6 +68,20 @@ def consume_daily_quota_atomic(user) -> tuple[bool, int]:
         return True, remaining
 
 
+def restore_daily_quota_atomic(user) -> int:
+    """Restores 1 AI generation attempt if generation failed after consumption."""
+    if not user or not user.is_authenticated:
+        return 0
+    today = timezone.localdate()
+    with transaction.atomic():
+        usage = AIGenerationUsage.objects.select_for_update().filter(user=user, date=today).first()
+        if usage and usage.count > 0:
+            AIGenerationUsage.objects.filter(pk=usage.pk).update(count=F("count") - 1)
+            usage.refresh_from_db()
+            return max(0, MAX_DAILY_ATTEMPTS - usage.count)
+        return MAX_DAILY_ATTEMPTS
+
+
 # ---------------------------------------------------------------------------
 # Host AI Prompt Template Loader
 # ---------------------------------------------------------------------------
@@ -255,6 +269,9 @@ def generate_quiz_with_gemini(prompt: str, question_count: int) -> dict:
         "gemini-3.5-flash",
         "gemini-3.7-flash",
         "gemini-flash-latest",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
     ):
         if fallback not in candidate_models:
             candidate_models.append(fallback)

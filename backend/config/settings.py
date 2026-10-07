@@ -102,6 +102,9 @@ if not CSRF_COOKIE_DOMAIN and not DEBUG and not IS_TESTING:
 # Support reverse proxies (e.g. Render / Cloudflare SSL termination)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 
 # Application definition

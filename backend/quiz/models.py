@@ -113,8 +113,8 @@ class LiveSession(models.Model):
         null=True,
         blank=True,
     )
-    game_pin = models.CharField(max_length=5, validators=[MinLengthValidator(5)])
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.WAITING)
+    game_pin = models.CharField(max_length=5, validators=[MinLengthValidator(5)], db_index=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.WAITING, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     # Live quiz state & timer for the entire quiz
@@ -230,6 +230,10 @@ class Participant(models.Model):
                 fields=("live_session", "display_name"),
                 name="unique_participant_name_per_session",
             )
+        ]
+        indexes = [
+            models.Index(fields=["live_session", "is_kicked", "is_admitted"]),
+            models.Index(fields=["live_session", "score"]),
         ]
         ordering = ("joined_at",)
 

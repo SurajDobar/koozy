@@ -29,6 +29,16 @@ logger = logging.getLogger(__name__)
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+def _safe_json_dumps(obj):
+    """Serialize object to JSON safely escaping HTML characters for embedding in <script>."""
+    return (
+        json.dumps(obj)
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+    )
+
+
 def _host_user_data(user):
     """Serialize authenticated host user for React hydration."""
     if not user or not user.is_authenticated:
@@ -87,7 +97,7 @@ def auth_login_view(request):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "page_title": "Host Sign In — Koozy",
         },
     )
@@ -126,7 +136,7 @@ def auth_google_login(request):
             request,
             "quiz/app.html",
             {
-                "config_json": json.dumps(config),
+                "config_json": _safe_json_dumps(config),
                 "page_title": "Configuration Required — Koozy",
             },
             status=200 if settings.DEBUG else 500,
@@ -176,7 +186,7 @@ def home(request):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "page_title": "Koozy — Make learning play",
         },
     )
@@ -211,7 +221,7 @@ def host_quiz_list(request):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "quizzes": quizzes,
             "page_title": "Host Dashboard — Koozy",
         },
@@ -237,7 +247,7 @@ def create_quiz(request):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "form": form,
             "page_title": "Create Quiz — Koozy",
         },
@@ -279,7 +289,7 @@ def add_question(request, quiz_id):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "form": form,
             "quiz": quiz,
             "questions": questions,
@@ -337,7 +347,9 @@ def host_lobby(request, session_id):
     if not request.user.is_authenticated:
         return redirect("auth_login_view")
 
-    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
+    live_session = get_object_or_404(
+        LiveSession, Q(host=request.user) | Q(quiz__author=request.user), id=session_id
+    )
     config = {
         "page": "host_session",
         "gamePin": live_session.game_pin,
@@ -349,7 +361,7 @@ def host_lobby(request, session_id):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "live_session": live_session,
             "is_host": True,
             "page_title": f"Host Room: {live_session.game_pin} — Koozy",
@@ -363,7 +375,9 @@ def start_live_session(request, session_id):
     if not request.user.is_authenticated:
         return HttpResponseForbidden("Authentication required")
 
-    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
+    live_session = get_object_or_404(
+        LiveSession, Q(host=request.user) | Q(quiz__author=request.user), id=session_id
+    )
     if (
         live_session.status == LiveSession.Status.WAITING
         and live_session.can_start()
@@ -390,7 +404,9 @@ def host_next_question(request, session_id):
     if not request.user.is_authenticated:
         return HttpResponseForbidden("Authentication required")
 
-    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
+    live_session = get_object_or_404(
+        LiveSession, Q(host=request.user) | Q(quiz__author=request.user), id=session_id
+    )
     if live_session.status != LiveSession.Status.ACTIVE:
         return redirect("host_lobby", session_id=live_session.id)
 
@@ -418,7 +434,9 @@ def host_close_question(request, session_id):
     if not request.user.is_authenticated:
         return HttpResponseForbidden("Authentication required")
 
-    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
+    live_session = get_object_or_404(
+        LiveSession, Q(host=request.user) | Q(quiz__author=request.user), id=session_id
+    )
     if live_session.status == LiveSession.Status.ACTIVE and not live_session.current_question_closed:
         live_session.current_question_closed = True
         live_session.save(update_fields=["current_question_closed"])
@@ -430,7 +448,9 @@ def host_result_page(request, session_id):
     if not request.user.is_authenticated:
         return redirect("auth_login_view")
 
-    live_session = get_object_or_404(LiveSession, id=session_id, quiz__author=request.user)
+    live_session = get_object_or_404(
+        LiveSession, Q(host=request.user) | Q(quiz__author=request.user), id=session_id
+    )
     config = {
         "page": "host_session",
         "gamePin": live_session.game_pin,
@@ -442,7 +462,7 @@ def host_result_page(request, session_id):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "live_session": live_session,
             "is_host": True,
             "page_title": f"Results: {live_session.game_pin} — Koozy",
@@ -470,7 +490,7 @@ def join_game(request):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "form": form,
             "form_errors": " ".join(errors),
             "page_title": "Join Live Quiz — Koozy",
@@ -517,7 +537,7 @@ def participant_join(request, game_pin):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "form": form,
             "form_errors": " ".join(errors),
             "live_session": live_session,
@@ -544,7 +564,7 @@ def participant_lobby(request, game_pin):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "live_session": live_session,
             "participant": participant,
             "is_host": False,
@@ -571,7 +591,7 @@ def participant_play(request, game_pin):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "live_session": live_session,
             "participant": participant,
             "is_host": False,
@@ -602,7 +622,7 @@ def participant_result_page(request, game_pin):
         request,
         "quiz/app.html",
         {
-            "config_json": json.dumps(config),
+            "config_json": _safe_json_dumps(config),
             "live_session": live_session,
             "participant": participant,
             "is_host": False,
