@@ -122,15 +122,13 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
     }
   }, [submitting, pin, draftKey, onSubmitSuccess]);
 
+  const handleAutoSubmitRef = useRef(handleAutoSubmit);
+  handleAutoSubmitRef.current = handleAutoSubmit;
+
   // Global countdown timer & auto-submit on completion
   useEffect(() => {
     if (session.status === 'COMPLETED' || (session.seconds_remaining !== undefined && session.seconds_remaining <= 0)) {
-      handleAutoSubmit();
-      return;
-    }
-
-    if (secondsRemaining <= 0) {
-      handleAutoSubmit();
+      handleAutoSubmitRef.current();
       return;
     }
 
@@ -138,7 +136,7 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
       setSecondsRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          handleAutoSubmit();
+          handleAutoSubmitRef.current();
           return 0;
         }
         if (prev <= 11 && prev > 1) {
@@ -149,7 +147,7 @@ export default function ParticipantQuiz({ session, participant, onSubmitSuccess 
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [session.status, session.seconds_remaining, secondsRemaining, handleAutoSubmit]);
+  }, [session.status, session.seconds_remaining]);
 
   const handleSelectOption = (questionId, optionKey) => {
     if (submitting) return;

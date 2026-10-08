@@ -152,6 +152,14 @@ export default {
         responseHeaders.set('Location', rewrittenLocation);
       }
 
+      responseHeaders.set('X-Content-Type-Options', 'nosniff');
+      if (!responseHeaders.has('X-Frame-Options')) {
+        responseHeaders.set('X-Frame-Options', 'DENY');
+      }
+      if (!responseHeaders.has('Referrer-Policy')) {
+        responseHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+      }
+
       return new Response(backendResponse.body, {
         status: backendResponse.status,
         statusText: backendResponse.statusText,
@@ -167,6 +175,9 @@ export default {
     const assetResponse = await env.ASSETS.fetch(request);
     if (assetResponse.status === 200) {
       const response = new Response(assetResponse.body, assetResponse);
+      response.headers.set('X-Content-Type-Options', 'nosniff');
+      response.headers.set('X-Frame-Options', 'DENY');
+      response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
       if (pathname.startsWith('/_astro/') || pathname.startsWith('/sounds/') || pathname.startsWith('/sound/')) {
         response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
       } else if (!response.headers.has('Cache-Control')) {
