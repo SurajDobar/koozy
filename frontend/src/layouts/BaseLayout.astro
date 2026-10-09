@@ -10,6 +10,12 @@ interface Props {
   noindex?: boolean;
   ogType?: 'website' | 'article';
   ogImage?: string;
+  ogImageWidth?: string | number;
+  ogImageHeight?: string | number;
+  ogImageAlt?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  canonical?: string;
   schema?: Record<string, any>;
   showHeader?: boolean;
   showFooter?: boolean;
@@ -22,6 +28,12 @@ const {
   noindex = false,
   ogType = 'website',
   ogImage,
+  ogImageWidth,
+  ogImageHeight,
+  ogImageAlt,
+  ogTitle,
+  ogDescription,
+  canonical,
   schema,
   showHeader = true,
   showFooter = true,
@@ -44,6 +56,13 @@ const {
       description={description}
       noindex={noindex}
       ogType={ogType}
+      ogImage={ogImage}
+      ogImageWidth={ogImageWidth}
+      ogImageHeight={ogImageHeight}
+      ogImageAlt={ogImageAlt}
+      ogTitle={ogTitle}
+      ogDescription={ogDescription}
+      canonical={canonical}
       schema={schema}
     />
     <!-- BEGIN PLERDY CODE (Deferred until window load for optimal LCP) -->

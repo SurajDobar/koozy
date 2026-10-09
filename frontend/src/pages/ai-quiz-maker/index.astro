@@ -1,48 +1,121 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import AIFeatureShowcase from '../../components/AIFeatureShowcase.jsx';
 
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'https://koozy.live').toString().replace(/\/$/, '');
 
+const pageTitle = 'AI Quiz Generator — Free AI Quiz Maker | Koozy';
+const pageDescription = 'Create interactive multiple-choice quizzes with Koozy\'s free AI quiz generator. The best free AI quiz maker for teachers, studying, classrooms, and live multiplayer trivia.';
+
 const schema = {
   '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  'name': 'Koozy AI Quiz Maker',
-  'url': `${siteUrl}/ai-quiz-maker/`,
-  'description': 'Generate balanced, high-quality 4-option multiple-choice trivia and academic quizzes in seconds using Google Gemini AI.',
-  'applicationCategory': 'EducationalApplication',
-  'operatingSystem': 'All',
-  'offers': {
-    '@type': 'Offer',
-    'price': '0',
-    'priceCurrency': 'USD',
-  },
-  'featureList': [
-    'Prompt-to-quiz generation powered by Google Gemini AI',
-    'Strict 4-option MCQ schema validation (A, B, C, D)',
-    'Configurable question counts and difficulty tiers',
-    'Full post-generation host editing and question reordering',
-    'Direct integration into live WebSocket game lobbies'
+  '@graph': [
+    {
+      '@type': 'WebApplication',
+      '@id': `${siteUrl}/ai-quiz-maker/#webapp`,
+      'name': 'Koozy AI Quiz Generator',
+      'alternateName': 'Koozy Free AI Quiz Maker',
+      'url': `${siteUrl}/ai-quiz-maker/`,
+      'applicationCategory': 'EducationalApplication',
+      'operatingSystem': 'All',
+      'description': pageDescription,
+      'offers': {
+        '@type': 'Offer',
+        'price': '0',
+        'priceCurrency': 'USD'
+      },
+      'featureList': [
+        'Prompt-to-quiz AI quiz generator powered by Google Gemini AI',
+        'Strict 4-option MCQ schema validation (A, B, C, D) with plausible distractors',
+        'Built-in quiz editor for teachers, hosts, and students to customize questions',
+        'Device-native question rendering without separate projector or app download',
+        'Direct integration into live WebSocket multiplayer game lobbies with 5-letter PIN'
+      ]
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${siteUrl}/ai-quiz-maker/#breadcrumb`,
+      'itemListElement': [
+        {
+          '@type': 'ListItem',
+          'position': 1,
+          'name': 'Home',
+          'item': `${siteUrl}/`
+        },
+        {
+          '@type': 'ListItem',
+          'position': 2,
+          'name': 'AI Quiz Generator',
+          'item': `${siteUrl}/ai-quiz-maker/`
+        }
+      ]
+    }
   ]
+};
+
+const faqItems = [
+  {
+    question: 'What is an AI quiz generator?',
+    answer: 'An AI quiz generator is an automated tool that uses artificial intelligence to turn a topic prompt or curriculum subject into multiple-choice questions with answer choices and a suggested answer key. Instead of writing questions and distractors manually, Koozy uses Google Gemini to generate 4-choice quiz drafts in seconds that hosts can customize and host live on player screens.'
+  },
+  {
+    question: 'How do you create a quiz using AI?',
+    answer: 'To create a quiz using AI on Koozy, open the AI Quiz Creator, type your topic or instructions (such as "World War II Pacific Theater" or "Python Loops"), choose your question count from 1 to 25, and click Generate. Google Gemini drafts the quiz in about 5 seconds. Because AI-generated questions can contain mistakes, you should review and adjust questions in the Quiz Studio before launching a live game with a 5-letter PIN or saving to your library.'
+  },
+  {
+    question: 'Can AI generate quiz questions from my notes?',
+    answer: 'Yes. You can paste key concepts, study notes, or lecture outlines directly into Koozy\'s topic prompt box for generation. For extensive lecture slides or textbook excerpts, Koozy also provides a copyable external prompt template: paste your detailed notes into ChatGPT, Claude, or DeepSeek with the template, copy the structured JSON response, and use Koozy\'s "Import Quiz JSON" feature to load the quiz instantly. Always review generated questions for accuracy before hosting.'
+  },
+  {
+    question: 'Is Koozy\'s AI quiz generator free?',
+    answer: 'Yes, Koozy\'s AI quiz generator is completely free. Every registered host receives a generous daily quota of 8 full AI quiz generations, refreshed every 24 hours. There are no credit card requirements, forced trial periods, watermarks, or paywalls. You can also edit, export, and host live multiplayer games for free.'
+  },
+  {
+    question: 'Is AI quiz generation reliable?',
+    answer: 'Koozy enforces strict backend schema validation so that generations arrive properly structured with four distinct options (A, B, C, D) and a suggested answer key. However, AI-generated questions can contain mistakes, outdated details, or awkward phrasing, and quality is never guaranteed. Hosts should always review and verify questions in the Quiz Studio to correct errors and adjust answers before hosting live.'
+  },
+  {
+    question: 'What is the best AI quiz generator for studying?',
+    answer: 'The best AI quiz generator for studying is one that supports active recall, quick self-testing, and easy review. Koozy is well-suited for studying because it generates topic-focused practice quizzes in seconds, lets students review and edit questions for accuracy, and displays quizzes directly on player screens without a projector. With free daily quotas and 1-click JSON exports, learners can self-test solo or run review sessions with study groups.'
+  }
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  'mainEntity': faqItems.map((item) => ({
+    '@type': 'Question',
+    'name': item.question,
+    'acceptedAnswer': {
+      '@type': 'Answer',
+      'text': item.answer
+    }
+  }))
 };
 ---
 
 <BaseLayout
-  title="Free AI Quiz Maker — Generate Live Quizzes in Seconds"
-  description="Create multiple-choice quizzes instantly using AI. Type any topic, get balanced questions and answers, and host live multiplayer games for free."
+  title={pageTitle}
+  description={pageDescription}
+  ogImage="/web-app-manifest-512x512.png"
+  ogType="website"
   noindex={false}
   schema={schema}
 >
   <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10 md:py-16">
     <!-- Hero Section -->
     <section class="text-center max-w-3xl mx-auto mb-16">
-      <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-3.5 py-1.5 rounded-full border border-[#c9bfff]">
-        Powered by Google Gemini AI
+      <div class="inline-flex items-center gap-2 text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-3 bg-[#eeeafd] px-4 py-1.5 rounded-full border border-[#c9bfff]">
+        <span>✦</span>
+        <span>Free AI Quiz Generator</span>
+        <span>✦</span>
+        <span>Google Gemini Powered</span>
       </div>
       <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-[#191817] tracking-tight leading-tight mb-4">
-        Make Multiplayer Quizzes in <span class="font-hand text-[#6c4de8] font-normal">Seconds with AI.</span>
+        Free AI Quiz Generator: <span class="font-hand text-[#6c4de8] font-normal">Make Live Quizzes in Seconds</span>
       </h1>
-      <p class="text-base sm:text-lg text-[#77736c] leading-relaxed mb-8">
-        No more spending hours writing questions and wrong answers. Describe any topic, and Koozy's AI creates a balanced 4-option multiple-choice quiz ready to host live.
+      <p class="text-base sm:text-lg text-[#77736c] leading-relaxed mb-8 max-w-2xl mx-auto">
+        Stop spending hours drafting multiple-choice questions, researching trivia facts, and brainstorming tricky distractors. Koozy is a lightning-fast <strong class="text-[#191817] font-bold">ai quiz generator</strong> that transforms any topic prompt into balanced, classroom-ready quizzes in seconds—ready to host live on player screens.
       </p>
 
       <div class="flex flex-wrap gap-4 justify-center items-center">
@@ -63,16 +136,35 @@ const schema = {
           <span>See How It Works</span>
         </a>
       </div>
+
+      <!-- Trust Badges -->
+      <div class="mt-8 flex flex-wrap justify-center items-center gap-6 text-xs font-bold text-[#77736c]">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#00cc05]"></span>
+          <span>100% Free Daily Quotas</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#6c4de8]"></span>
+          <span>No Credit Card Required</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#05cdff]"></span>
+          <span>Multiplayer PIN Joining</span>
+        </div>
+      </div>
     </section>
 
-    <!-- How the AI Generator Operates -->
+    <!-- A/B/C/D Feature Showcase (Core Creator Features) -->
+    <AIFeatureShowcase client:visible />
+
+    <!-- How the AI Generator Operates (3 Steps) -->
     <section class="mb-16">
       <div class="text-center mb-10">
         <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
           instant creation ✦
         </div>
         <h2 class="text-3xl font-black text-[#191817]">
-          From topic prompt to live lobby in 3 steps.
+          From Topic Prompt to Live Lobby in 3 Steps
         </h2>
       </div>
 
@@ -87,11 +179,11 @@ const schema = {
               Enter Topic & Instructions
             </h3>
             <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
-              Type what your quiz is about. For example: <span class="italic text-[#191817] font-semibold">"European Capital Cities"</span>, <span class="italic text-[#191817] font-semibold">"JavaScript Async/Await"</span>, or <span class="italic text-[#191817] font-semibold">"90s Movie Trivia"</span>.
+              Type what your quiz is about with specific guidelines. For example: <span class="italic text-[#191817] font-semibold">"European Capital Cities"</span>, <span class="italic text-[#191817] font-semibold">"Photosynthesis & Cellular Respiration"</span>, or <span class="italic text-[#191817] font-semibold">"Python Data Structures"</span>.
             </p>
           </div>
           <div class="mt-6 text-xs text-[#77736c] bg-[#f7f5ef] p-3 rounded-xl border border-[#d8d3ca]">
-            Supports custom difficulty and targeted age groups.
+            Supports custom difficulty tiers, academic levels, and trivia themes.
           </div>
         </div>
 
@@ -109,7 +201,7 @@ const schema = {
             </p>
           </div>
           <div class="mt-6 text-xs text-[#77736c] bg-[#f7f5ef] p-3 rounded-xl border border-[#d8d3ca]">
-            Every question receives exactly 4 options: A, B, C, D.
+            Every question receives exactly 4 options: A, B, C, D with realistic distractors.
           </div>
         </div>
 
@@ -127,66 +219,155 @@ const schema = {
             </p>
           </div>
           <div class="mt-6 text-xs text-[#77736c] bg-[#f7f5ef] p-3 rounded-xl border border-[#d8d3ca]">
-            Save directly to your personal quiz library.
+            Save directly to your personal quiz library and export to JSON anytime.
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Why Koozy AI Is Reliable -->
-    <section class="mb-16 kz-card-tactile p-8 bg-[#fffdf7]">
-      <h2 class="text-2xl sm:text-3xl font-black text-[#191817] mb-4 text-center">
-        Engineered for Accuracy & Strict Structure
-      </h2>
-      <p class="text-sm text-[#77736c] text-center max-w-2xl mx-auto mb-8">
-        Generic chatbots frequently hallucinate formatting, forget question limits, or write confusing options. Koozy's backend AI pipeline implements strict validation guards.
-      </p>
+    <!-- In-Depth Tool Overview: The Smarter AI Quiz Generator -->
+    <section class="mb-16 kz-card-tactile p-8 sm:p-10 bg-white border-2 border-[#191817] shadow-[4px_4px_0_#191817] rounded-3xl">
+      <div class="max-w-3xl mx-auto">
+        <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#6c4de8] mb-2 font-mono">
+          ✦ Smarter Question Creation
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-[#191817] mb-4">
+          The Modern AI Quiz Generator: Eliminate the Grunt Work
+        </h2>
+        <div class="space-y-4 text-sm sm:text-base text-[#77736c] leading-relaxed">
+          <p>
+            Writing quality multiple-choice assessments from scratch is exhausting. To build a solid quiz, you have to craft unambiguous question stems, verify factual correctness, and formulate three plausible false options (distractors) that genuinely test comprehension rather than tricking people. For educators, study group leaders, and trivia hosts, compiling a 10-question assessment manually often takes forty-five minutes or more.
+          </p>
+          <p>
+            Koozy changes that with a dedicated <strong class="text-[#191817] font-semibold">ai quiz generator</strong> powered by Google Gemini. Unlike generic conversational chatbots that produce unstructured bullet points, markdown clutter, or inconsistent answer counts, our specialized <strong class="text-[#191817] font-semibold">ai quiz maker</strong> operates under strict validation guards. Every generation produces structured JSON containing clear questions, four well-differentiated options, and a single verified correct answer.
+          </p>
+          <p>
+            The result? You spend zero time wrestling with formatting or formatting errors. Whether you need a 5-minute bell-ringer for high school students or an energetic pub trivia round for Friday night, your quiz is built, balanced, and ready to host in under five seconds.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Use Cases: Teachers & Students -->
+    <section class="mb-16">
+      <div class="text-center mb-10">
+        <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
+          built for your workflow ✦
+        </div>
+        <h2 class="text-3xl font-black text-[#191817]">
+          Tailored for Classrooms, Study Sessions & Trivia Nights
+        </h2>
+        <p class="text-sm text-[#77736c] mt-2 max-w-2xl mx-auto">
+          See why teachers and students rely on Koozy as their go-to multiple-choice creator.
+        </p>
+      </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="flex items-start gap-4">
-          <div class="w-8 h-8 rounded-lg bg-[#eeeafd] text-[#6c4de8] font-bold flex items-center justify-center shrink-0 border border-[#c9bfff]">
+        <!-- Teachers Card -->
+        <div class="kz-card-tactile p-7 sm:p-8 bg-[#fffdf7] border-2 border-[#191817] rounded-3xl flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-[#eeeafd] text-[#6c4de8] border-2 border-[#191817] shadow-[2px_2px_0_#191817] flex items-center justify-center font-bold text-xl mb-4">
+              🎓
+            </div>
+            <h3 class="text-2xl font-black text-[#191817] mb-3">
+              An AI Quiz Maker for Teachers
+            </h3>
+            <p class="text-sm text-[#77736c] leading-relaxed mb-4">
+              Formative assessment is essential for measuring learning progress, but educators rarely have spare time to draft fresh quizzes for every curriculum unit. As an <strong class="text-[#191817] font-semibold">ai quiz maker for teachers</strong>, Koozy eliminates lesson preparation friction.
+            </p>
+            <p class="text-sm text-[#77736c] leading-relaxed">
+              Input your grade level, subject matter, or standard, and receive aligned questions instantly. When it is time to play, students join via a 5-letter Game PIN on school Chromebooks, iPads, or smartphones. With zero student accounts, logins, or app downloads, your classroom stays focused, inclusive, and FERPA-friendly.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-[#d8d3ca] flex items-center justify-between text-xs font-bold text-[#6c4de8]">
+            <span>✓ No student logins needed</span>
+            <span>✓ Device-native display</span>
+          </div>
+        </div>
+
+        <!-- Studying Card -->
+        <div class="kz-card-tactile p-7 sm:p-8 bg-[#fffdf7] border-2 border-[#191817] rounded-3xl flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-[#e6f9ff] text-[#05cdff] border-2 border-[#191817] shadow-[2px_2px_0_#191817] flex items-center justify-center font-bold text-xl mb-4">
+              📚
+            </div>
+            <h3 class="text-2xl font-black text-[#191817] mb-3">
+              A Focused AI Quiz Maker for Studying
+            </h3>
+            <p class="text-sm text-[#77736c] leading-relaxed mb-4">
+              Passive reading and re-reading notes produce an illusion of competence without genuine mastery. Cognitive science proves that active recall—retrieving concepts from memory through self-testing—dramatically improves long-term exam performance.
+            </p>
+            <p class="text-sm text-[#77736c] leading-relaxed">
+              Using Koozy as a dedicated <strong class="text-[#191817] font-semibold">study ai quiz maker</strong> allows learners to turn syllabus outlines, lecture notes, and textbook chapters into interactive practice quizzes. Whether studying solo or gathering classmates for collaborative exam prep, this <strong class="text-[#191817] font-semibold">ai quiz maker for studying</strong> turns tedious study sessions into engaging, fast-paced retention drills.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-[#d8d3ca] flex items-center justify-between text-xs font-bold text-[#05cdff]">
+            <span>✓ Active recall drills</span>
+            <span>✓ Solo & group study</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Koozy is the Best Free AI Quiz Maker -->
+    <section class="mb-16 kz-card-tactile p-8 sm:p-10 bg-[#fffdf7] border-2 border-[#191817] rounded-3xl">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#00cc05] mb-2 font-mono">
+          ✦ Zero Paywalls ✦
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-[#191817] mb-3">
+          Why Koozy is the Best Free AI Quiz Maker
+        </h2>
+        <p class="text-sm sm:text-base text-[#77736c] leading-relaxed">
+          Many educational tools claim to offer artificial intelligence assistance, only to force you into subscription paywalls or demand credit cards upfront. We built Koozy so you can use our <strong class="text-[#191817] font-semibold">ai quiz maker free</strong> of charge every day. We designed this <strong class="text-[#191817] font-semibold">ai quiz maker easy</strong> and intuitive for anyone: type your prompt, get verified questions, and start playing immediately. Here is what makes Koozy the <strong class="text-[#191817] font-semibold">best free ai quiz maker</strong> for interactive live learning.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="flex items-start gap-4 p-4 bg-white rounded-2xl border border-[#d8d3ca]">
+          <div class="w-9 h-9 rounded-xl bg-[#eeeafd] text-[#6c4de8] font-bold flex items-center justify-center shrink-0 border border-[#c9bfff]">
             1
           </div>
           <div>
             <h3 class="font-black text-base text-[#191817] mb-1">Strict JSON Schema Validation</h3>
-            <p class="text-xs text-[#77736c] leading-relaxed">
-              Every generation is validated against Koozy's strict MCQ schema before being written to your library. Responses must contain exactly 4 options, a valid correct answer key, and zero markdown clutter.
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              Every generation is verified against Koozy's strict MCQ schema before being written to your library. Responses must contain exactly 4 options, a valid correct answer key, and zero markdown clutter.
             </p>
           </div>
         </div>
 
-        <div class="flex items-start gap-4">
-          <div class="w-8 h-8 rounded-lg bg-[#e6f9ff] text-[#05cdff] font-bold flex items-center justify-center shrink-0 border border-[#05cdff]/30">
+        <div class="flex items-start gap-4 p-4 bg-white rounded-2xl border border-[#d8d3ca]">
+          <div class="w-9 h-9 rounded-xl bg-[#e6f9ff] text-[#05cdff] font-bold flex items-center justify-center shrink-0 border border-[#05cdff]/30">
             2
           </div>
           <div>
-            <h3 class="font-black text-base text-[#191817] mb-1">Plausible Distractors</h3>
-            <p class="text-xs text-[#77736c] leading-relaxed">
+            <h3 class="font-black text-base text-[#191817] mb-1">Plausible Distractors (No Trick Hallucinations)</h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
               The AI is instructed to craft realistic incorrect options rather than silly trick answers, ensuring your quiz genuinely tests knowledge and creates competitive fun.
             </p>
           </div>
         </div>
 
-        <div class="flex items-start gap-4">
-          <div class="w-8 h-8 rounded-lg bg-[#e6ffe6] text-[#00cc05] font-bold flex items-center justify-center shrink-0 border border-[#00cc05]/30">
+        <div class="flex items-start gap-4 p-4 bg-white rounded-2xl border border-[#d8d3ca]">
+          <div class="w-9 h-9 rounded-xl bg-[#e6ffe6] text-[#00cc05] font-bold flex items-center justify-center shrink-0 border border-[#00cc05]/30">
             3
           </div>
           <div>
-            <h3 class="font-black text-base text-[#191817] mb-1">Fair Daily Host Quota</h3>
-            <p class="text-xs text-[#77736c] leading-relaxed">
-              Every host receives a free daily quota of 8 full AI quiz generations, refreshed every 24 hours. No hidden fees or subscription lock-ins to start creating.
+            <h3 class="font-black text-base text-[#191817] mb-1">Generous Free Daily Quota</h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              Every host receives a free daily quota of 8 full AI quiz generations, refreshed every 24 hours. Enjoy our <strong class="text-[#191817] font-semibold">free ai quiz maker</strong> without hidden trial locks or watermarks.
             </p>
           </div>
         </div>
 
-        <div class="flex items-start gap-4">
-          <div class="w-8 h-8 rounded-lg bg-[#fee2e2] text-[#ff0000] font-bold flex items-center justify-center shrink-0 border border-[#fca5a5]">
+        <div class="flex items-start gap-4 p-4 bg-white rounded-2xl border border-[#d8d3ca]">
+          <div class="w-9 h-9 rounded-xl bg-[#fee2e2] text-[#ff0000] font-bold flex items-center justify-center shrink-0 border border-[#fca5a5]">
             4
           </div>
           <div>
-            <h3 class="font-black text-base text-[#191817] mb-1">Full Export & Portability</h3>
-            <p class="text-xs text-[#77736c] leading-relaxed">
-              Once generated, your quizzes can be exported as structured JSON backups with a single click, or imported back into your account at any time.
+            <h3 class="font-black text-base text-[#191817] mb-1">Full Export & Library Portability</h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              Once generated, your quizzes can be exported as structured JSON backups with a single click, edited at any time in the Quiz Studio, or imported back into your account.
             </p>
           </div>
         </div>
@@ -194,10 +375,10 @@ const schema = {
     </section>
 
     <!-- Sample Prompt Ideas -->
-    <section class="mb-12">
+    <section class="mb-16">
       <div class="text-center mb-6">
         <h2 class="text-2xl font-black text-[#191817]">Popular Quiz Prompt Ideas</h2>
-        <p class="text-xs text-[#77736c] mt-1">Try copying one of these into Koozy's AI creator:</p>
+        <p class="text-xs sm:text-sm text-[#77736c] mt-1">Try copying one of these into Koozy's AI creator:</p>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
@@ -212,6 +393,64 @@ const schema = {
         </div>
         <div class="p-4 bg-white border-2 border-[#191817] rounded-xl text-xs font-mono shadow-[2px_2px_0_#191817]">
           <span class="text-[#6c4de8] font-bold">Pop Culture:</span> "10 fun trivia questions about 2000s animated movies from Pixar and DreamWorks."
+        </div>
+      </div>
+    </section>
+
+    <!-- Frequently Asked Questions (FAQ) Section -->
+    <section class="mb-16">
+      <div class="text-center mb-8">
+        <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
+          got questions? ✦
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-[#191817]">
+          Frequently Asked Questions About Our AI Quiz Generator
+        </h2>
+        <p class="text-xs sm:text-sm text-[#77736c] mt-1">
+          Everything you need to know about generating quizzes with Koozy.
+        </p>
+      </div>
+
+      <div class="space-y-4 max-w-3xl mx-auto">
+        {faqItems.map((item) => (
+          <div class="p-5 sm:p-6 bg-white border-2 border-[#191817] shadow-[3px_3px_0_#191817] sm:shadow-[3.5px_3.5px_0_#191817] rounded-2xl">
+            <h3 class="font-black text-base sm:text-lg text-[#191817] mb-2 leading-snug">
+              {item.question}
+            </h3>
+            <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
+              {item.answer}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <!-- FAQPage JSON-LD Structured Data for Search Engines -->
+      <script type="application/ld+json" is:inline set:html={JSON.stringify(faqSchema)} />
+    </section>
+
+    <!-- Bottom CTA Section -->
+    <section class="text-center py-12 border-t border-[#d8d3ca]">
+      <div class="max-w-xl mx-auto">
+        <h2 class="text-3xl font-black text-[#191817] tracking-tight mb-3">
+          Ready to generate your first quiz?
+        </h2>
+        <p class="text-sm sm:text-base text-[#77736c] mb-6">
+          Harness Google Gemini AI to build engaging multiple-choice trivia and academic quizzes in under 5 seconds.
+        </p>
+        <div class="flex flex-wrap gap-4 justify-center items-center">
+          <a
+            href="/host/quizzes/create/"
+            class="kz-btn-primary px-8 py-3.5 rounded-xl font-bold text-base flex items-center gap-2"
+          >
+            <span>Create Quiz with AI</span>
+            <span>&rarr;</span>
+          </a>
+          <a
+            href="/how-it-works/"
+            class="kz-btn-secondary px-8 py-3.5 rounded-xl font-bold text-base"
+          >
+            <span>How It Works</span>
+          </a>
         </div>
       </div>
     </section>

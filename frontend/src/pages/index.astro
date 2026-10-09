@@ -13,7 +13,7 @@ const schema = {
       'name': 'Koozy',
       'url': `${siteUrl}/`,
       'logo': `${siteUrl}/favicon-96x96.png`,
-      'description': 'Real-time multiplayer quiz and live trivia platform with Google Gemini AI.',
+      'description': 'Free real-time online multiplayer quiz and live trivia platform with Google Gemini AI.',
       'contactPoint': {
         '@type': 'ContactPoint',
         'email': 'surajdobardev@gmail.com',
@@ -25,7 +25,7 @@ const schema = {
       '@id': `${siteUrl}/#website`,
       'url': `${siteUrl}/`,
       'name': 'Koozy',
-      'description': 'Real-time multiplayer quiz and live trivia platform with Google Gemini AI.',
+      'description': 'Free online multiplayer quiz platform and live trivia games.',
       'publisher': {
         '@id': `${siteUrl}/#organization`
       },
@@ -36,7 +36,7 @@ const schema = {
       '@id': `${siteUrl}/#webapp`,
       'name': 'Koozy',
       'url': `${siteUrl}/`,
-      'description': 'Create a quiz, share a 5-letter PIN, and get everyone answering on a global timer. Simple for hosts. Fast for players.',
+      'description': 'Create an online multiplayer quiz game, share a 5-letter PIN, and get everyone answering on a live global timer. Simple for hosts, fast for players.',
       'applicationCategory': 'GameApplication',
       'operatingSystem': 'All',
       'browserRequirements': 'Requires JavaScript and modern web browser with WebSocket support',
@@ -59,11 +59,60 @@ const schema = {
     }
   ]
 };
+
+const faqItems = [
+  {
+    question: 'What is an online multiplayer quiz?',
+    answer:
+      'An online multiplayer quiz is a live trivia game where multiple participants answer questions simultaneously from their own devices. On Koozy, questions and four choices appear directly on each player\'s screen, synchronized to a live countdown timer managed over WebSockets without requiring a projector.'
+  },
+  {
+    question: 'How do I create and host a multiplayer quiz on Koozy?',
+    answer:
+      'Sign in with Google, go to your host dashboard, and create a quiz manually or generate balanced multiple-choice questions in seconds using Google Gemini AI. When ready, click "Start Live Session" to open the waiting lobby, share the 5-letter PIN, and launch the game when players join.'
+  },
+  {
+    question: 'How do players join a quiz using a PIN?',
+    answer:
+      'Players navigate to /join/ on any web browser, enter the host\'s 5-letter Game PIN, and pick a nickname. They enter the live waiting room instantly without needing passwords or invitations.'
+  },
+  {
+    question: 'Do players need to download an app or create an account?',
+    answer:
+      'No. Players join 100% as guests on phones, tablets, or laptops. No app store download, installation, or account registration is needed for participants.'
+  },
+  {
+    question: 'Can I use my own questions in Koozy?',
+    answer:
+      'Yes. Hosts have complete creative control to write custom questions and choices from scratch, adjust countdown timers, reorder questions, or import and export JSON question sets. You can also edit and customize AI-generated drafts.'
+  },
+  {
+    question: 'Is Koozy free to use?',
+    answer:
+      'Yes. Koozy is completely free for hosts and players. Real-time multiplayer rooms, live leaderboards, automated scoring, and daily Gemini AI quiz generations are included without paywalls.'
+  }
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  'mainEntity': faqItems.map((item) => ({
+    '@type': 'Question',
+    'name': item.question,
+    'acceptedAnswer': {
+      '@type': 'Answer',
+      'text': `<p>${item.answer}</p>`
+    }
+  }))
+};
 ---
 
 <BaseLayout
-  title="Koozy — Free Live Multiplayer Quizzes & Trivia Games"
-  description="Koozy is a live multiplayer quiz platform. Create quizzes, share a 5-letter PIN, and play real-time quizzes right on player screens with zero app download."
+  title="Online Multiplayer Quiz — Play Free Live Trivia Games | Koozy"
+  description="Play Koozy, the free online multiplayer quiz game. Create custom trivia or generate questions with AI, share a 5-letter PIN, and play live with friends on any screen."
+  ogTitle="Online Multiplayer Quiz — Play Free Live Trivia Games | Koozy"
+  ogDescription="Play Koozy, the free online multiplayer quiz game. Create custom trivia or generate questions with AI, share a 5-letter PIN, and play live with friends on any screen."
+  ogImage="/og-image.png"
   noindex={false}
   schema={schema}
   showFooterCta={true}
@@ -365,7 +414,138 @@ const schema = {
       </div>
     </section>
 
-    <!-- SECTION 6: CONTACT US -->
+    <!-- SECTION 6: THE MODERN ONLINE MULTIPLAYER QUIZ (SEO Editorial Guide) -->
+    <section class="py-14 md:py-20 border-t border-[#d8d3ca]">
+      <div class="kz-card-tactile bg-white p-7 sm:p-12 border-2 border-[#191817] shadow-[5px_5px_0_#191817] rounded-3xl">
+        <div class="max-w-3xl mb-10">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#eeeafd] border border-[#c9bfff] rounded-full text-xs font-mono font-bold text-[#6c4de8] mb-3">
+            <span>✦</span>
+            <span>PLAY TOGETHER ANYWHERE</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-[#191817] tracking-tight leading-tight">
+            The Modern Online Multiplayer Quiz Experience
+          </h2>
+          <p class="text-base sm:text-lg text-[#77736c] font-medium mt-3 leading-relaxed">
+            Everything you need to know about hosting, creating, and playing live trivia games on Koozy.
+          </p>
+        </div>
+
+        <div class="space-y-8 text-sm sm:text-base text-[#77736c] leading-relaxed">
+          <!-- Block 1 -->
+          <div class="p-6 sm:p-8 bg-[#fffdf7] border-2 border-[#191817] rounded-2xl shadow-[3px_3px_0_#191817]">
+            <h3 class="text-xl sm:text-2xl font-black text-[#191817] mb-3">
+              What Makes Koozy the Best Multiplayer Quiz Game for Any Screen?
+            </h3>
+            <p class="mb-3">
+              When organizing a game night, classroom review, or team icebreaker, finding the <strong class="text-[#191817]">best multiplayer quiz game</strong> should be effortless. Traditional trivia tools were originally designed around corporate meeting rooms and large lecture halls with giant overhead projectors. In those legacy setups, players only see abstract colored shape buttons on their phones while squinting across the room to read question text on a distant screen.
+            </p>
+            <p>
+              Koozy rethinks this format from scratch as an intuitive <strong class="text-[#191817]">online multiplayer quiz</strong> built for how people actually connect today. Instead of requiring a shared display, split-screen video feeds, or cumbersome classroom setups, Koozy renders the full question and all four answer options directly on every participant's screen. Whether your group is sitting around the living room sofa, gathered in a school computer lab, or dialing in over Discord or Zoom, everyone experiences a fluid, synchronized <strong class="text-[#191817]">multiplayer quiz game online</strong>.
+            </p>
+          </div>
+
+          <!-- Block 2 -->
+          <div class="p-6 sm:p-8 bg-[#fffdf7] border-2 border-[#191817] rounded-2xl shadow-[3px_3px_0_#191817]">
+            <h3 class="text-xl sm:text-2xl font-black text-[#191817] mb-3">
+              Instant Play Without a Multiplayer Quiz Game App Download
+            </h3>
+            <p class="mb-3">
+              One of the biggest hurdles when trying to start a <strong class="text-[#191817]">free online multiplayer quiz</strong> is friction. Most platforms force every participant to install a separate <strong class="text-[#191817]">multiplayer quiz game app</strong>, create user accounts, or verify email addresses just to join a ten-minute session. That friction kills momentum before the first question even starts.
+            </p>
+            <p>
+              With Koozy, joining takes three seconds. The host starts a session and shares an easy-to-read, 5-letter Game PIN. Participants open any web browser on iOS, Android, macOS, Windows, or ChromeOS, enter the code with a nickname, and instantly join the lobby. Because Koozy runs entirely in modern browsers through high-speed WebSockets, you get native performance, responsive tactile animations, and real-time audio effects without downloading anything from an app store.
+            </p>
+          </div>
+
+          <!-- Block 3 -->
+          <div class="p-6 sm:p-8 bg-[#fffdf7] border-2 border-[#191817] rounded-2xl shadow-[3px_3px_0_#191817]">
+            <h3 class="text-xl sm:text-2xl font-black text-[#191817] mb-3">
+              How to Create an Online Multiplayer Quiz Game in Minutes
+            </h3>
+            <p class="mb-3">
+              Koozy gives hosts total creative freedom to <strong class="text-[#191817]">create online multiplayer quiz game</strong> sessions tailored to any audience. As a host, you can:
+            </p>
+            <ul class="space-y-2.5 list-disc list-inside pl-1">
+              <li>
+                <strong class="text-[#191817]">Build Custom Question Sets:</strong> Write your own <strong class="text-[#191817]">online multiple choice quiz game</strong> from scratch with custom timers, rich formatting, and four balanced options.
+              </li>
+              <li>
+                <strong class="text-[#191817]">Generate Instantly with AI:</strong> Use Koozy's built-in Google Gemini integration to turn any curriculum topic, pop culture subject, or work theme into verified 4-choice questions in under five seconds.
+              </li>
+              <li>
+                <strong class="text-[#191817]">Moderate Live Lobbies:</strong> Manage players in real time, admit participants, kick trolls, and monitor live submission progress on an authoritative host dashboard.
+              </li>
+            </ul>
+          </div>
+
+          <!-- Block 4 -->
+          <div class="p-6 sm:p-8 bg-[#fffdf7] border-2 border-[#191817] rounded-2xl shadow-[3px_3px_0_#191817]">
+            <h3 class="text-xl sm:text-2xl font-black text-[#191817] mb-3">
+              Why Groups Choose Koozy Over a Traditional Kahoot Multiplayer Quiz Game
+            </h3>
+            <p class="mb-3">
+              If you have ever hosted a <strong class="text-[#191817]">kahoot multiplayer quiz game</strong>, you know how frustrating it is when remote participants cannot read small projector text or when strict participant limits block your group behind an expensive paywall. Koozy eliminates those barriers. As one of the top <strong class="text-[#191817]">online multiplayer question games</strong>, Koozy provides device-native clarity, unlimited live participants on asynchronous Daphne servers, and clean scoring where correct answers earn 1,000 points on a synchronized global countdown clock.
+            </p>
+            <p>
+              Scoring on Koozy is fully automated, transparent, and immediate. As participants submit answers, progress indicators update live for the host. When the synchronized countdown expires, final scores are calculated in milliseconds. Players receive an instant scorecard highlighting correct solutions, while the host dashboard reveals a celebratory top-three podium.
+            </p>
+          </div>
+
+          <!-- Block 5 -->
+          <div class="p-6 sm:p-8 bg-[#fffdf7] border-2 border-[#191817] rounded-2xl shadow-[3px_3px_0_#191817]">
+            <h3 class="text-xl sm:text-2xl font-black text-[#191817] mb-3">
+              Host Trivia Quiz Online Multiplayer Sessions Anywhere
+            </h3>
+            <p>
+              Whether you want to play fast-paced <strong class="text-[#191817]">online multiplayer quiz games with friends</strong> on the weekend, run high-engagement classroom knowledge checks, or spice up remote company meetings, Koozy delivers electric <strong class="text-[#191817]">trivia quiz online multiplayer</strong> excitement with zero hassle. Pick a topic, share your PIN, and see who climbs to the top of the live podium!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 7: FREQUENTLY ASKED QUESTIONS -->
+    <section class="py-14 md:py-20 border-t border-[#d8d3ca]">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
+          got questions? ✦
+        </div>
+        <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-[#191817] tracking-tight">
+          Frequently Asked Questions
+        </h2>
+        <p class="text-base text-[#77736c] font-medium mt-2">
+          Everything you need to know about playing and hosting online multiplayer quizzes on Koozy.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl mx-auto">
+        {faqItems.map((item) => (
+          <div class="kz-card-tactile p-6 sm:p-7 bg-white flex flex-col justify-start">
+            <h3 class="font-black text-lg sm:text-xl text-[#191817] mb-2 leading-snug">
+              {item.question}
+            </h3>
+            <p class="text-xs sm:text-sm text-[#77736c] font-medium leading-relaxed">
+              {item.answer}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div class="text-center mt-8">
+        <a
+          href="/faq/"
+          class="text-xs sm:text-sm font-bold text-[#6c4de8] hover:underline inline-flex items-center gap-1.5"
+        >
+          <span>View all frequently asked questions</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <!-- FAQPage JSON-LD Structured Data for Search Engines -->
+      <script type="application/ld+json" is:inline set:html={JSON.stringify(faqSchema)} />
+    </section>
+
+    <!-- SECTION 8: CONTACT US -->
     <section class="py-12 md:py-16 border-t border-[#d8d3ca]">
       <div class="kz-card-tactile bg-white p-8 sm:p-11 border-2 border-[#191817] shadow-[5px_5px_0_#191817] rounded-3xl max-w-3xl mx-auto text-center">
         <span class="font-hand text-base sm:text-lg font-bold text-[#6c4de8] block mb-1.5">
@@ -393,7 +573,7 @@ const schema = {
       </div>
     </section>
 
-    <!-- SECTION 7: Final CTA Section -->
+    <!-- SECTION 9: Final CTA Section -->
     <section class="py-16 md:py-24 border-t border-[#d8d3ca] text-center">
       <div class="max-w-2xl mx-auto">
         <h2 class="text-4xl sm:text-5xl font-black text-[#191817] tracking-tight mb-4">

@@ -5,27 +5,44 @@ interface Props {
   noindex?: boolean;
   ogType?: 'website' | 'article';
   ogImage?: string;
+  ogImageWidth?: string | number;
+  ogImageHeight?: string | number;
+  ogImageAlt?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  canonical?: string;
   schema?: Record<string, any>;
 }
 
 const {
   title,
-  description = 'Koozy is an interactive, real-time multiplayer quiz and trivia platform with Google Gemini AI. Simple for hosts, fast for players.',
+  description = 'Koozy is a free online multiplayer quiz platform. Create custom quizzes or generate questions with AI, share a 5-letter PIN, and play live with friends on any screen.',
   noindex = false,
   ogType = 'website',
-  ogImage = '/web-app-manifest-512x512.png',
+  ogImage = '/og-image.png',
+  ogImageWidth,
+  ogImageHeight,
+  ogImageAlt,
+  ogTitle,
+  ogDescription,
+  canonical,
   schema,
 } = Astro.props;
 
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'https://koozy.live').toString().replace(/\/$/, '');
 const pathname = Astro.url.pathname.endsWith('/') || Astro.url.pathname.includes('.') ? Astro.url.pathname : `${Astro.url.pathname}/`;
-const canonicalUrl = new URL(pathname, siteUrl).href;
+const canonicalUrl = canonical || new URL(pathname, siteUrl).href;
 const fullTitle = title
   ? title.includes('Koozy')
     ? title
     : `${title} — Koozy`
-  : 'Koozy — Free Live Multiplayer Quizzes & Trivia Games';
+  : 'Online Multiplayer Quiz — Play Free Live Trivia Games | Koozy';
 const resolvedOgImage = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
+const socialTitle = ogTitle || fullTitle;
+const socialDescription = ogDescription || description;
+const resolvedImageWidth = ogImageWidth?.toString() || (resolvedOgImage.includes('512x512') ? '512' : '1200');
+const resolvedImageHeight = ogImageHeight?.toString() || (resolvedOgImage.includes('512x512') ? '512' : '630');
+const resolvedImageAlt = ogImageAlt || socialTitle;
 ---
 
 <!-- Google Analytics (GA4) -->
@@ -48,7 +65,7 @@ const resolvedOgImage = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogIm
 
 <!-- Robots Indexing Control -->
 {noindex ? (
-  <meta name="robots" content="noindex, follow" />
+  <meta name="robots" content="noindex, nofollow" />
 ) : (
   <meta name="robots" content="index, follow" />
 )}
@@ -56,19 +73,24 @@ const resolvedOgImage = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogIm
 <!-- OpenGraph / Social Cards -->
 <meta property="og:type" content={ogType} />
 <meta property="og:url" content={canonicalUrl} />
-<meta property="og:title" content={fullTitle} />
-<meta property="og:description" content={description} />
+<meta property="og:title" content={socialTitle} />
+<meta property="og:description" content={socialDescription} />
 <meta property="og:image" content={resolvedOgImage} />
-<meta property="og:image:width" content="512" />
-<meta property="og:image:height" content="512" />
+<meta property="og:image:secure_url" content={resolvedOgImage} />
+<meta property="og:image:width" content={resolvedImageWidth} />
+<meta property="og:image:height" content={resolvedImageHeight} />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:alt" content={resolvedImageAlt} />
 <meta property="og:site_name" content="Koozy" />
+<meta property="og:locale" content="en_US" />
 
 <!-- Twitter / X Cards -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:url" content={canonicalUrl} />
-<meta name="twitter:title" content={fullTitle} />
-<meta name="twitter:description" content={description} />
+<meta name="twitter:title" content={socialTitle} />
+<meta name="twitter:description" content={socialDescription} />
 <meta name="twitter:image" content={resolvedOgImage} />
+<meta name="twitter:image:alt" content={resolvedImageAlt} />
 
 <!-- Favicon & Touch Icons -->
 <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
