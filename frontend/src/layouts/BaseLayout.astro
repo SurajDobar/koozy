@@ -38,6 +38,7 @@ const {
     //umami analytics
      <script defer src="https://cloud.umami.is/script.js" data-website-id="1da35d03-c4c3-4a9b-9aca-48c9e3d21981"></script>
     
+     
      <SEOHead
       title={title}
       description={description}
@@ -70,7 +71,9 @@ const {
     <!-- END PLERDY CODE -->
   </head>
   <body class="bg-[#f7f5ef] text-[#191817] min-h-screen flex flex-col justify-between selection:bg-[#c9bfff] selection:text-[#191817]">
+    
     {showHeader && <Header />}
+    
     <main class="flex-1">
       <slot />
     </main>

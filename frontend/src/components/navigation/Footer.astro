@@ -1,4 +1,6 @@
 ---
+import GoogleAd from '../ads/GoogleAd.astro';
+
 interface Props {
   showCta?: boolean;
 }
@@ -140,6 +142,11 @@ const { showCta = true } = Astro.props;
           </li>
         </ul>
       </div>
+    </div>
+
+    <!-- Google AdSense Ad Unit -->
+    <div class="mb-8 pt-4">
+      <GoogleAd />
     </div>
 
     <!-- Bottom Copyright & Architecture Notice -->
