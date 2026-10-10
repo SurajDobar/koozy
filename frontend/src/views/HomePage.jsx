@@ -60,6 +60,49 @@ export default function HomePage({ user = null }) {
             <span>Join a Quiz</span>
           </a>
         </div>
+
+        {/* Tilted & Titled YouTube Video Card (Calibrated height & placement to barely clear the text) */}
+        <div className="mt-8 lg:mt-0 lg:absolute lg:right-0 xl:right-2 lg:bottom-10 xl:bottom-10 z-20 w-full max-w-xs sm:max-w-sm lg:w-[260px] xl:w-[285px] transition-all duration-300 ease-out group hover:scale-[1.02] rotate-1.5 sm:rotate-2 hover:rotate-0">
+          <div className="kz-card-tactile bg-white p-2 sm:p-2.5 border-2 border-[#191817] shadow-[4px_4px_0_#191817] rounded-2xl text-left">
+            {/* Window Header / Title Bar */}
+            <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#d8d3ca]">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-[#ff5f56] border border-[#191817]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#ffbd2e] border border-[#191817]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#27c93f] border border-[#191817]"></span>
+                <span className="ml-1.5 font-mono text-[10px] sm:text-[11px] font-bold text-[#191817] truncate">
+                  Koozy is liveee ✦
+                </span>
+              </div>
+              <span className="shrink-0 text-[9px] font-mono font-bold uppercase tracking-wider text-[#6c4de8] bg-[#eeeafd] px-1.5 py-0.5 rounded-full border border-[#c9bfff]">
+                Demo
+              </span>
+            </div>
+
+            {/* Video Player Container */}
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-[#191817] bg-[#191817]">
+              <iframe
+                src="https://www.youtube-nocookie.com/embed/y8F1BwhzwfQ?rel=0"
+                title="Koozy is liveee"
+                className="w-full h-full block"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+
+            {/* Footer Caption */}
+            <div className="mt-1.5 pt-0.5 flex items-center justify-between text-[10px] font-hand text-[#77736c] select-none">
+              <span className="flex items-center gap-1">
+                <span className="text-[#ff0000]">▶</span> Watch in action
+              </span>
+              <span className="text-[#6c4de8] font-bold group-hover:translate-x-0.5 transition-transform">
+                see it live ✦
+              </span>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Minimal Footer */}

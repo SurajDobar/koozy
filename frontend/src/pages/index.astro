@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HowKoozyWorksSection from '../components/HowKoozyWorksSection.jsx';
+import FeatureShowcaseSection from '../components/FeatureShowcaseSection.jsx';
+import AudienceSection from '../components/AudienceSection.jsx';
 
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'https://koozy.live').toString().replace(/\/$/, '');
 
@@ -203,6 +205,55 @@ const faqSchema = {
         </div>
       </div>
 
+      <!-- Tilted & Titled YouTube Video Card (Calibrated height & placement to barely clear the text) -->
+      <div
+        class="mt-8 lg:mt-0 lg:absolute lg:right-0 xl:right-2 lg:bottom-10 xl:bottom-10 z-20 w-full max-w-xs sm:max-w-sm lg:w-[260px] xl:w-[285px] transition-all duration-300 ease-out group hover:scale-[1.02] rotate-1.5 sm:rotate-2 hover:rotate-0"
+      >
+        <div
+          class="kz-card-tactile bg-white p-2 sm:p-2.5 border-2 border-[#191817] shadow-[4px_4px_0_#191817] rounded-2xl text-left"
+        >
+          <!-- Window Header / Title Bar -->
+          <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#d8d3ca]">
+            <div class="flex items-center gap-1 min-w-0">
+              <span class="w-2 h-2 rounded-full bg-[#ff5f56] border border-[#191817]"></span>
+              <span class="w-2 h-2 rounded-full bg-[#ffbd2e] border border-[#191817]"></span>
+              <span class="w-2 h-2 rounded-full bg-[#27c93f] border border-[#191817]"></span>
+              <span class="ml-1.5 font-mono text-[10px] sm:text-[11px] font-bold text-[#191817] truncate">
+                Koozy is liveee ✦
+              </span>
+            </div>
+            <span
+              class="shrink-0 text-[9px] font-mono font-bold uppercase tracking-wider text-[#6c4de8] bg-[#eeeafd] px-1.5 py-0.5 rounded-full border border-[#c9bfff]"
+            >
+              Demo
+            </span>
+          </div>
+
+          <!-- Video Player Container -->
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden border border-[#191817] bg-[#191817]">
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/y8F1BwhzwfQ?rel=0"
+              title="Koozy is liveee"
+              class="w-full h-full block"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            ></iframe>
+          </div>
+
+          <!-- Footer Caption / Subtle Playful Note -->
+          <div class="mt-1.5 pt-0.5 flex items-center justify-between text-[10px] font-hand text-[#77736c] select-none">
+            <span class="flex items-center gap-1">
+              <span class="text-[#ff0000]">▶</span> Watch in action
+            </span>
+            <span class="text-[#6c4de8] font-bold group-hover:translate-x-0.5 transition-transform">
+              see it live ✦
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Subtle Scroll Cue -->
       <a
         href="#how-koozy-works"
@@ -218,92 +269,8 @@ const faqSchema = {
     <!-- SECTION 2: See how Koozy works — Interactive Visual Walkthrough -->
     <HowKoozyWorksSection client:visible />
 
-    <!-- SECTION 3: AI Quiz Generation Section (Matching actual Koozy AIGeneratorModal) -->
-    <section class="py-14 md:py-18 border-t border-[#d8d3ca]">
-      <div class="kz-card-tactile bg-white p-6 sm:p-9 border-2 border-[#191817] shadow-[5px_5px_0_#191817] rounded-3xl">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-center">
-          <div class="lg:col-span-6">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#fff8e7] border border-[#ffbd2e] rounded-full text-xs font-mono font-bold text-[#946200] mb-3">
-              <span>✦</span>
-              <span>AI QUIZ GENERATOR</span>
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-black text-[#191817] tracking-tight leading-tight">
-              Don't want to write every question?
-            </h2>
-            <p class="text-sm sm:text-base text-[#77736c] font-medium mt-2 leading-relaxed">
-              Type any topic. Google Gemini generates verified 4-choice questions in 5 seconds. Edit anything before you play.
-            </p>
-            <div class="mt-5 flex flex-wrap items-center gap-3">
-              <a
-                href="/ai-quiz-maker/"
-                class="kz-btn-primary px-5 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-1.5"
-              >
-                <span>Try AI Generator</span>
-                <span>&rarr;</span>
-              </a>
-              <span class="text-xs font-mono font-bold text-[#77736c]">
-                ✦ Free daily quotas
-              </span>
-            </div>
-          </div>
-
-          <!-- Realistic Koozy AI Generator Modal Mockup Card -->
-          <div class="lg:col-span-6 bg-[#fffdf7] border-2 border-[#191817] rounded-2xl overflow-hidden shadow-[3.5px_3.5px_0_#191817]">
-            <!-- Header matching AIGeneratorModal.jsx -->
-            <div class="bg-[#f7f5ef] px-4 py-3 border-b-2 border-[#191817] flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-lg bg-[#6c4de8] text-white flex items-center justify-center border border-[#191817] text-xs">
-                  ✦
-                </div>
-                <div>
-                  <div class="text-xs font-black text-[#191817] leading-none">
-                    AI Quiz Generator
-                  </div>
-                  <div class="text-[10px] text-[#77736c] font-semibold mt-0.5">
-                    Generate MCQs with Gemini
-                  </div>
-                </div>
-              </div>
-              <span class="text-[10px] font-mono font-bold text-[#946200] bg-[#fff8e7] px-2 py-0.5 rounded-full border border-[#ffbd2e]">
-                Quota: 8 / 8 left
-              </span>
-            </div>
-
-            <!-- Tab switcher matching modal -->
-            <div class="flex border-b-2 border-[#191817] bg-white text-xs font-bold">
-              <div class="flex-1 py-1.5 text-center bg-[#eeeafd] text-[#6c4de8] border-r-2 border-[#191817]">
-                ✨ Gemini Generator
-              </div>
-              <div class="flex-1 py-1.5 text-center text-[#77736c]">
-                📋 Copy Prompt Template
-              </div>
-            </div>
-
-            <!-- Body -->
-            <div class="p-3.5 space-y-2.5">
-              <div>
-                <span class="block text-[10px] font-bold text-[#191817] uppercase mb-1">
-                  Topic or Instructions
-                </span>
-                <div class="bg-white border-2 border-[#191817] rounded-xl p-2 text-xs font-medium text-[#191817]">
-                  Python Fundamentals: Lists, Dictionaries & Loops
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 text-xs">
-                  <span class="text-[10px] font-bold text-[#77736c] uppercase">Count:</span>
-                  <span class="font-mono font-bold bg-[#f7f5ef] border border-[#d8d3ca] px-2 py-0.5 rounded-md">5 Questions</span>
-                </div>
-                <div class="kz-btn-primary px-3 py-1 rounded-xl text-xs font-black shadow-[1.5px_1.5px_0_#191817] flex items-center gap-1">
-                  <span>✦ Generate</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- SECTION 3: Horizontal Scroll-Driven Feature Showcase (Cards A, B, C) -->
+    <FeatureShowcaseSection client:visible />
 
     <!-- SECTION 4: Compact "Why Koozy?" (1-2s scan rule) -->
     <section class="py-14 md:py-18 border-t border-[#d8d3ca]">
@@ -373,48 +340,79 @@ const faqSchema = {
       </div>
     </section>
 
-    <!-- SECTION 5: BUILT FOR MORE THAN CLASSROOMS -->
+    <!-- SECTION 5: BUILT FOR MORE THAN CLASSROOMS (Interactive Audience Showcase) -->
+    <AudienceSection client:visible />
+
+    <!-- SECTION 6: CONTACT US / FEEDBACK (3-5% larger on large screens) -->
     <section class="py-12 md:py-16 border-t border-[#d8d3ca]">
-      <div class="kz-card-tactile bg-[#fffdf7] p-7 sm:p-10 border-2 border-[#191817] shadow-[4px_4px_0_#191817] rounded-3xl text-center">
-        <div class="mb-6">
-          <span class="font-hand text-base sm:text-lg font-bold text-[#6c4de8] block mb-1">
-            built for more than classrooms ✦
-          </span>
-          <h3 class="text-3xl sm:text-4xl font-black text-[#191817] tracking-tight">
-            Made for wherever people gather.
-          </h3>
-        </div>
+      <div class="kz-card-tactile bg-white p-8 sm:p-11 border-2 border-[#191817] shadow-[5px_5px_0_#191817] rounded-3xl max-w-3xl mx-auto text-center">
+        <span class="font-hand text-base sm:text-lg lg:text-[19px] font-bold text-[#6c4de8] block mb-1.5">
+          say hello ✦
+        </span>
+        <h3 class="text-3xl sm:text-4xl lg:text-[38px] font-black text-[#191817] tracking-tight mb-3">
+          Got feedback? Talk to the team.
+        </h3>
+        <p class="text-sm sm:text-base lg:text-[17px] text-[#77736c] font-medium max-w-lg mx-auto mb-6 leading-relaxed">
+          Found a bug? Got a feature idea? Want to tell us how your first quiz went?<br class="hidden sm:inline" />
+          <strong class="text-[#191817] font-bold">We actually read everything.</strong>
+        </p>
 
-        <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-3.5 mb-6">
-          <div class="bg-white border-2 border-[#191817] px-4 py-2.5 rounded-2xl shadow-[2px_2px_0_#191817] text-xs sm:text-sm font-bold flex items-center gap-2">
-            <span>🏫</span>
-            <span>Classrooms</span>
-          </div>
-          <div class="bg-white border-2 border-[#191817] px-4 py-2.5 rounded-2xl shadow-[2px_2px_0_#191817] text-xs sm:text-sm font-bold flex items-center gap-2">
-            <span>👥</span>
-            <span>Teams</span>
-          </div>
-          <div class="bg-white border-2 border-[#191817] px-4 py-2.5 rounded-2xl shadow-[2px_2px_0_#191817] text-xs sm:text-sm font-bold flex items-center gap-2">
-            <span>🎉</span>
-            <span>Events</span>
-          </div>
-          <div class="bg-white border-2 border-[#191817] px-4 py-2.5 rounded-2xl shadow-[2px_2px_0_#191817] text-xs sm:text-sm font-bold flex items-center gap-2">
-            <span>🏠</span>
-            <span>Friends & Family</span>
-          </div>
-          <div class="bg-white border-2 border-[#191817] px-4 py-2.5 rounded-2xl shadow-[2px_2px_0_#191817] text-xs sm:text-sm font-bold flex items-center gap-2">
-            <span>💼</span>
-            <span>Workshops & Training</span>
-          </div>
-        </div>
+        <a
+          href="/contact/"
+          class="kz-btn-primary px-7 py-3 rounded-xl font-bold text-sm sm:text-base lg:text-[17px] inline-flex items-center gap-2 shadow-[3px_3px_0_#191817]"
+        >
+          <span>Contact us</span>
+          <span>&rarr;</span>
+        </a>
 
-        <p class="max-w-xl mx-auto text-sm sm:text-base text-[#77736c] font-medium leading-relaxed">
-          Whether you're teaching a class, running a team activity, hosting an event, or just getting everyone together — Koozy gets everyone playing on the same screen.
+        <p class="mt-5 text-xs sm:text-sm lg:text-[14.5px] font-hand text-[#77736c] max-w-md mx-auto">
+          Replies may take 6–7 business days. Our entire team is currently one developer. 😭
         </p>
       </div>
     </section>
 
-    <!-- SECTION 6: THE MODERN ONLINE MULTIPLAYER QUIZ (SEO Editorial Guide) -->
+    <!-- SECTION 7: FREQUENTLY ASKED QUESTIONS (Second-last section) -->
+    <section class="py-14 md:py-20 border-t border-[#d8d3ca]">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
+          got questions? ✦
+        </div>
+        <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-[#191817] tracking-tight">
+          Frequently Asked Questions
+        </h2>
+        <p class="text-base text-[#77736c] font-medium mt-2">
+          Everything you need to know about playing and hosting online multiplayer quizzes on Koozy.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl mx-auto">
+        {faqItems.map((item) => (
+          <div class="kz-card-tactile p-6 sm:p-7 bg-white flex flex-col justify-start">
+            <h3 class="font-black text-lg sm:text-xl text-[#191817] mb-2 leading-snug">
+              {item.question}
+            </h3>
+            <p class="text-xs sm:text-sm text-[#77736c] font-medium leading-relaxed">
+              {item.answer}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div class="text-center mt-8">
+        <a
+          href="/faq/"
+          class="text-xs sm:text-sm font-bold text-[#6c4de8] hover:underline inline-flex items-center gap-1.5"
+        >
+          <span>View all frequently asked questions</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <!-- FAQPage JSON-LD Structured Data for Search Engines -->
+      <script type="application/ld+json" is:inline set:html={JSON.stringify(faqSchema)} />
+    </section>
+
+    <!-- SECTION 8: THE MODERN ONLINE MULTIPLAYER QUIZ (Final section - SEO Editorial Guide) -->
     <section class="py-14 md:py-20 border-t border-[#d8d3ca]">
       <div class="kz-card-tactile bg-white p-7 sm:p-12 border-2 border-[#191817] shadow-[5px_5px_0_#191817] rounded-3xl">
         <div class="max-w-3xl mb-10">
@@ -500,102 +498,6 @@ const faqSchema = {
               Whether you want to play fast-paced <strong class="text-[#191817]">online multiplayer quiz games with friends</strong> on the weekend, run high-engagement classroom knowledge checks, or spice up remote company meetings, Koozy delivers electric <strong class="text-[#191817]">trivia quiz online multiplayer</strong> excitement with zero hassle. Pick a topic, share your PIN, and see who climbs to the top of the live podium!
             </p>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 7: FREQUENTLY ASKED QUESTIONS -->
-    <section class="py-14 md:py-20 border-t border-[#d8d3ca]">
-      <div class="text-center max-w-2xl mx-auto mb-10">
-        <div class="font-hand text-2xl text-[#6c4de8] -rotate-2 select-none mb-1">
-          got questions? ✦
-        </div>
-        <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-[#191817] tracking-tight">
-          Frequently Asked Questions
-        </h2>
-        <p class="text-base text-[#77736c] font-medium mt-2">
-          Everything you need to know about playing and hosting online multiplayer quizzes on Koozy.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl mx-auto">
-        {faqItems.map((item) => (
-          <div class="kz-card-tactile p-6 sm:p-7 bg-white flex flex-col justify-start">
-            <h3 class="font-black text-lg sm:text-xl text-[#191817] mb-2 leading-snug">
-              {item.question}
-            </h3>
-            <p class="text-xs sm:text-sm text-[#77736c] font-medium leading-relaxed">
-              {item.answer}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div class="text-center mt-8">
-        <a
-          href="/faq/"
-          class="text-xs sm:text-sm font-bold text-[#6c4de8] hover:underline inline-flex items-center gap-1.5"
-        >
-          <span>View all frequently asked questions</span>
-          <span>&rarr;</span>
-        </a>
-      </div>
-
-      <!-- FAQPage JSON-LD Structured Data for Search Engines -->
-      <script type="application/ld+json" is:inline set:html={JSON.stringify(faqSchema)} />
-    </section>
-
-    <!-- SECTION 8: CONTACT US -->
-    <section class="py-12 md:py-16 border-t border-[#d8d3ca]">
-      <div class="kz-card-tactile bg-white p-8 sm:p-11 border-2 border-[#191817] shadow-[5px_5px_0_#191817] rounded-3xl max-w-3xl mx-auto text-center">
-        <span class="font-hand text-base sm:text-lg font-bold text-[#6c4de8] block mb-1.5">
-          say hello ✦
-        </span>
-        <h3 class="text-3xl sm:text-4xl font-black text-[#191817] tracking-tight mb-3">
-          Got feedback? Talk to the team.
-        </h3>
-        <p class="text-sm sm:text-base text-[#77736c] font-medium max-w-lg mx-auto mb-6 leading-relaxed">
-          Found a bug? Got a feature idea? Want to tell us how your first quiz went?<br class="hidden sm:inline" />
-          <strong class="text-[#191817] font-bold">We actually read everything.</strong>
-        </p>
-
-        <a
-          href="/contact/"
-          class="kz-btn-primary px-7 py-3 rounded-xl font-bold text-sm sm:text-base inline-flex items-center gap-2 shadow-[3px_3px_0_#191817]"
-        >
-          <span>Contact us</span>
-          <span>&rarr;</span>
-        </a>
-
-        <p class="mt-5 text-xs sm:text-sm font-hand text-[#77736c] max-w-md mx-auto">
-          Replies may take 6–7 business days. Our entire team is currently one developer. 😭
-        </p>
-      </div>
-    </section>
-
-    <!-- SECTION 9: Final CTA Section -->
-    <section class="py-16 md:py-24 border-t border-[#d8d3ca] text-center">
-      <div class="max-w-2xl mx-auto">
-        <h2 class="text-4xl sm:text-5xl font-black text-[#191817] tracking-tight mb-4">
-          Ready to play?
-        </h2>
-        <p class="text-base sm:text-lg text-[#77736c] font-medium mb-8">
-          Host your next live quiz today with friends, students, or colleagues. Free, instant, and fun.
-        </p>
-        <div class="flex flex-wrap gap-4 justify-center items-center">
-          <a
-            href="/host/quizzes/"
-            class="kz-btn-primary px-8 py-3.5 rounded-xl font-bold text-base flex items-center gap-2"
-          >
-            <span>Host a Quiz</span>
-            <span>&rarr;</span>
-          </a>
-          <a
-            href="/join/"
-            class="kz-btn-secondary px-8 py-3.5 rounded-xl font-bold text-base"
-          >
-            <span>Join with PIN</span>
-          </a>
         </div>
       </div>
     </section>
