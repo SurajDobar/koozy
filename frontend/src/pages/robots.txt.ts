@@ -9,6 +9,9 @@ Disallow: /ws/
 Disallow: /admin/
 Disallow: /dev/
 Disallow: /join/*/
+Disallow: /host/sessions/
+Disallow: /auth/google
+Disallow: /auth/logout
 
 Sitemap: ${siteUrl}/sitemap.xml
 `;

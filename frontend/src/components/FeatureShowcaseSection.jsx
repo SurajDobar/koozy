@@ -218,7 +218,7 @@ export default function FeatureShowcaseSection() {
                       href="/ai-quiz-maker/"
                       className="kz-btn-primary px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-[2px_2px_0_#191817]"
                     >
-                      <span>Try AI Generator</span>
+                      <span>Try AI Quiz Generator</span>
                       <ArrowRight size={16} />
                     </a>
                   </div>

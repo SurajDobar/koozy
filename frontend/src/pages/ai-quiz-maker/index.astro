@@ -4,8 +4,8 @@ import AIFeatureShowcase from '../../components/AIFeatureShowcase.jsx';
 
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.site || 'https://koozy.live').toString().replace(/\/$/, '');
 
-const pageTitle = 'AI Quiz Generator — Free AI Quiz Maker | Koozy';
-const pageDescription = 'Create interactive multiple-choice quizzes with Koozy\'s free AI quiz generator. The best free AI quiz maker for teachers, studying, classrooms, and live multiplayer trivia.';
+const pageTitle = 'AI Quiz Generator — Make Live Quizzes in Seconds | Koozy';
+const pageDescription = 'Generate multiple-choice quizzes in seconds with Koozy\'s free AI quiz generator. Powered by Gemini AI for classrooms, studying, and live trivia.';
 
 const schema = {
   '@context': 'https://schema.org',
@@ -14,7 +14,6 @@ const schema = {
       '@type': 'WebApplication',
       '@id': `${siteUrl}/ai-quiz-maker/#webapp`,
       'name': 'Koozy AI Quiz Generator',
-      'alternateName': 'Koozy Free AI Quiz Maker',
       'url': `${siteUrl}/ai-quiz-maker/`,
       'applicationCategory': 'EducationalApplication',
       'operatingSystem': 'All',
@@ -97,7 +96,8 @@ const faqSchema = {
 <BaseLayout
   title={pageTitle}
   description={pageDescription}
-  ogImage="/web-app-manifest-512x512.png"
+  ogImage="/og-image-ai.png"
+  ogImageAlt="Koozy — Free AI Quiz Generator"
   ogType="website"
   noindex={false}
   schema={schema}
@@ -112,10 +112,10 @@ const faqSchema = {
         <span>Google Gemini Powered</span>
       </div>
       <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-[#191817] tracking-tight leading-tight mb-4">
-        Free AI Quiz Generator: <span class="font-hand text-[#6c4de8] font-normal">Make Live Quizzes in Seconds</span>
+        AI Quiz Generator: <span class="font-hand text-[#6c4de8] font-normal">Make Live Quizzes in Seconds</span>
       </h1>
       <p class="text-base sm:text-lg text-[#77736c] leading-relaxed mb-8 max-w-2xl mx-auto">
-        Stop spending hours drafting multiple-choice questions, researching trivia facts, and brainstorming tricky distractors. Koozy is a lightning-fast <strong class="text-[#191817] font-bold">ai quiz generator</strong> that transforms any topic prompt into balanced, classroom-ready quizzes in seconds—ready to host live on player screens.
+        Stop spending hours drafting multiple-choice questions, researching trivia facts, and brainstorming tricky distractors. Koozy is a lightning-fast <strong class="text-[#191817] font-bold">AI quiz generator</strong> that transforms any topic prompt into balanced, classroom-ready quizzes in seconds—ready to host as an <a href="/" class="text-[#6c4de8] font-bold underline hover:text-[#191817] transition-colors">online multiplayer quiz</a> on player screens.
       </p>
 
       <div class="flex flex-wrap gap-4 justify-center items-center">
@@ -215,7 +215,7 @@ const faqSchema = {
               Review, Edit, or Launch Live
             </h3>
             <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
-              The AI populates your quiz studio instantly. You maintain 100% control: change wording, adjust the correct answer, reorder questions, or launch straight into a live session.
+              The AI populates your quiz studio instantly. You maintain 100% control: change wording, adjust the correct answer, reorder questions, or launch straight into a <a href="/live-quiz/" class="text-[#6c4de8] font-bold underline hover:text-[#191817] transition-colors">live quiz game</a>.
             </p>
           </div>
           <div class="mt-6 text-xs text-[#77736c] bg-[#f7f5ef] p-3 rounded-xl border border-[#d8d3ca]">
@@ -239,7 +239,7 @@ const faqSchema = {
             Writing quality multiple-choice assessments from scratch is exhausting. To build a solid quiz, you have to craft unambiguous question stems, verify factual correctness, and formulate three plausible false options (distractors) that genuinely test comprehension rather than tricking people. For educators, study group leaders, and trivia hosts, compiling a 10-question assessment manually often takes forty-five minutes or more.
           </p>
           <p>
-            Koozy changes that with a dedicated <strong class="text-[#191817] font-semibold">ai quiz generator</strong> powered by Google Gemini. Unlike generic conversational chatbots that produce unstructured bullet points, markdown clutter, or inconsistent answer counts, our specialized <strong class="text-[#191817] font-semibold">ai quiz maker</strong> operates under strict validation guards. Every generation produces structured JSON containing clear questions, four well-differentiated options, and a single verified correct answer.
+            Koozy changes that with a dedicated <strong class="text-[#191817] font-semibold">AI quiz generator</strong> powered by Google Gemini. Unlike generic conversational chatbots that produce unstructured bullet points, markdown clutter, or inconsistent answer counts, our specialized <strong class="text-[#191817] font-semibold">AI quiz generator</strong> operates under strict validation guards. Every generation produces structured JSON containing clear questions, four well-differentiated options, and a single verified correct answer.
           </p>
           <p>
             The result? You spend zero time wrestling with formatting or formatting errors. Whether you need a 5-minute bell-ringer for high school students or an energetic pub trivia round for Friday night, your quiz is built, balanced, and ready to host in under five seconds.
@@ -270,13 +270,13 @@ const faqSchema = {
               🎓
             </div>
             <h3 class="text-2xl font-black text-[#191817] mb-3">
-              An AI Quiz Maker for Teachers
+              An AI Quiz Generator for Teachers
             </h3>
             <p class="text-sm text-[#77736c] leading-relaxed mb-4">
-              Formative assessment is essential for measuring learning progress, but educators rarely have spare time to draft fresh quizzes for every curriculum unit. As an <strong class="text-[#191817] font-semibold">ai quiz maker for teachers</strong>, Koozy eliminates lesson preparation friction.
+              Formative assessment is essential for measuring learning progress, but educators rarely have spare time to draft fresh quizzes for every curriculum unit. As an <strong class="text-[#191817] font-semibold">AI quiz generator for teachers</strong>, Koozy eliminates lesson preparation friction.
             </p>
             <p class="text-sm text-[#77736c] leading-relaxed">
-              Input your grade level, subject matter, or standard, and receive aligned questions instantly. When it is time to play, students join via a 5-letter Game PIN on school Chromebooks, iPads, or smartphones. With zero student accounts, logins, or app downloads, your classroom stays focused, inclusive, and FERPA-friendly.
+              Input your grade level, subject matter, or standard, and receive aligned questions instantly. When it is time to play, students join via a <a href="/join/" class="text-[#6c4de8] font-bold underline hover:text-[#191817] transition-colors">5-letter Game PIN</a> on school Chromebooks, iPads, or smartphones. With zero student accounts, logins, or app downloads, your classroom stays focused, inclusive, and FERPA-friendly.
             </p>
           </div>
           <div class="mt-6 pt-4 border-t border-[#d8d3ca] flex items-center justify-between text-xs font-bold text-[#6c4de8]">
@@ -292,13 +292,13 @@ const faqSchema = {
               📚
             </div>
             <h3 class="text-2xl font-black text-[#191817] mb-3">
-              A Focused AI Quiz Maker for Studying
+              A Focused AI Quiz Generator for Studying
             </h3>
             <p class="text-sm text-[#77736c] leading-relaxed mb-4">
               Passive reading and re-reading notes produce an illusion of competence without genuine mastery. Cognitive science proves that active recall—retrieving concepts from memory through self-testing—dramatically improves long-term exam performance.
             </p>
             <p class="text-sm text-[#77736c] leading-relaxed">
-              Using Koozy as a dedicated <strong class="text-[#191817] font-semibold">study ai quiz maker</strong> allows learners to turn syllabus outlines, lecture notes, and textbook chapters into interactive practice quizzes. Whether studying solo or gathering classmates for collaborative exam prep, this <strong class="text-[#191817] font-semibold">ai quiz maker for studying</strong> turns tedious study sessions into engaging, fast-paced retention drills.
+              Using Koozy as a dedicated <strong class="text-[#191817] font-semibold">AI quiz generator for studying</strong> allows learners to turn syllabus outlines, lecture notes, and textbook chapters into interactive practice quizzes. Whether studying solo or gathering classmates for collaborative exam prep, this <strong class="text-[#191817] font-semibold">AI quiz generator</strong> turns tedious study sessions into engaging, fast-paced retention drills.
             </p>
           </div>
           <div class="mt-6 pt-4 border-t border-[#d8d3ca] flex items-center justify-between text-xs font-bold text-[#05cdff]">
@@ -309,17 +309,17 @@ const faqSchema = {
       </div>
     </section>
 
-    <!-- Why Koozy is the Best Free AI Quiz Maker -->
+    <!-- Why Koozy is the Best Free AI Quiz Generator -->
     <section class="mb-16 kz-card-tactile p-8 sm:p-10 bg-[#fffdf7] border-2 border-[#191817] rounded-3xl">
       <div class="text-center max-w-2xl mx-auto mb-10">
         <div class="inline-block text-xs uppercase font-extrabold tracking-widest text-[#00cc05] mb-2 font-mono">
           ✦ Zero Paywalls ✦
         </div>
         <h2 class="text-2xl sm:text-3xl font-black text-[#191817] mb-3">
-          Why Koozy is the Best Free AI Quiz Maker
+          Why Koozy is the Best Free AI Quiz Generator
         </h2>
         <p class="text-sm sm:text-base text-[#77736c] leading-relaxed">
-          Many educational tools claim to offer artificial intelligence assistance, only to force you into subscription paywalls or demand credit cards upfront. We built Koozy so you can use our <strong class="text-[#191817] font-semibold">ai quiz maker free</strong> of charge every day. We designed this <strong class="text-[#191817] font-semibold">ai quiz maker easy</strong> and intuitive for anyone: type your prompt, get verified questions, and start playing immediately. Here is what makes Koozy the <strong class="text-[#191817] font-semibold">best free ai quiz maker</strong> for interactive live learning.
+          Many educational tools claim to offer artificial intelligence assistance, only to force you into subscription paywalls or demand credit cards upfront. We built Koozy so you can use our <strong class="text-[#191817] font-semibold">AI quiz generator</strong> free of charge every day. We designed it to be easy and intuitive for anyone: type your prompt, get verified questions, and start playing immediately. Here is what makes Koozy the <strong class="text-[#191817] font-semibold">best free AI quiz generator</strong> for interactive live learning.
         </p>
       </div>
 
@@ -355,7 +355,7 @@ const faqSchema = {
           <div>
             <h3 class="font-black text-base text-[#191817] mb-1">Generous Free Daily Quota</h3>
             <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
-              Every host receives a free daily quota of 8 full AI quiz generations, refreshed every 24 hours. Enjoy our <strong class="text-[#191817] font-semibold">free ai quiz maker</strong> without hidden trial locks or watermarks.
+              Every host receives a free daily quota of 8 full AI quiz generations, refreshed every 24 hours. Enjoy our <strong class="text-[#191817] font-semibold">free AI quiz generator</strong> without hidden trial locks or watermarks.
             </p>
           </div>
         </div>
@@ -367,7 +367,7 @@ const faqSchema = {
           <div>
             <h3 class="font-black text-base text-[#191817] mb-1">Full Export & Library Portability</h3>
             <p class="text-xs sm:text-sm text-[#77736c] leading-relaxed">
-              Once generated, your quizzes can be exported as structured JSON backups with a single click, edited at any time in the Quiz Studio, or imported back into your account.
+              Once generated, your quizzes can be exported as structured JSON backups with a single click, edited at any time in your <a href="/host/quizzes/" class="text-[#6c4de8] font-bold underline hover:text-[#191817] transition-colors">host quiz library</a>, or imported back into your account.
             </p>
           </div>
         </div>
@@ -422,6 +422,16 @@ const faqSchema = {
             </p>
           </div>
         ))}
+      </div>
+
+      <div class="text-center mt-6">
+        <a
+          href="/faq/"
+          class="text-xs sm:text-sm font-bold text-[#6c4de8] hover:underline inline-flex items-center gap-1.5"
+        >
+          <span>View all frequently asked questions</span>
+          <span>&rarr;</span>
+        </a>
       </div>
 
       <!-- FAQPage JSON-LD Structured Data for Search Engines -->
