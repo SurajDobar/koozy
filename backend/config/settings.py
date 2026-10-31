@@ -157,12 +157,16 @@ ASGI_APPLICATION = 'config.asgi.application'
 
 database_url = os.environ.get('DATABASE_URL', '').strip()
 if database_url:
+    db_config = dj_database_url.config(
+        default=database_url,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+    # Ensure database NAME is never empty for cloud providers like Neon
+    if not db_config.get('NAME'):
+        db_config['NAME'] = 'neondb'
     DATABASES = {
-        'default': dj_database_url.config(
-            default=database_url,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+        'default': db_config
     }
 else:
     DATABASES = {
