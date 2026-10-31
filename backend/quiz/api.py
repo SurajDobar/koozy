@@ -25,7 +25,8 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 
 from .models import AnswerSubmission, HostProfile, LiveSession, Participant, Question, Quiz
@@ -1187,10 +1188,15 @@ def api_reorder_questions(request, quiz_id):
 
 
 # ---------------------------------------------------------------------------
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return
+
 # AI Quiz Generator REST APIs (Host Owned)
 # ---------------------------------------------------------------------------
 
 @api_view(["POST"])
+@authentication_classes([CsrfExemptSessionAuthentication, BasicAuthentication])
 def api_ai_generate_quiz(request):
     """
     Generate a complete quiz using Gemini AI, validate strictly,
