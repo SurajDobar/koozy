@@ -248,3 +248,12 @@ MAILERS = {
 # Google Gemini AI Quiz Generator Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
+
+
+# Django REST Framework configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'quiz.authentication.RobustSessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+}
