@@ -44,6 +44,8 @@ backend/*.log
 backend/.env
 backend/.env.*
 !backend/.env.example
+*.neon_connection.txt
+backend/.neon_connection.txt
 
 # =========================
 # React / Vite / Node
@@ -107,4 +109,4 @@ documents/
 
 staticfiles/
 backend/staticfiles/
-frontend/dist-astro/
+frontend/dist-astro/
